@@ -5,6 +5,9 @@ node_modules/
 .next/
 out/
 
+# typescript
+*.tsbuildinfo
+
 # env files (never commit secrets)
 .env
 .env.local
