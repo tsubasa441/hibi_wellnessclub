@@ -236,15 +236,11 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
                 <tr>
                   <td style="padding:16px 20px;">
                     <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2C3531;">キャンセルポリシー</p>
-                    <p style="margin:0 0 12px;font-size:12px;color:#919694;line-height:1.6;">
-                      イベント2日前までのキャンセルは全額返金されます。<br/>
-                      2日前を過ぎてからのキャンセルはお受けできますが、返金はいたしません。
-                    </p>
-                    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2C3531;">イベント中止の場合</p>
                     <p style="margin:0;font-size:12px;color:#919694;line-height:1.6;">
-                      悪天候・その他やむを得ない事情によりイベントが中止となった場合は、<br/>
-                      お支払い金額を全額返金いたします。返金はお支払い方法に応じて自動的に処理され、反映までに数日かかる場合があります。<br/>
-                      中止の際はアプリ内またはメールにてご連絡いたします。
+                      ・イベント当日までキャンセル可能です<br/>
+                      ・2日前まで：全額返金<br/>
+                      ・前日・当日：返金対象外（キャンセル料100%）<br/>
+                      ・悪天候等による中止：時期を問わず全額返金
                     </p>
                   </td>
                 </tr>

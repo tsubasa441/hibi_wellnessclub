@@ -72,7 +72,12 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
 
         <div className="bg-base-100 border border-sage-200 rounded-xl p-4 mb-6 text-sm text-ink-700">
           <p className="font-outfit font-semibold mb-1">キャンセルポリシー</p>
-          <p className="font-dm">イベント2日前までキャンセル可能です。1日前・当日のキャンセルは返金対象外となります。</p>
+          <ul className="font-dm space-y-0.5">
+            <li>・イベント当日までキャンセル可能です</li>
+            <li>・2日前まで：全額返金</li>
+            <li>・前日・当日：返金対象外（キャンセル料100%）</li>
+            <li>・悪天候等による中止：時期を問わず全額返金</li>
+          </ul>
         </div>
 
         <CheckoutForm
