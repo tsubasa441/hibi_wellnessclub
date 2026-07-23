@@ -5,6 +5,12 @@ import { encrypt } from "@/lib/encrypt";
 import { awardPoints } from "@/lib/points";
 import { checkReferralBadges } from "@/lib/badges";
 
+const NAME_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,50}$/;
+const NAME_ROMAN_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,100}$/;
+const BIRTH_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const REFERRAL_CODE_REGEX = /^[A-Z0-9]{1,20}$/;
+const GENDERS = new Set(["male", "female", "other"]);
+
 export async function POST(req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -18,11 +24,31 @@ export async function POST(req: NextRequest) {
     referralCode?: string;
   };
 
+  if (!body.name || !NAME_REGEX.test(body.name.trim())) {
+    return NextResponse.json({ error: "名前の形式が正しくありません" }, { status: 400 });
+  }
+  if (body.nameRoman && !NAME_ROMAN_REGEX.test(body.nameRoman.trim())) {
+    return NextResponse.json({ error: "nameRoman の形式が正しくありません" }, { status: 400 });
+  }
+  if (!body.gender || !GENDERS.has(body.gender)) {
+    return NextResponse.json({ error: "性別の値が正しくありません" }, { status: 400 });
+  }
+  if (!body.birthDate || !BIRTH_DATE_REGEX.test(body.birthDate)) {
+    return NextResponse.json({ error: "生年月日の形式が正しくありません" }, { status: 400 });
+  }
+  const birthYear = Number(body.birthDate.slice(0, 4));
+  if (birthYear < 1900 || birthYear > new Date().getFullYear()) {
+    return NextResponse.json({ error: "生年月日の年を正しく入力してください" }, { status: 400 });
+  }
+  if (body.referralCode && !REFERRAL_CODE_REGEX.test(body.referralCode)) {
+    return NextResponse.json({ error: "紹介コードの形式が正しくありません" }, { status: 400 });
+  }
+
   const updates: Record<string, string> = {};
-  if (body.name) updates.name = encrypt(body.name);
-  if (body.nameRoman) updates.name_roman = encrypt(body.nameRoman);
-  if (body.gender) updates.gender = encrypt(body.gender);
-  if (body.birthDate) updates.birth_date = encrypt(body.birthDate);
+  updates.name = encrypt(body.name.trim());
+  if (body.nameRoman) updates.name_roman = encrypt(body.nameRoman.trim());
+  updates.gender = encrypt(body.gender);
+  updates.birth_date = encrypt(body.birthDate);
   if (body.referralCode) updates.referral_code_used = encrypt(body.referralCode);
 
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
