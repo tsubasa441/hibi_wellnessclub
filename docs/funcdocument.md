@@ -1,0 +1,184 @@
+# Hibi フィットネスコミュニティ Web アプリ 設計書
+
+**Version:** 1.0  
+**Date:** 2026-06-14  
+**Author:** Hibi 開発チーム
+
+---
+
+## 1. システム構成
+
+| レイヤー | 技術 |
+|---------|------|
+| フロントエンド | Next.js 14（App Router） |
+| バックエンド | Next.js API Routes / Supabase Functions |
+| データベース | Supabase（PostgreSQL） |
+| 認証 | Supabase Auth（メール + パスワード） |
+| 決済 | Square API + PayPay API |
+| ホスティング | Vercel |
+| スタイリング | Tailwind CSS v4 |
+
+---
+
+## 2. DB 設計
+
+### profiles
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK、auth.users と連携 |
+| name | text | 表示名 |
+| avatar_url | text | プロフィール画像 |
+| referral_code | text | UNIQUE、紹介コード |
+| referred_by | uuid | FK → profiles.id |
+| points | integer | 累計ポイント |
+| created_at | timestamptz | |
+
+### events
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| title | text | イベント名 |
+| description | text | 説明文 |
+| event_type | text | yoga / training / running / boxing |
+| start_at | timestamptz | 開催日時 |
+| location | text | 場所 |
+| capacity | integer | 定員 |
+| price | integer | 価格（円） |
+| status | text | draft / published / cancelled |
+| created_at | timestamptz | |
+
+### bookings
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| user_id | uuid | FK → profiles.id |
+| event_id | uuid | FK → events.id |
+| payment_method | text | square / paypay / free |
+| payment_status | text | pending / paid / refunded |
+| payment_id | text | 決済 ID |
+| status | text | confirmed / cancelled |
+| points_used | integer | 予約時に充当したポイント数（1pt = 1円）。デフォルト0 |
+| amount_charged | integer | Square / PayPay に実際に請求した金額（円）。ポイント全額充当時は0。価格変動時の返金額算出にはこの値を使う（`events.price` は使わない） |
+| created_at | timestamptz | |
+
+### badges
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| name | text | バッジ名 |
+| description | text | 説明 |
+| condition_type | text | monthly_first_running / monthly_first_yoga / monthly_first_training / monthly_first_boxing / monthly_event_count / monthly_referral_count |
+| condition_value | integer | 達成条件の数値 |
+| icon_url | text | アイコン画像 |
+
+### user_badges
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| user_id | uuid | FK → profiles.id |
+| badge_id | uuid | FK → badges.id |
+| period | text | 対象月（"YYYY-MM"）。`(user_id, badge_id, period)` で複合ユニーク制約 |
+| earned_at | timestamptz | 取得日時 |
+
+### referrals
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| referrer_id | uuid | FK → profiles.id（紹介した人） |
+| referee_id | uuid | FK → profiles.id（紹介された人） |
+| status | text | pending / rewarded |
+| rewarded_at | timestamptz | ポイント付与日時 |
+| created_at | timestamptz | |
+
+### journals
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| user_id | uuid | FK → profiles.id |
+| recorded_at | date | 記録日 |
+| mood | integer | 気分スコア（1〜5） |
+| energy | integer | 体調スコア（1〜5） |
+| note | text | 自由記述（任意） |
+| created_at | timestamptz | |
+
+---
+
+## 3. API 設計
+
+| メソッド | エンドポイント | 説明 | 認証 |
+|---------|--------------|------|------|
+| POST | `/api/payments/square` | Square 決済処理（予約作成込み） | 必要 |
+| POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み） | 必要 |
+| POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
+| GET / POST | `/api/journals` | ジャーナル取得・記録 | 必要 |
+| POST | `/api/signup/profile` | サインアップ時プロフィール作成・紹介報酬付与 | 必要 |
+| POST | `/api/convert-name` | 名前ローマ字変換 | 必要 |
+| POST | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron） | 不要（Cron Secret） |
+| POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
+
+イベント一覧・詳細・プロフィールの取得は API Routes を介さず、Server Component から Supabase に直接クエリする（`docs/architecture.md` のデータフロー参照）。
+
+---
+
+## 4. ポイント設計
+
+| アクション | 付与ポイント | 付与タイミング | 失効 |
+|-----------|------------|--------------|------|
+| ジャーナル回答（1日1回） | 3pt | ジャーナル保存時 | なし |
+| イベント参加（ランク別 30〜100pt） | ランク依存 | イベント翌日以降、ホーム画面ロード時 | なし |
+| 月間全イベント参加ボーナス | 500pt | 月末を過ぎた後、ホーム画面ロード時 | なし |
+| 紹介者への報酬 | 200pt | 被紹介者のイベント翌日以降、ホーム画面ロード時 | なし |
+| 被紹介者への報酬 | 200pt | 自身のイベント翌日以降、ホーム画面ロード時 | なし |
+| バッジ獲得数ボーナス（月次） | 3個:300pt / 5個:500pt / 9個:1000pt | 翌月1日 Cron 実行時 | なし |
+
+**キャンセル時のポイント取り消し：** 予約キャンセル時、`event_participation` で付与済みのポイントを `points_log` から削除し `profiles.points` から減算する。`decrement_points` RPC を使用（最低0ptで保護）。
+
+## 4-1. ポイントによる予約割引
+
+イベント予約時、保有ポイントを 1pt = 1円としてその場で参加費に充当できる（`bookings.points_used`）。上限は参加費全額（0円決済も可）。
+
+- 充当は `spend_points` RPC（残高が足りる場合のみ原子的に減算し成否を返す）で行い、`points_log`（reason: `booking_discount`）に記録する
+- 決済額（Square / PayPay への請求額）は `参加費 - 充当ポイント`。0円になる場合は決済自体をスキップし、`payment_status` を即時 `paid` にする
+- 決済成功後に予約作成が失敗した場合は、決済（あれば）とポイント充当の両方を取り消す（`src/lib/points.ts` の `refundUsedPoints` を使用）
+- **キャンセル時：** キャンセルポリシー（2日前まで）を満たす場合、現金分の返金と同時に充当ポイントも全額 `profiles.points` へ払い戻す。2日前を過ぎたキャンセルは現金と同様、ポイントも払い戻し対象外
+
+---
+
+## 5. バッジ設計
+
+バッジは**月間バッジ**のみ（累計参加数によるマイルストーンバッジは廃止）。`period`（"YYYY-MM"）単位で毎月リセットされ、`condition_type` + `condition_value` の組み合わせで判定する。
+
+| バッジ名 | 条件 | condition_type | condition_value |
+|---------|------|----------------|-----------------|
+| Running First | 今月ランニングクラスに初参加 | monthly_first_running | 1 |
+| Yoga First | 今月ヨガクラスに初参加 | monthly_first_yoga | 1 |
+| Training First | 今月トレーニングクラスに初参加 | monthly_first_training | 1 |
+| Boxing First | 今月ボクシングクラスに初参加 | monthly_first_boxing | 1 |
+| 3 Classes | 今月3回クラスに参加 | monthly_event_count | 3 |
+| 5 Classes | 今月5回クラスに参加 | monthly_event_count | 5 |
+| Bridge Builder | 今月友人を1人招待 | monthly_referral_count | 1 |
+| Community Recruiter | 今月友人を3人招待 | monthly_referral_count | 3 |
+| Ambassador | 今月友人を5人招待 | monthly_referral_count | 5 |
+
+バッジ自体にポイント付与はなく、月間の獲得数に応じたボーナスポイント（3個:300pt / 5個:500pt / 9個:1000pt、最高ティアのみ付与）を翌月1日の Cron で一括付与する（4. ポイント設計を参照）。
+
+---
+
+## 6. 実装順序
+
+| ステップ | 内容 | 状態 |
+|---------|------|------|
+| Step1 | Next.js・Supabase・認証フロー | ✅ 完了 |
+| Step2 | イベント一覧・詳細・予約・決済 | ✅ 完了 |
+| Step3 | マイページ・参加履歴・累計カウント | ✅ 完了 |
+| Step4 | ポイント・バッジ | ✅ 完了 |
+| Step5 | 紹介コード・報酬付与 | ✅ 完了 |
+| Step6 | ジャーナル機能（当日記録のみ） | ✅ 完了 |
+| Step7 | テスト・Vercel デプロイ・本番切り替え | 未着手 |

@@ -1,0 +1,43 @@
+import Link from "next/link";
+import Image from "next/image";
+
+export default function HomePage() {
+  return (
+    <main className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
+      <Image
+        src="/images/top.png"
+        alt="Hibi background"
+        fill
+        className="object-cover object-center"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/20" />
+
+      <div className="relative z-10 flex flex-col items-center mt-[25vh] gap-8 px-4">
+        <h1 className="font-outfit text-5xl font-medium text-white tracking-wide drop-shadow-lg animate-fade-up animate-delay-100">
+          Hibi
+        </h1>
+        <p className="font-cormorant text-xs font-light text-white/90 tracking-[0.3em] drop-shadow -mt-6 animate-fade-up animate-delay-200">
+          Wellness Club
+        </p>
+        <div className="flex flex-col items-center gap-3 text-center animate-fade-up animate-delay-300">
+          <p className="font-dm text-sm text-white font-medium drop-shadow">
+            大人になった今でも心躍る毎日を
+          </p>
+          <p className="font-cormorant text-[10px] text-white/80 leading-loose tracking-wide drop-shadow max-w-xs">
+            福岡と東京を拠点としたウェルネスコミュニティ。<br />
+            ランニング、トレーニング、ヨガ、ボクシングなどのイベントを通じて、
+            新しい「自分」、「つながり」、「ライフスタイル」を<br />
+            見つけるきっかけに。
+          </p>
+        </div>
+        <Link
+          href="/login"
+          className="mt-4 bg-white/90 text-ink-700 font-outfit font-medium text-xs px-6 py-1.5 rounded-full hover:bg-white transition tracking-wider animate-fade-up animate-delay-500"
+        >
+          イベントご参加の方はこちら
+        </Link>
+      </div>
+    </main>
+  );
+}

@@ -1,0 +1,349 @@
+"use client";
+
+import { useState, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+type Tab = "signin" | "signup" | "forgot";
+type Gender = "male" | "female" | "other";
+
+const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-ink-300 transition";
+const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-2";
+const toggleClass = (active: boolean) =>
+  `flex-1 py-2.5 rounded-xl font-outfit text-xs font-medium transition border ${
+    active
+      ? "bg-ink-500 border-ink-500 text-white"
+      : "bg-base-50 border-base-200 text-ink-400"
+  }`;
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(searchParams.get("ref") ? "signup" : "signin");
+  const formTopRef = useRef<HTMLDivElement>(null);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [gender, setGender] = useState<Gender | "">("");
+  const [birthDate, setBirthDate] = useState("");
+  const [referralCode, setReferralCode] = useState(searchParams.get("ref") ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  function showError(msg: string) {
+    setError(msg);
+    setTimeout(() => formTopRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+  }
+
+  function resetForm() {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setGender("");
+    setBirthDate("");
+    setReferralCode(searchParams.get("ref") ?? "");
+    setError(null);
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!email) {
+      showError("メールアドレスを入力してください");
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/auth/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      showError("メールの送信に失敗しました。しばらく経ってから再試行してください。");
+    } else {
+      setError(null);
+      setTab("signin");
+      resetForm();
+      showError("パスワードリセットのメールを送信しました。メールをご確認ください。");
+    }
+  }
+
+  async function handleSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!email || !password) {
+      showError("未入力項目があります");
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      showError("メールアドレスまたはパスワードが正しくありません");
+      setLoading(false);
+    } else {
+      router.push("/home");
+      router.refresh();
+    }
+  }
+
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!name || !email || !password || !gender || !birthDate) {
+      showError("未入力項目があります");
+      return;
+    }
+
+    // 名前：日本語・英字・スペースのみ、1〜50文字
+    const nameRegex = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,50}$/;
+    if (!nameRegex.test(name.trim())) {
+      showError("お名前は日本語・英字のみ入力してください（数字・記号は使用できません）");
+      return;
+    }
+
+    // メール：標準形式・最大254文字
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 254) {
+      showError("メールアドレスの形式が正しくありません");
+      return;
+    }
+
+    // 生年月日：年が4桁であること
+    const birthYear = new Date(birthDate).getFullYear();
+    if (birthYear < 1900 || birthYear > new Date().getFullYear()) {
+      showError("生年月日の年を正しく入力してください（4桁）");
+      return;
+    }
+
+    // パスワード：大文字・小文字・数字・記号すべて含む、8〜72文字
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+    if (password.length < 8 || password.length > 72 || !hasUpper || !hasLower || !hasDigit || !hasSymbol) {
+      showError("パスワードは、半角英大文字・小文字・数字・記号をすべて含み、8文字以上で入力してください。");
+      return;
+    }
+
+    setLoading(true);
+    const supabase = createClient();
+
+    // 紹介コードの存在チェック
+    if (referralCode.trim()) {
+      const { data: referrer } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("referral_code", referralCode.trim().toUpperCase())
+        .single();
+      if (!referrer) {
+        showError("紹介コードが正しくありません");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // ローマ字変換
+    let nameRoman = name;
+    try {
+      const res = await fetch("/api/convert-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        nameRoman = data.romaji ?? name;
+      }
+    } catch {
+      // 変換失敗時は元の名前をそのまま使用
+    }
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
+
+    if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("password")) {
+        showError("パスワードは、半角英大文字・小文字・数字・記号をすべて含み、8文字以上で入力してください。");
+      } else {
+        showError("このメールアドレスは既に使用されています");
+      }
+      setLoading(false);
+      return;
+    }
+
+    // メール確認なし環境では既存メールでも成功するが identities が空になる
+    if (!signUpData.user || signUpData.user.identities?.length === 0) {
+      showError("このメールアドレスは既に使用されています");
+      setLoading(false);
+      return;
+    }
+
+    if (signUpData.user) {
+      await fetch("/api/signup/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          nameRoman,
+          gender,
+          birthDate,
+          referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
+        }),
+      });
+    }
+
+    router.push("/register-complete");
+  }
+
+  return (
+    <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-16 sm:pt-0 pb-10">
+      <div className="relative z-10 w-full max-w-sm nm-card p-6 sm:p-8 animate-fade-up">
+        <div className="text-center mb-6">
+          <span className="font-outfit text-3xl font-medium text-ink-700 tracking-wide">Hibi</span>
+        </div>
+
+        <div ref={formTopRef} className="mb-6">
+          {tab !== "forgot" ? (
+            <div className="flex gap-1 p-1 rounded-full bg-base-100 border border-base-200">
+              <button
+                onClick={() => { setTab("signin"); resetForm(); }}
+                className={`flex-1 py-2 rounded-full font-outfit text-sm font-medium transition ${tab === "signin" ? "bg-sage-500 text-white" : "text-ink-300"}`}
+              >
+                ログイン
+              </button>
+              <button
+                onClick={() => { setTab("signup"); resetForm(); }}
+                className={`flex-1 py-2 rounded-full font-outfit text-sm font-medium transition ${tab === "signup" ? "bg-sage-500 text-white" : "text-ink-300"}`}
+              >
+                新規登録
+              </button>
+            </div>
+          ) : (
+            <p className="text-center font-outfit text-sm font-medium text-ink-700">
+              パスワード再設定
+            </p>
+          )}
+        </div>
+
+        {error && <div className="text-red-500 text-xs font-dm mb-4 text-center">{error}</div>}
+
+        {tab === "signin" ? (
+          <form onSubmit={handleSignIn} noValidate className="space-y-4">
+            <div>
+              <p className={labelClass}>EMAIL</p>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+            </div>
+            <div>
+              <p className={labelClass}>PASSWORD</p>
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+            </div>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => { setTab("forgot"); resetForm(); }}
+                className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
+              >
+                パスワードをお忘れの方
+              </button>
+            </div>
+            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-3 disabled:opacity-40 mt-4">
+              {loading ? "ログイン中..." : "ログイン"}
+            </button>
+          </form>
+        ) : tab === "forgot" ? (
+          <form onSubmit={handleForgotPassword} noValidate className="space-y-3">
+            <p className="font-dm text-xs text-ink-300 leading-relaxed text-center">
+              登録済みのメールアドレスを入力してください。
+            </p>
+            <div>
+              <p className={labelClass}>EMAIL</p>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+            </div>
+            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-2 disabled:opacity-40">
+              {loading ? "送信中..." : "メールを送信"}
+            </button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => { setTab("signin"); resetForm(); }}
+                className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
+              >
+                ログインに戻る
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleSignUp} noValidate className="space-y-4">
+            <div>
+              <p className={labelClass}>NAME</p>
+              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="山田 太郎" />
+            </div>
+            <div>
+              <p className={labelClass}>EMAIL</p>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+            </div>
+            <div>
+              <p className={labelClass}>PASSWORD</p>
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="英大文字・小文字・数字・記号を含む8文字以上" />
+            </div>
+
+            {/* 性別 */}
+            <div>
+              <p className={labelClass}>GENDER</p>
+              <div className="flex gap-2">
+                {(["male", "female", "other"] as Gender[]).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(g)}
+                    className={toggleClass(gender === g)}
+                  >
+                    {g === "male" ? "男性" : g === "female" ? "女性" : "その他"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 生年月日 */}
+            <div>
+              <p className={labelClass}>DATE OF BIRTH</p>
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                min="1900-01-01"
+                max={`${new Date().getFullYear()}-12-31`}
+                className={`${inputClass} [color-scheme:light]`}
+              />
+            </div>
+
+            {/* 紹介コード（任意） */}
+            <div>
+              <p className={labelClass}>REFERRAL CODE <span className="text-ink-200 normal-case font-dm tracking-normal">（任意）</span></p>
+              <input type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className={inputClass} placeholder="招待コードをお持ちの方" />
+            </div>
+
+            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-3 disabled:opacity-40 mt-4">
+              {loading ? "登録中..." : "登録"}
+            </button>
+          </form>
+        )}
+      </div>
+    </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}

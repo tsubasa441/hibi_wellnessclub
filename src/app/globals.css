@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@theme {
+  /* Primary: ベース（背景） */
+  --color-base-50:  #FBFBFB;
+  --color-base-100: #F4F6F5;
+  --color-base-200: #DCDFDD;
+  --color-base-300: #BCC0BE;
+
+  /* Secondary: インク（テキスト・ボタン） */
+  --color-ink-50:  #F2F3F3;
+  --color-ink-100: #DFE1E0;
+  --color-ink-200: #BBBEBD;
+  --color-ink-300: #919694;
+  --color-ink-400: #5A615E;
+  --color-ink-500: #2C3531;
+  --color-ink-600: #242B28;
+  --color-ink-700: #1C221F;
+  --color-ink-800: #141816;
+
+  /* Accent: セージグリーン */
+  --color-sage-50:  #C9D4CC;
+  --color-sage-100: #ABBDAF;
+  --color-sage-200: #95AB9B;
+  --color-sage-300: #87A08D;
+  --color-sage-400: #79907F;
+  --color-sage-500: #6A7E70;
+  --color-sage-600: #2F6A51;
+
+  /* Font families */
+  --font-outfit: 'Outfit', sans-serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-dm: 'DM Sans', sans-serif;
+  --font-didot: 'Didot', 'GFS Didot', 'Bodoni MT', 'Playfair Display', serif;
+  --font-maru: 'M PLUS Rounded 1c', sans-serif;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s ease both;
+}
+.animate-delay-100 { animation-delay: 0.1s; }
+.animate-delay-200 { animation-delay: 0.2s; }
+.animate-delay-300 { animation-delay: 0.3s; }
+.animate-delay-400 { animation-delay: 0.4s; }
+.animate-delay-500 { animation-delay: 0.5s; }
+.animate-delay-600 { animation-delay: 0.6s; }
+
+/* ── Neumorphism design tokens ── */
+:root {
+  --nm-bg:     #F4F6F5;
+  --nm-light:  #FBFBFB;
+  --nm-dark:   #BCC0BE;
+  --nm-r-lg:   20px;
+  --nm-r-md:   14px;
+  --nm-r-full: 9999px;
+}
+
+/* ページ背景 */
+.app-bg { background: var(--nm-bg); }
+
+/* 浮き出し カード（大） */
+.nm-card {
+  background: var(--nm-bg);
+  border-radius: var(--nm-r-lg);
+  box-shadow: 8px 8px 18px var(--nm-dark), -8px -8px 18px var(--nm-light);
+}
+
+/* 浮き出し カード（小） */
+.nm-card-sm {
+  background: var(--nm-bg);
+  border-radius: var(--nm-r-md);
+  box-shadow: 5px 5px 10px var(--nm-dark), -5px -5px 10px var(--nm-light);
+}
+
+/* 凹み（インセット） */
+.nm-inset {
+  background: var(--nm-bg);
+  border-radius: var(--nm-r-md);
+  box-shadow: inset 4px 4px 9px var(--nm-dark), inset -4px -4px 9px var(--nm-light);
+}
+
+/* ピル型ボタン */
+.nm-btn {
+  background: var(--nm-bg);
+  border-radius: var(--nm-r-full);
+  box-shadow: 5px 5px 10px var(--nm-dark), -5px -5px 10px var(--nm-light);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+.nm-btn:active {
+  box-shadow: inset 3px 3px 7px var(--nm-dark), inset -3px -3px 7px var(--nm-light);
+  transform: scale(0.98);
+}
+
+/* プライマリボタン（セージグリーン） */
+.nm-btn-primary {
+  background: #6A7E70;
+  border-radius: var(--nm-r-full);
+  box-shadow: 1px 1px 3px #3D483F, -1px -1px 2px #95AB9B;
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+.nm-btn-primary:active {
+  box-shadow: inset 1px 1px 2px #3D483F, inset -1px -1px 2px #95AB9B;
+  transform: scale(0.98);
+}
+
+/* ヘッダー・ナビ共通ベース */
+.nm-nav-top {
+  background: var(--nm-bg);
+  box-shadow: 0 4px 10px var(--nm-dark), 0 1px 3px var(--nm-light);
+}
+.nm-nav-bottom {
+  background: var(--nm-bg);
+  box-shadow: 0 -4px 10px var(--nm-dark), 0 -1px 3px var(--nm-light);
+}
+
+/* ナビアイテム アクティブ（凹み） */
+.nm-nav-active {
+  box-shadow: inset 3px 3px 7px var(--nm-dark), inset -3px -3px 7px var(--nm-light);
+  border-radius: var(--nm-r-md);
+}
