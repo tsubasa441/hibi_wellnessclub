@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "private": true,
   "dependencies": {
@@ -29,5 +31,8 @@
     "square": "^44.2.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }
