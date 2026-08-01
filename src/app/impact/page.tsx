@@ -81,6 +81,7 @@ export default async function ImpactPage() {
     { data: userBadges },
     { data: allBadges },
     { data: referrals },
+    { data: referredNames },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
@@ -96,10 +97,15 @@ export default async function ImpactPage() {
     supabase.from("badges").select("*"),
     supabase
       .from("referrals")
-      .select("*, profiles!referrals_referee_id_fkey(name, created_at)")
+      .select("*")
       .eq("referrer_id", user.id)
       .order("created_at", { ascending: false }),
+    supabase.rpc("get_my_referred_names"),
   ]);
+
+  const referredNameMap = new Map<string, string>(
+    (referredNames ?? []).map((r: { referee_id: string; name: string }) => [r.referee_id, r.name])
+  );
 
   const totalCount = (bookings ?? []).length;
 
@@ -300,9 +306,13 @@ export default async function ImpactPage() {
                   </div>
                   <div className="text-right shrink-0">
                     {rank.minCount > 0 && (
-                      <p className={`font-dm text-xs ${isCurrent ? "text-white/70" : "text-ink-300"}`}>
+                      <p className={`font-dm text-xs leading-tight ${isCurrent ? "text-white/70" : "text-ink-300"}`}>
                         {`${rank.minCount}回〜`}
-                        {rank.minReferrals > 0 && `　紹介 ${rank.minReferrals}人〜`}
+                      </p>
+                    )}
+                    {rank.minReferrals > 0 && (
+                      <p className={`font-dm text-xs leading-tight ${isCurrent ? "text-white/70" : "text-ink-300"}`}>
+                        {`紹介 ${rank.minReferrals}人〜`}
                       </p>
                     )}
                   </div>
@@ -458,8 +468,9 @@ export default async function ImpactPage() {
           <h2 className="font-outfit font-semibold text-lg text-ink-700 mb-4">紹介履歴</h2>
           {(referrals ?? []).length > 0 ? (
             <div className="space-y-3">
-              {(referrals ?? []).map((r: { id: string; profiles: { name: string } | null; created_at: string; status: string }) => {
-                const refName = r.profiles?.name ? decrypt(r.profiles.name) : null;
+              {(referrals ?? []).map((r: { id: string; referee_id: string; created_at: string; status: string }) => {
+                const refNameEncrypted = referredNameMap.get(r.referee_id);
+                const refName = refNameEncrypted ? decrypt(refNameEncrypted) : null;
                 return (
                   <div key={r.id} className="nm-card-sm flex items-center justify-between p-3">
                     <div>

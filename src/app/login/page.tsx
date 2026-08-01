@@ -133,12 +133,10 @@ function LoginForm() {
 
     // 紹介コードの存在チェック
     if (referralCode.trim()) {
-      const { data: referrer } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("referral_code", referralCode.trim().toUpperCase())
-        .single();
-      if (!referrer) {
+      const { data: isValidReferralCode } = await supabase.rpc("referral_code_exists", {
+        p_code: referralCode.trim().toUpperCase(),
+      });
+      if (!isValidReferralCode) {
         showError("紹介コードが正しくありません");
         setLoading(false);
         return;
