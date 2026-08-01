@@ -15,16 +15,18 @@ export default function Header() {
   }
 
   return (
-    <header className="nm-nav-top px-5 py-4 sm:px-8 flex items-center justify-between">
-      <Link href="/home" className="font-outfit text-xl font-medium text-ink-700 tracking-wide">
-        Hibi
-      </Link>
-      <button
-        onClick={handleLogout}
-        className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition"
-      >
-        ログアウト
-      </button>
+    <header className="nm-nav-top">
+      <div className="max-w-2xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
+        <Link href="/home" className="font-outfit text-xl font-medium text-ink-700 tracking-wide">
+          Hibi
+        </Link>
+        <button
+          onClick={handleLogout}
+          className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition"
+        >
+          ログアウト
+        </button>
+      </div>
     </header>
   );
 }
