@@ -39,6 +39,17 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 2. / にリダイレクト
 ```
 
+### パスワードリセット（/login の「パスワードを忘れた」）
+
+```
+1. ユーザーがメールアドレスを入力
+2. supabase.auth.resetPasswordForEmail() を呼び出す（redirectTo: /auth/reset-password）
+3. Supabase からリセットリンク付きメールが送信される
+4. ユーザーがメール内のリンクをクリックし /auth/reset-password に遷移（Supabase が一時的なリカバリーセッションを発行）
+5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す
+6. /home にリダイレクト
+```
+
 ---
 
 ## セッション管理

@@ -49,6 +49,9 @@ src/
 │   │       └── checkout/
 │   │           ├── page.tsx
 │   │           └── CheckoutForm.tsx
+│   ├── bookings/page.tsx        # 予約済みイベント一覧・キャンセル
+│   ├── auth/
+│   │   └── reset-password/page.tsx  # パスワード再設定（リセットメールのリンク先）
 │   ├── impact/
 │   │   ├── page.tsx            # Impact（プロフィール・参加履歴・バッジ・紹介）
 │   │   └── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
@@ -90,6 +93,7 @@ docs/                           # ドキュメント一式
 / トップページ
   └─[ボタンタップ]→ /login ログイン・新規登録（SIGN IN / SIGN UP タブ）
                       └─[認証成功]→ /home ホーム
+                                      ├─[「すべて見る」]→ /bookings 予約済みイベント一覧（キャンセル）
                                       ├─[BottomNav: Event]→ /events イベント一覧
                                       │                         └─[タップ]→ /events/[id] 詳細
                                       │                                         └─[予約]→ /events/[id]/checkout 決済
@@ -97,6 +101,8 @@ docs/                           # ドキュメント一式
                                                                 （プロフィール・参加履歴・バッジ・紹介コード・シェア）
 
 /login?ref=コード  ←── /impact の紹介リンク経由（SIGN UP タブが自動選択される）
+
+/login「パスワードを忘れた」→ リセットメール送信 → /auth/reset-password（メールのリンクから遷移・新パスワード設定）→ /home
 ```
 
 ### BottomNav 構成（全認証済み画面共通）
