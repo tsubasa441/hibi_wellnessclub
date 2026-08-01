@@ -68,7 +68,7 @@ export default function RankGuideModal({ currentLevel }: Props) {
                       {rank.minReferrals > 0 && (
                         <p>紹介実績：{rank.minReferrals} 人以上</p>
                       )}
-                      <p>参加ポイント：{rank.eventPoints} pt / 回</p>
+                      <p>参加獲得ポイント：{rank.eventPoints} pt / 回</p>
                     </div>
                   </div>
                 );
