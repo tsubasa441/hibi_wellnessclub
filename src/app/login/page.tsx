@@ -7,10 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
 
-const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-ink-300 transition";
-const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-2";
+const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-ink-300 transition";
+const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-1.5";
 const toggleClass = (active: boolean) =>
-  `flex-1 py-2.5 rounded-xl font-outfit text-xs font-medium transition border ${
+  `flex-1 py-1.5 rounded-xl font-outfit text-xs font-medium transition border ${
     active
       ? "bg-ink-500 border-ink-500 text-white"
       : "bg-base-50 border-base-200 text-ink-400"
@@ -201,13 +201,13 @@ function LoginForm() {
   }
 
   return (
-    <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-16 sm:pt-0 pb-10">
-      <div className="relative z-10 w-full max-w-sm nm-card p-6 sm:p-8 animate-fade-up">
-        <div className="text-center mb-6">
+    <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-4 sm:pt-0 pb-4 sm:pb-10">
+      <div className="relative z-10 w-full max-w-sm nm-card p-5 sm:p-8 animate-fade-up">
+        <div className="text-center mb-3">
           <span className="font-outfit text-3xl font-medium text-ink-700 tracking-wide">Hibi</span>
         </div>
 
-        <div ref={formTopRef} className="mb-6">
+        <div ref={formTopRef} className="mb-3">
           {tab !== "forgot" ? (
             <div className="flex gap-1 p-1 rounded-full bg-base-100 border border-base-200">
               <button
@@ -278,7 +278,7 @@ function LoginForm() {
             </div>
           </form>
         ) : (
-          <form onSubmit={handleSignUp} noValidate className="space-y-4">
+          <form onSubmit={handleSignUp} noValidate className="space-y-2">
             <div>
               <p className={labelClass}>NAME</p>
               <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="山田 太郎" />
@@ -289,7 +289,9 @@ function LoginForm() {
             </div>
             <div>
               <p className={labelClass}>PASSWORD</p>
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="英大文字・小文字・数字・記号を含む8文字以上" />
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+              <p className="font-dm text-xs text-ink-300 mt-1">8文字以上で、以下をすべて含めてください</p>
+              <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
             </div>
 
             {/* 性別 */}
@@ -328,7 +330,7 @@ function LoginForm() {
               <input type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className={inputClass} placeholder="招待コードをお持ちの方" />
             </div>
 
-            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-3 disabled:opacity-40 mt-4">
+            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-2.5 disabled:opacity-40 mt-1">
               {loading ? "登録中..." : "登録"}
             </button>
           </form>
