@@ -224,7 +224,7 @@ export default function CheckoutForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-ink-500 text-white font-outfit font-medium py-4 rounded-full hover:bg-ink-600 transition disabled:opacity-60 text-lg"
+        className="w-full bg-sage-500 text-white font-outfit font-medium py-4 rounded-full hover:bg-sage-600 transition disabled:opacity-60 text-lg"
       >
         {loading ? "処理中..." : discountedAmount === 0 ? "予約する" : `¥${discountedAmount.toLocaleString()} を支払う`}
       </button>

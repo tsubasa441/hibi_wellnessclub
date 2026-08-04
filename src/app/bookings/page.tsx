@@ -71,7 +71,7 @@ export default async function BookingsPage() {
             <p className="font-dm text-sm text-ink-300 mb-4">予約中のイベントはありません</p>
             <Link
               href="/events"
-              className="inline-block font-outfit text-sm font-medium text-white bg-ink-500 px-6 py-2.5 rounded-full hover:bg-ink-600 transition"
+              className="inline-block font-outfit text-sm font-medium text-white bg-sage-500 px-6 py-2.5 rounded-full hover:bg-sage-600 transition"
             >
               イベントを探す
             </Link>

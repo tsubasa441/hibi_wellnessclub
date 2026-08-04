@@ -50,7 +50,7 @@
 
 ```tsx
 // プライマリ
-<button className="bg-ink-500 text-white font-outfit font-medium px-8 py-3 rounded-full hover:bg-ink-600 transition">
+<button className="bg-sage-500 text-white font-outfit font-medium px-8 py-3 rounded-full hover:bg-sage-600 transition">
   ラベル
 </button>
 

@@ -73,7 +73,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
       <div className="max-w-2xl mx-auto px-4 py-8 sm:px-6 sm:py-10">
         <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(44,53,49,0.08)] overflow-hidden animate-fade-up animate-delay-100">
           {/* Hero */}
-          <div className="bg-gradient-to-br from-ink-800 via-ink-700 to-ink-500 px-6 py-5 text-white">
+          <div className="bg-gradient-to-br from-sage-500 via-sage-400 to-sage-300 px-6 py-5 text-white">
             <span className={`inline-flex items-center text-xs font-maru font-medium px-3 py-1 rounded-full mb-4 ${type.color}`}>
               {type.label}
             </span>
