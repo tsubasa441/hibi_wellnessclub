@@ -8,6 +8,8 @@ export type EventInput = {
   startAt?: string;
   endAt?: string;
   location?: string;
+  meetingPlace?: string;
+  remarks?: string;
   capacity?: number;
   price?: number;
   status?: string;
@@ -34,6 +36,12 @@ export function validateEventInput(body: EventInput): string | null {
   }
   if (!body.location || !body.location.trim() || body.location.trim().length > 200) {
     return "開催場所を1〜200文字で入力してください";
+  }
+  if (body.meetingPlace && body.meetingPlace.length > 200) {
+    return "集合場所は200文字以内で入力してください";
+  }
+  if (body.remarks && body.remarks.length > 1000) {
+    return "備考は1000文字以内で入力してください";
   }
   if (!Number.isInteger(body.capacity) || (body.capacity as number) < 1) {
     return "定員は1以上の整数で入力してください";

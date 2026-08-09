@@ -45,7 +45,9 @@
 | event_type | text | yoga / training / running / boxing |
 | start_at | timestamptz | 開催日時 |
 | end_at | timestamptz | 終了日時 |
-| location | text | 場所 |
+| location | text | 開催場所 |
+| meeting_place | text | 集合場所（開催場所とは別の具体的な待ち合わせ情報。任意） |
+| remarks | text | 備考（説明文とは別の自由記述欄。任意） |
 | capacity | integer | 定員 |
 | price | integer | 価格（円） |
 | status | text | draft / published / cancelled |

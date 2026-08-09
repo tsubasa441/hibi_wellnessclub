@@ -106,10 +106,24 @@ export default async function EventDetailPage({ params }: { params: { id: string
               </div>
             </div>
 
+            {event.meeting_place && (
+              <div className="bg-base-100 rounded-xl p-4">
+                <p className="font-maru text-xs text-ink-400 mb-1">集合場所</p>
+                <p className="font-maru text-sm font-medium text-ink-700">{event.meeting_place}</p>
+              </div>
+            )}
+
             {event.description && (
               <div>
                 <p className="font-maru text-xs text-ink-400 mb-2">イベント詳細</p>
                 <p className="font-maru text-sm text-ink-500 leading-relaxed">{event.description}</p>
+              </div>
+            )}
+
+            {event.remarks && (
+              <div>
+                <p className="font-maru text-xs text-ink-400 mb-2">備考</p>
+                <p className="font-maru text-sm text-ink-500 leading-relaxed whitespace-pre-wrap">{event.remarks}</p>
               </div>
             )}
 

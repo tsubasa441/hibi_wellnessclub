@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
       start_at: body.startAt,
       end_at: body.endAt,
       location: body.location!.trim(),
+      meeting_place: body.meetingPlace?.trim() || null,
+      remarks: body.remarks?.trim() || null,
       capacity: body.capacity,
       price: body.price,
       status: body.status,

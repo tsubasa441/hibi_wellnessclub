@@ -27,6 +27,8 @@ type EventRecord = {
   start_at: string;
   end_at: string;
   location: string;
+  meeting_place: string | null;
+  remarks: string | null;
   capacity: number;
   price: number;
   status: string;
@@ -52,6 +54,8 @@ export default function EventForm({
   const [startAt, setStartAt] = useState(initialEvent ? toLocalInputValue(initialEvent.start_at) : "");
   const [endAt, setEndAt] = useState(initialEvent ? toLocalInputValue(initialEvent.end_at) : "");
   const [location, setLocation] = useState(initialEvent?.location ?? "");
+  const [meetingPlace, setMeetingPlace] = useState(initialEvent?.meeting_place ?? "");
+  const [remarks, setRemarks] = useState(initialEvent?.remarks ?? "");
   const [capacity, setCapacity] = useState(initialEvent?.capacity ?? 20);
   const [price, setPrice] = useState(initialEvent?.price ?? 0);
   const [status, setStatus] = useState(initialEvent?.status ?? "draft");
@@ -70,6 +74,8 @@ export default function EventForm({
       startAt: startAt ? new Date(startAt).toISOString() : "",
       endAt: endAt ? new Date(endAt).toISOString() : "",
       location,
+      meetingPlace,
+      remarks,
       capacity: Number(capacity),
       price: Number(price),
       status,
@@ -165,6 +171,29 @@ export default function EventForm({
           onChange={(e) => setLocation(e.target.value)}
           required
           maxLength={200}
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>集合場所</label>
+        <input
+          className={inputClass}
+          value={meetingPlace}
+          onChange={(e) => setMeetingPlace(e.target.value)}
+          maxLength={200}
+          placeholder="任意（例：公園入口の噴水前）"
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>備考</label>
+        <textarea
+          className={inputClass}
+          value={remarks}
+          onChange={(e) => setRemarks(e.target.value)}
+          rows={3}
+          maxLength={1000}
+          placeholder="任意（例：雨天時は中止、持ち物など）"
         />
       </div>
 
