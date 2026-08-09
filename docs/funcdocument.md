@@ -32,6 +32,7 @@
 | referral_code | text | UNIQUE、紹介コード |
 | referred_by | uuid | FK → profiles.id |
 | points | integer | 累計ポイント |
+| is_admin | boolean | 管理者フラグ。既定値 false。付与は Supabase Studio から手動 UPDATE（@docs/authdesign.md 参照） |
 | created_at | timestamptz | |
 
 ### events
@@ -43,6 +44,7 @@
 | description | text | 説明文 |
 | event_type | text | yoga / training / running / boxing |
 | start_at | timestamptz | 開催日時 |
+| end_at | timestamptz | 終了日時 |
 | location | text | 場所 |
 | capacity | integer | 定員 |
 | price | integer | 価格（円） |
@@ -122,8 +124,12 @@
 | POST | `/api/convert-name` | 名前ローマ字変換 | 必要 |
 | POST | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
+| POST | `/api/admin/events` | イベント作成 | 必要（管理者のみ） |
+| PATCH | `/api/admin/events/[id]` | イベント更新 | 必要（管理者のみ） |
+| DELETE | `/api/admin/events/[id]` | イベント削除（論理削除。`status` を `cancelled` に更新するのみ） | 必要（管理者のみ） |
+| GET | `/api/admin/events/[id]/participants/export` | 参加者一覧の CSV エクスポート | 必要（管理者のみ） |
 
-イベント一覧・詳細・プロフィールの取得は API Routes を介さず、Server Component から Supabase に直接クエリする（`docs/architecture.md` のデータフロー参照）。
+イベント一覧・詳細・プロフィールの取得は API Routes を介さず、Server Component から Supabase に直接クエリする（`docs/architecture.md` のデータフロー参照）。管理画面のイベント一覧・編集・参加者一覧も同様に Server Component から直接クエリし、書き込み（作成・更新・削除・CSV）のみ上記 API Routes を介する。
 
 ---
 
@@ -181,4 +187,5 @@
 | Step4 | ポイント・バッジ | ✅ 完了 |
 | Step5 | 紹介コード・報酬付与 | ✅ 完了 |
 | Step6 | ジャーナル機能（当日記録のみ） | ✅ 完了 |
-| Step7 | テスト・Vercel デプロイ・本番切り替え | 未着手 |
+| Step7 | テスト・Vercel デプロイ・本番切り替え | 進行中（Vercel連携済み、決済本番申請待ち） |
+| Step8 | 管理者機能（イベントCRUD・参加者一覧・CSVエクスポート） | ✅ 完了 |

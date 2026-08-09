@@ -29,6 +29,9 @@
 | BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |
+| AdminNav | `app/admin/AdminNav.tsx` | 管理画面用ナビ（ログアウト・ユーザー画面への導線） | ✅ |
+| EventForm | `app/admin/events/EventForm.tsx` | イベント作成/編集共通フォーム | ✅ |
+| DeleteEventButton | `app/admin/events/[id]/DeleteEventButton.tsx` | イベント論理削除の確認ダイアログ | ✅ |
 
 ---
 

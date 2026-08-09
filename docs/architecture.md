@@ -55,6 +55,18 @@ src/
 │   ├── impact/
 │   │   ├── page.tsx            # Impact（プロフィール・参加履歴・バッジ・紹介）
 │   │   └── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
+│   ├── admin/                   # 管理者向け画面（is_admin のみアクセス可、layout.tsxでガード）
+│   │   ├── layout.tsx            # 認証・管理者判定・AdminNav表示
+│   │   ├── AdminNav.tsx          # 管理画面用ナビ（Client Component）
+│   │   ├── page.tsx              # /admin/events へ redirect
+│   │   └── events/
+│   │       ├── page.tsx          # イベント一覧（全ステータス）
+│   │       ├── EventForm.tsx     # 作成/編集共通フォーム（Client Component）
+│   │       ├── new/page.tsx      # イベント新規作成
+│   │       └── [id]/
+│   │           ├── page.tsx             # イベント編集
+│   │           ├── DeleteEventButton.tsx  # 論理削除ボタン（Client Component）
+│   │           └── participants/page.tsx  # 参加者一覧・CSVダウンロード導線
 │   └── api/
 │       ├── bookings/[id]/cancel/route.ts  # 予約キャンセル・返金処理
 │       ├── convert-name/route.ts          # 名前ローマ字変換
@@ -65,17 +77,26 @@ src/
 │       │   └── paypay/
 │       │       ├── route.ts
 │       │       └── callback/route.ts
-│       └── signup/profile/route.ts        # サインアップ時プロフィール作成
+│       ├── signup/profile/route.ts        # サインアップ時プロフィール作成
+│       └── admin/events/
+│           ├── route.ts                    # POST イベント作成
+│           └── [id]/
+│               ├── route.ts                # PATCH 更新 / DELETE 論理削除
+│               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + ログアウト）
 │   └── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts           # ブラウザ用クライアント
-│   │   └── server.ts           # サーバー用クライアント
+│   │   ├── server.ts           # サーバー用クライアント
+│   │   └── service.ts          # service_role クライアント（RLSバイパス、Cron・管理者APIの一部で使用）
+│   ├── admin.ts                # 管理者判定（isAdmin）
 │   ├── badges.ts               # バッジ付与ロジック
+│   ├── csv.ts                  # CSV生成ヘルパー
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号
+│   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）
 │   ├── points.ts               # ポイント付与・取り消しロジック
 │   ├── ranks.ts                # ランク定義・ランクアップ判定
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）
@@ -104,6 +125,8 @@ docs/                           # ドキュメント一式
 
 /login「パスワードを忘れた」→ リセットメール送信 → /auth/reset-password（メールのリンクから遷移・新パスワード設定）→ /home
 ```
+
+管理者（`profiles.is_admin = true`）は `/admin/events` から独立してイベント管理・参加者管理を行う。一般ユーザー導線とは接続しない（URLを直接開く運用）。管理者以外が `/admin/*` にアクセスした場合は `/home` へリダイレクトする。
 
 ### BottomNav 構成（全認証済み画面共通）
 

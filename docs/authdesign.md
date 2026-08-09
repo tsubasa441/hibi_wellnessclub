@@ -68,6 +68,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 | `/impact` | `/login` にリダイレクト |
 | `/bookings` | `/login` にリダイレクト |
 | `/events/[id]/checkout` | `/login` にリダイレクト |
+| `/admin/*` | 未認証は `/login` へ、認証済みでも `is_admin` でなければ `/home` へリダイレクト |
 
 認証チェックは各 Server Component の先頭で行う：
 
@@ -76,15 +77,28 @@ const { data: { user } } = await supabase.auth.getUser();
 if (!user) redirect("/login");
 ```
 
+`/admin/*` は `src/app/admin/layout.tsx` で上記に加えて `isAdmin()`（`src/lib/admin.ts`）を確認し、管理者でなければ `/home` へリダイレクトする。API Routes（`/api/admin/*`）は layout の恩恵を受けないため、各ルートの冒頭で同じ認証・管理者チェックを個別に行う。
+
+---
+
+## 管理者判定
+
+- `profiles.is_admin`（boolean、既定値 `false`）で管理者を判定する。付与するUIは無く、Supabase Studio の SQL Editor から手動で行う運用：
+  ```sql
+  update public.profiles set is_admin = true where id = '<対象ユーザーのuuid>';
+  ```
+- `profiles` の既存 UPDATE ポリシー（本人のみ）は行単位の制御のみで列を制限していないため、`is_admin` を保護しないと本人が自分の行を書き換えて管理者に昇格できてしまう。これを防ぐため、`authenticated`/`anon` ロール（＝通常のアプリ経由の更新）からの `is_admin` 変更を無効化するトリガー（`prevent_is_admin_self_update`）を設けている（`supabase/migrations/020_admin_role.sql`）。service_role・Studio からの手動更新は対象外。
+- RLS ポリシーからは `public.is_admin()`（SECURITY DEFINER 関数）経由で判定する。
+
 ---
 
 ## Row Level Security（RLS）方針
 
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
 |---------|--------|--------|--------|--------|
-| profiles | 本人のみ | 不可（トリガー） | 本人のみ | 不可 |
-| events | 全員 | 管理者のみ | 管理者のみ | 管理者のみ |
-| bookings | 本人のみ | 本人のみ | 不可 | 不可 |
+| profiles | 本人のみ | 不可（トリガー） | 本人のみ（`is_admin` 列は本人からの変更を無効化） | 不可 |
+| events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（アプリからは呼ばず論理削除で運用） |
+| bookings | 本人のみ／管理者は全件 | 本人のみ | 不可 | 不可 |
 | badges | 全員 | 不可 | 不可 | 不可 |
 | user_badges | 本人のみ | サーバーのみ | 不可 | 不可 |
 | referrals | 本人のみ | サーバーのみ | サーバーのみ | 不可 |
