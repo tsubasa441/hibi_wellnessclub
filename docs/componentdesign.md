@@ -26,6 +26,7 @@
 
 | コンポーネント | パス | 説明 | Client? |
 |-------------|------|------|---------|
+| LoginForm | `app/login/LoginForm.tsx` | ログイン・新規登録・パスワード再設定リクエストフォーム | ✅ |
 | BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |

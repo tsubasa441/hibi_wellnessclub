@@ -47,7 +47,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 3. Supabase からリセットリンク付きメールが送信される
 4. ユーザーがメール内のリンクをクリックし /auth/reset-password に遷移（Supabase が一時的なリカバリーセッションを発行）
 5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す
-6. /home にリダイレクト
+6. 同ページ内に再設定完了画面を表示し、「ログイン画面へ」ボタンからリカバリーセッションを signOut() した上で /login へ遷移
 ```
 
 ---
@@ -78,6 +78,12 @@ if (!user) redirect("/login");
 ```
 
 `/admin/*` は `src/app/admin/layout.tsx` で上記に加えて `isAdmin()`（`src/lib/admin.ts`）を確認し、管理者でなければ `/home` へリダイレクトする。API Routes（`/api/admin/*`）は layout の恩恵を受けないため、各ルートの冒頭で同じ認証・管理者チェックを個別に行う。
+
+### 認証済みユーザーがログイン画面にアクセスした場合
+
+`/login` は `src/app/login/page.tsx`（Server Component）の先頭でセッションを確認し、認証済みなら `/home` へリダイレクトする（未認証時のみ `LoginForm`（Client Component）を描画する）。これにより、ログイン後にブラウザの「戻る」で `/login` に戻っても、ログインフォームが再表示されずに `/home` へ即座に戻る。
+
+`/register-complete`（サインアップ直後、認証済み状態で表示される完了画面）や `/auth/reset-password`（リカバリーセッションも `auth.getUser()` 上は認証済み扱いになる）には、この「認証済みなら弾く」ガードは適用しない。前者は認証済みであることが前提の画面であり、後者はパスワード再設定リンクを開いた直後の一時セッションを弾いてしまうと再設定自体ができなくなるため。
 
 ---
 

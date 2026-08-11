@@ -38,7 +38,9 @@ src/
 │   ├── layout.tsx              # ルートレイアウト・フォント設定
 │   ├── globals.css             # カラー変数・グローバルスタイル・.app-bg
 │   ├── page.tsx                # トップページ（/）
-│   ├── login/page.tsx          # ログイン・新規登録（タブ切り替え・紹介コード対応）
+│   ├── login/
+│   │   ├── page.tsx            # 認証チェック（認証済みなら /home へリダイレクト）
+│   │   └── LoginForm.tsx       # ログイン・新規登録フォーム（タブ切り替え・紹介コード対応）
 │   ├── register-complete/page.tsx  # 新規登録完了画面
 │   ├── home/page.tsx           # ホーム（ログイン後ランディング）
 │   ├── events/
