@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   // 残席チェック
   const { data: event } = await supabase
     .from("events")
-    .select("capacity, price, title, event_type, description, start_at, location")
+    .select("capacity, price, title, event_type, description, start_at, location, belongings")
     .eq("id", eventId)
     .single();
 
@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
       description: event.description ?? "",
       startAt: event.start_at,
       location: event.location ?? "",
+      belongings: event.belongings ?? undefined,
       price: event.price,
       paymentMethod: "paypay",
       pointsUsed: requestedPoints,

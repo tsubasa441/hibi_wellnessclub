@@ -12,6 +12,7 @@ type BookingConfirmationParams = {
   description: string;
   startAt: string;
   location: string;
+  belongings?: string;
   price: number;
   paymentMethod: "square" | "paypay" | "free";
   pointsUsed?: number;
@@ -158,11 +159,21 @@ function eventTypeLabel(type: string): string {
 }
 
 export async function sendBookingConfirmation(params: BookingConfirmationParams) {
-  const { to, userName, eventTitle, eventType, description, startAt, location, price, paymentMethod, pointsUsed } = params;
+  const { to, userName, eventTitle, eventType, description, startAt, location, belongings, price, paymentMethod, pointsUsed } = params;
   const dateStr = formatDateTime(startAt);
   const priceStr = price === 0 ? "無料" : `¥${price.toLocaleString("ja-JP")}`;
   const pointsRow = pointsUsed && pointsUsed > 0
     ? `<tr><td style="padding:6px 0;font-size:13px;color:#919694;">ポイント利用</td><td style="padding:6px 0;font-size:13px;color:#1C221F;font-weight:500;">-${pointsUsed.toLocaleString("ja-JP")}pt</td></tr>`
+    : "";
+  const belongingsBlock = belongings
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #DCDFDD;border-radius:8px;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2C3531;">持ち物</p>
+                    <p style="margin:0;font-size:12px;color:#919694;line-height:1.6;">${belongings}</p>
+                  </td>
+                </tr>
+              </table>`
     : "";
 
   await resend.emails.send({
@@ -230,6 +241,8 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
                   </td>
                 </tr>
               </table>
+
+              ${belongingsBlock}
 
               <!-- キャンセルポリシー -->
               <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #DCDFDD;border-radius:8px;margin-bottom:32px;">

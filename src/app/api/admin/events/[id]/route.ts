@@ -36,6 +36,7 @@ export async function PATCH(
       location: body.location!.trim(),
       meeting_place: body.meetingPlace?.trim() || null,
       remarks: body.remarks?.trim() || null,
+      belongings: body.belongings?.trim() || null,
       capacity: body.capacity,
       price: body.price,
       status: body.status,

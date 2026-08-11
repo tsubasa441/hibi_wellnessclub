@@ -10,6 +10,7 @@ export type EventInput = {
   location?: string;
   meetingPlace?: string;
   remarks?: string;
+  belongings?: string;
   capacity?: number;
   price?: number;
   status?: string;
@@ -42,6 +43,9 @@ export function validateEventInput(body: EventInput): string | null {
   }
   if (body.remarks && body.remarks.length > 1000) {
     return "備考は1000文字以内で入力してください";
+  }
+  if (body.belongings && body.belongings.length > 500) {
+    return "持ち物は500文字以内で入力してください";
   }
   if (!Number.isInteger(body.capacity) || (body.capacity as number) < 1) {
     return "定員は1以上の整数で入力してください";

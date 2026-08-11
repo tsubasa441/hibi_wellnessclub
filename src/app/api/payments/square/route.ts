@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   // イベント・残席チェック
   const { data: event } = await supabase
     .from("events")
-    .select("capacity, price, title, event_type, description, start_at, location")
+    .select("capacity, price, title, event_type, description, start_at, location, belongings")
     .eq("id", eventId)
     .single();
 
@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       description: event.description ?? "",
       startAt: event.start_at,
       location: event.location ?? "",
+      belongings: event.belongings ?? undefined,
       price: 0,
       paymentMethod: "free",
     });
@@ -134,6 +135,7 @@ export async function POST(req: NextRequest) {
       description: event.description ?? "",
       startAt: event.start_at,
       location: event.location ?? "",
+      belongings: event.belongings ?? undefined,
       price: event.price,
       paymentMethod: "square",
       pointsUsed: requestedPoints,
@@ -201,6 +203,7 @@ export async function POST(req: NextRequest) {
       description: event.description ?? "",
       startAt: event.start_at,
       location: event.location ?? "",
+      belongings: event.belongings ?? undefined,
       price: event.price,
       paymentMethod: "square",
       pointsUsed: requestedPoints,

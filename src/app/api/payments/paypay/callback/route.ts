@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
   // ポイント・ランク処理・メール送信
   const { data: event } = await supabase
     .from("events")
-    .select("title, event_type, description, start_at, location, price")
+    .select("title, event_type, description, start_at, location, price, belongings")
     .eq("id", booking.event_id)
     .single();
 
@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
       description: event.description ?? "",
       startAt: event.start_at,
       location: event.location ?? "",
+      belongings: event.belongings ?? undefined,
       price: event.price,
       paymentMethod: "paypay",
       pointsUsed: booking.points_used,

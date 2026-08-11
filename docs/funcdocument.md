@@ -48,6 +48,7 @@
 | location | text | 開催場所 |
 | meeting_place | text | 集合場所（開催場所とは別の具体的な待ち合わせ情報。任意） |
 | remarks | text | 備考（説明文とは別の自由記述欄。任意） |
+| belongings | text | 持ち物設定（参加者が持参すべき物の自由記述欄。任意） |
 | capacity | integer | 定員 |
 | price | integer | 価格（円） |
 | status | text | draft / published / cancelled |

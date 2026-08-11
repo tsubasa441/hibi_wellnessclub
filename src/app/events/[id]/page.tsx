@@ -120,6 +120,13 @@ export default async function EventDetailPage({ params }: { params: { id: string
               </div>
             )}
 
+            {event.belongings && (
+              <div>
+                <p className="font-maru text-xs text-ink-400 mb-2">持ち物</p>
+                <p className="font-maru text-sm text-ink-500 leading-relaxed whitespace-pre-wrap">{event.belongings}</p>
+              </div>
+            )}
+
             {event.remarks && (
               <div>
                 <p className="font-maru text-xs text-ink-400 mb-2">備考</p>

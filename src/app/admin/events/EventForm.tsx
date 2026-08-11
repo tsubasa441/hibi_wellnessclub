@@ -29,6 +29,7 @@ type EventRecord = {
   location: string;
   meeting_place: string | null;
   remarks: string | null;
+  belongings: string | null;
   capacity: number;
   price: number;
   status: string;
@@ -56,6 +57,7 @@ export default function EventForm({
   const [location, setLocation] = useState(initialEvent?.location ?? "");
   const [meetingPlace, setMeetingPlace] = useState(initialEvent?.meeting_place ?? "");
   const [remarks, setRemarks] = useState(initialEvent?.remarks ?? "");
+  const [belongings, setBelongings] = useState(initialEvent?.belongings ?? "");
   const [capacity, setCapacity] = useState(initialEvent?.capacity ?? 20);
   const [price, setPrice] = useState(initialEvent?.price ?? 0);
   const [status, setStatus] = useState(initialEvent?.status ?? "draft");
@@ -76,6 +78,7 @@ export default function EventForm({
       location,
       meetingPlace,
       remarks,
+      belongings,
       capacity: Number(capacity),
       price: Number(price),
       status,
@@ -194,6 +197,18 @@ export default function EventForm({
           rows={3}
           maxLength={1000}
           placeholder="任意（例：雨天時は中止、持ち物など）"
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>持ち物</label>
+        <textarea
+          className={inputClass}
+          value={belongings}
+          onChange={(e) => setBelongings(e.target.value)}
+          rows={3}
+          maxLength={500}
+          placeholder="任意（例：タオル、水筒、ヨガマット）"
         />
       </div>
 
