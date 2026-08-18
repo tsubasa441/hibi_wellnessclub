@@ -97,9 +97,14 @@ function LoginFormInner() {
       return;
     }
 
-    // 名前：日本語・英字・スペースのみ、1〜50文字
-    const nameRegex = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,50}$/;
-    if (!nameRegex.test(name.trim())) {
+    // 名前：日本語・英字・スペースのみ、1〜30文字
+    const trimmedName = name.trim();
+    if (trimmedName.length > 30) {
+      showError("30文字以内で入力してください");
+      return;
+    }
+    const nameRegex = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
+    if (!nameRegex.test(trimmedName)) {
       showError("お名前は日本語・英字のみ入力してください");
       return;
     }
@@ -118,12 +123,16 @@ function LoginFormInner() {
       return;
     }
 
-    // パスワード：大文字・小文字・数字・記号すべて含む、8〜72文字
+    // パスワード：大文字・小文字・数字・記号すべて含む、8〜15文字
+    if (password.length > 15) {
+      showError("パスワードは15文字以内で入力してください");
+      return;
+    }
     const hasUpper = /[A-Z]/.test(password);
     const hasLower = /[a-z]/.test(password);
     const hasDigit = /[0-9]/.test(password);
     const hasSymbol = /[^a-zA-Z0-9]/.test(password);
-    if (password.length < 8 || password.length > 72 || !hasUpper || !hasLower || !hasDigit || !hasSymbol) {
+    if (password.length < 8 || !hasUpper || !hasLower || !hasDigit || !hasSymbol) {
       showError("パスワードを正しく設定してください");
       return;
     }
@@ -329,7 +338,7 @@ function LoginFormInner() {
             <div>
               <p className={labelClass}>PASSWORD</p>
               <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
-              <p className="font-dm text-xs text-ink-300 mt-1">8文字以上で、以下をすべて含めてください</p>
+              <p className="font-dm text-xs text-ink-300 mt-1">8〜15文字で、以下をすべて含めてください</p>
               <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
             </div>
 
