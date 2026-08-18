@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
     const hasDigit = /[0-9]/.test(password);
     const hasSymbol = /[^a-zA-Z0-9]/.test(password);
     if (password.length < 8 || password.length > 72 || !hasUpper || !hasLower || !hasDigit || !hasSymbol) {
-      setError("パスワードは、半角英大文字・小文字・数字・記号をすべて含み、8文字以上で入力してください。");
+      setError("パスワードを正しく設定してください");
       return;
     }
 

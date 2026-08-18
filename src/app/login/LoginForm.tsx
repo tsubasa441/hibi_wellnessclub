@@ -100,7 +100,7 @@ function LoginFormInner() {
     // 名前：日本語・英字・スペースのみ、1〜50文字
     const nameRegex = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,50}$/;
     if (!nameRegex.test(name.trim())) {
-      showError("お名前は日本語・英字のみ入力してください（数字・記号は使用できません）");
+      showError("お名前は日本語・英字のみ入力してください");
       return;
     }
 
@@ -124,7 +124,7 @@ function LoginFormInner() {
     const hasDigit = /[0-9]/.test(password);
     const hasSymbol = /[^a-zA-Z0-9]/.test(password);
     if (password.length < 8 || password.length > 72 || !hasUpper || !hasLower || !hasDigit || !hasSymbol) {
-      showError("パスワードは、半角英大文字・小文字・数字・記号をすべて含み、8文字以上で入力してください。");
+      showError("パスワードを正しく設定してください");
       return;
     }
 
@@ -168,7 +168,7 @@ function LoginFormInner() {
     if (signUpError) {
       const msg = signUpError.message.toLowerCase();
       if (msg.includes("password")) {
-        showError("パスワードは、半角英大文字・小文字・数字・記号をすべて含み、8文字以上で入力してください。");
+        showError("パスワードを正しく設定してください");
       } else {
         showError("このメールアドレスは既に使用されています");
       }
