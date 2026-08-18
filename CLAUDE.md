@@ -15,6 +15,7 @@ See @docs/authdesign.md for 認証フロー・RLS
 See @docs/componentdesign.md for コンポーネント定義
 See @docs/codingstandards.md for 命名規則・禁止事項
 See @docs/frontdesign.md for カラー・フォント・余白
+See @docs/testplan.md for 画面・API別のテスト項目チェックリスト
 
 ## ルール
 See @.claude/rules/frontend.md for フロントエンド実装ルール

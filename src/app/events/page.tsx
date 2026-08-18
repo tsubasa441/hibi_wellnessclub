@@ -26,9 +26,12 @@ function formatDate(dateStr: string) {
 
 export default async function EventsPage() {
   const supabase = createClient();
+  const now = new Date().toISOString();
   const { data: events } = await supabase
     .from("events")
     .select("*")
+    .eq("status", "published")
+    .gt("start_at", now)
     .order("start_at", { ascending: true });
 
   return (

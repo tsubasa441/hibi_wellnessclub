@@ -6,7 +6,9 @@ import { awardPoints } from "@/lib/points";
 import { checkReferralBadges } from "@/lib/badges";
 
 const NAME_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,50}$/;
-const NAME_ROMAN_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,100}$/;
+// ローマ字変換（kuroshiro）は長音を ō 等のマクロン付き文字で返すため、
+// a-z の範囲だけでなく Unicode の文字全般（\p{L}）を許容する
+const NAME_ROMAN_REGEX = /^[\p{L}\s　'-]{1,100}$/u;
 const BIRTH_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const REFERRAL_CODE_REGEX = /^[A-Z0-9]{1,20}$/;
 const GENDERS = new Set(["male", "female", "other"]);

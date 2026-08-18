@@ -184,17 +184,32 @@ function LoginFormInner() {
     }
 
     if (signUpData.user) {
-      await fetch("/api/signup/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          nameRoman,
-          gender,
-          birthDate,
-          referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
-        }),
+      const profileBody = JSON.stringify({
+        name: name.trim(),
+        nameRoman,
+        gender,
+        birthDate,
+        referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
       });
+      const postProfile = () =>
+        fetch("/api/signup/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: profileBody,
+        });
+
+      let profileRes = await postProfile();
+      if (!profileRes.ok) {
+        // 一時的な失敗の可能性があるため1回だけ再試行する
+        profileRes = await postProfile();
+      }
+      if (!profileRes.ok) {
+        // アカウント自体は作成済みのためサインアップ画面には戻さず、
+        // プロフィール情報の保存に失敗したことが分かる状態で完了画面へ進める
+        router.push("/register-complete?profileError=1");
+        setLoading(false);
+        return;
+      }
     }
 
     router.push("/register-complete");
