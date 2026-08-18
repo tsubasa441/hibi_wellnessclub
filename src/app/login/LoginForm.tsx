@@ -119,7 +119,7 @@ function LoginFormInner() {
     // 生年月日：年が4桁であること
     const birthYear = new Date(birthDate).getFullYear();
     if (birthYear < 1900 || birthYear > new Date().getFullYear()) {
-      showError("生年月日の年を正しく入力してください（4桁）");
+      showError("生年月日を正しく入力してください");
       return;
     }
 
