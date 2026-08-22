@@ -23,6 +23,7 @@
 | BUG-1 | `src/app/login/LoginForm.tsx` の `POST /api/signup/profile` 呼び出しがレスポンスの成否を確認していなかった。ローマ字氏名に長音（マクロン、例: 「号」→`Gō`）を含む場合、`src/app/api/signup/profile/route.ts` の `NAME_ROMAN_REGEX` に一致せず400が返るが、クライアントはエラーを無視してそのまま「登録が完了しました」画面に遷移していた。結果、性別・生年月日・氏名（暗号化）・`name_roman`・紹介コード適用が一切保存されず、紹介者・被紹介者への200pt付与も発生しない状態だった | 日本語氏名に長音を含むケース全般（例:陽子→Yōko、裕太→Yūta等）でサインアップが部分的に失敗し、紹介システムが機能しない事例になりうる | ✅ 2026-08-18 修正済み。`NAME_ROMAN_REGEX` をUnicode文字全般（`\p{L}`）を許容する形に変更し、`LoginForm.tsx`はレスポンス失敗時に1回リトライ→それでも失敗時は`/register-complete?profileError=1`で警告表示するよう修正。macron入り氏名で紹介コード付きサインアップ→200pt付与・Bridge Builderバッジ付与・紹介履歴表示まで再現テストし正常動作を確認 |
 | BUG-2 | `POST /api/journals` に同日2回目の記録を送ると、ユニーク制約違反が握りつぶされず 500 Internal Server Error（`{"error":"保存に失敗しました"}`）として返る。二重付与は防げているが、想定内の重複という状況を500として扱っている | ログ監視上「サーバーエラー」として誤検知されうる（実害は小さい） | 未修正（対応要否は別途判断） |
 | DOC-1 | `docs/funcdocument.md` は `POST /api/cron/badges` と記載しているが、実装（`src/app/api/cron/badges/route.ts`）は `GET` のみ export（Vercel Cron の既定に合わせた実装として妥当）。ドキュメントの表記が実装と不一致 | ドキュメントのみ。動作に影響なし | 未修正（対応要否は別途判断） |
+| BUG-3 | パスワード再設定メールのリンクをタップしても、新しいパスワード入力画面に遷移しない不具合。原因は複合的だった：(1) Vercel本番環境に `NEXT_PUBLIC_SITE_URL` が未設定/`localhost`のままで、`resetPasswordForEmail` の `redirectTo` が本番ドメインを指していなかった、(2) Supabase Dashboard の Authentication > URL Configuration で本番ドメインが Redirect URLs に未登録だった、(3) `NEXT_PUBLIC_SITE_URL` の値に末尾スラッシュが付いていたため `${siteUrl}/auth/reset-password` が二重スラッシュになり、Redirect URLs 登録後もSupabase側の許可リストと一致せずSite URL（トップページ）にフォールバックしていた。加えて `src/app/auth/reset-password/page.tsx` がリンク無効・期限切れ時のエラーを検知せず空フォームを表示するだけだった | 全ユーザーがパスワード再設定機能を利用できない状態だった | ✅ 2026-08-22 修正済み。Vercelの `NEXT_PUBLIC_SITE_URL` を本番ドメイン（末尾スラッシュなし）に設定し直し、Supabase Dashboard の Redirect URLs に `https://hibi-wellnessclub.jp/**` を登録。あわせて `LoginForm.tsx`・`impact/page.tsx`・`api/payments/paypay/route.ts` で `NEXT_PUBLIC_SITE_URL` 使用時に末尾スラッシュを除去する防御的処理を追加し、`reset-password/page.tsx` を作り直して `onAuthStateChange` の `PASSWORD_RECOVERY` イベント検知・エラーパラメータ検知・タイムアウトによる「リンクが無効です」表示を実装。本番でメールリンク→パスワード再設定→ログインまで一連の動作を確認 |
 
 ---
 
@@ -37,7 +38,7 @@
 | 1-5 | 認証済み状態で `/login` に直接アクセス | 自動で `/home` にリダイレクト | - | ✅ 2026-08-18 |
 | 1-6 | ヘッダーの「ログアウト」を押す | セッションが切れ `/` へ遷移 | - | ✅ 2026-08-18 |
 | 1-7 | `/login` の「パスワードをお忘れの方」からメールアドレスを送信 | 「メールを送信しました」画面が表示される | - | ✅ 2026-08-18 |
-| 1-8 | 送信されたリセットメールのリンクから `/auth/reset-password` を開き新パスワードを設定 | 再設定完了画面→「ログイン画面へ」で `/login` に遷移しログイン可能 | - | 未確認（メール受信の目視確認が必要なため引き続き手動） |
+| 1-8 | 送信されたリセットメールのリンクから `/auth/reset-password` を開き新パスワードを設定 | 再設定完了画面→「ログイン画面へ」で `/login` に遷移しログイン可能 | - | ✅ 2026-08-22（BUG-3修正後に本番環境で確認。スマホ実機でメールリンク→`/auth/reset-password`遷移→新パスワード設定→ログインまで一連の動作を確認） |
 | 1-9 | 未認証で `/home`・`/impact`・`/bookings`・`/events/[id]/checkout` にアクセス | すべて `/login` にリダイレクト | - | ✅ 2026-08-18 |
 
 ## 2. ホーム（`/home`）
@@ -148,3 +149,4 @@
 | 2026-08-18 | 初版作成。決済(Square/PayPay)・管理者機能を除く範囲を手動確認し反映。イベント一覧の過去イベント非表示化の修正を反映 |
 | 2026-08-18 | 決済・管理者機能以外の未確認項目を追加確認。BUG-1（紹介ポイント未付与）・BUG-2（ジャーナル重複時500）・DOC-1（cronのPOST/GET不一致）を発見し記録 |
 | 2026-08-18 | BUG-1を修正（`NAME_ROMAN_REGEX`をUnicode全般許容に変更、`LoginForm.tsx`にレスポンスチェック＋リトライ＋失敗時警告表示を追加）。`npm run test`（93件）全通過を確認のうえ、長音入り氏名での紹介フローを再テストし正常動作を確認。BUG-2・DOC-1は未修正のまま |
+| 2026-08-22 | BUG-3（パスワード再設定リンクが機能しない）を発見・修正。Vercelの`NEXT_PUBLIC_SITE_URL`設定・Supabase DashboardのRedirect URLs登録・末尾スラッシュ除去・`reset-password/page.tsx`のリンク無効判定を対応し、本番環境で1-8を含む一連の動作を確認 |
