@@ -169,8 +169,10 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={inputClass}
-                  placeholder="英大文字・小文字・数字・記号を含む8〜15文字"
+                  placeholder="••••••••"
                 />
+                <p className="font-dm text-xs text-ink-300 mt-1">8〜15文字で、以下をすべて含めてください</p>
+                <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
               </div>
               <div>
                 <p className={labelClass}>パスワード（確認）</p>
