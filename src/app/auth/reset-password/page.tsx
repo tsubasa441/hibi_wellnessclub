@@ -1,19 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-ink-300 transition";
 const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-1.5";
 
+type LinkStatus = "checking" | "ready" | "invalid";
+
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const [linkStatus, setLinkStatus] = useState<LinkStatus>("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Supabaseはリンク無効時にhashまたはqueryへerror系パラメータを付与してリダイレクトしてくる
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const queryParams = new URLSearchParams(window.location.search);
+    if (hashParams.get("error") || queryParams.get("error")) {
+      setLinkStatus("invalid");
+      return;
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setLinkStatus("ready");
+      }
+    });
+
+    // イベント発火前に既にリカバリーセッションが確立している場合のフォールバック
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setLinkStatus((s) => (s === "checking" ? "ready" : s));
+      }
+    });
+
+    // リンクが壊れている等でイベントが一切発火しないケースを一定時間で無効判定にする
+    const timeout = setTimeout(() => {
+      setLinkStatus((s) => (s === "checking" ? "invalid" : s));
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,7 +105,29 @@ export default function ResetPasswordPage() {
           <span className="font-outfit text-3xl font-medium text-ink-700 tracking-wide">Hibi</span>
         </div>
 
-        {done ? (
+        {linkStatus === "checking" ? (
+          <div className="text-center py-8">
+            <p className="font-dm text-sm text-ink-300">リンクを確認しています...</p>
+          </div>
+        ) : linkStatus === "invalid" ? (
+          <div className="text-center space-y-6">
+            <div className="space-y-2">
+              <p className="font-cormorant text-xl font-semibold text-ink-700 tracking-wide">
+                リンクが無効です
+              </p>
+              <p className="font-dm text-sm text-ink-300 leading-relaxed">
+                このリンクの有効期限が切れているか、既に使用されています。お手数ですが、もう一度パスワード再設定をお試しください。
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
+              className="w-full nm-btn-primary text-white font-outfit font-medium py-3 text-sm tracking-wider"
+            >
+              ログイン画面へ
+            </button>
+          </div>
+        ) : done ? (
           <div className="text-center space-y-6">
             <div className="flex justify-center">
               <div className="w-12 h-12 rounded-full border border-sage-300 flex items-center justify-center">

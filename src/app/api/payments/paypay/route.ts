@@ -129,7 +129,8 @@ export async function POST(req: NextRequest) {
 
   // PayPay QRコード決済作成
   const merchantPaymentId = booking.id;
-  const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/payments/paypay/callback?merchantPaymentId=${merchantPaymentId}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  const callbackUrl = `${siteUrl}/api/payments/paypay/callback?merchantPaymentId=${merchantPaymentId}`;
 
   const payload = {
     merchantPaymentId,

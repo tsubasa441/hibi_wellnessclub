@@ -116,7 +116,8 @@ export default async function ImpactPage() {
   // ---- 紹介 ----
   const rewardedCount = (referrals ?? []).filter((r: { status: string }) => r.status === "rewarded").length;
   const totalPoints = rewardedCount * 200;
-  const referralUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/login?ref=${profile?.referral_code}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
   // ---- バッジ集計 ----
   // 今月確定した予約（created_at ベース）

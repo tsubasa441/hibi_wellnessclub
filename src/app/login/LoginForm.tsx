@@ -57,7 +57,8 @@ function LoginFormInner() {
     }
     setLoading(true);
     const supabase = createClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    // 末尾スラッシュがあるとSupabaseのRedirect URL許可リストと一致せずフォールバックされるため除去する
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${siteUrl}/auth/reset-password`,
     });
