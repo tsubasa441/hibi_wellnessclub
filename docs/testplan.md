@@ -24,6 +24,8 @@
 | BUG-2 | `POST /api/journals` に同日2回目の記録を送ると、ユニーク制約違反が握りつぶされず 500 Internal Server Error（`{"error":"保存に失敗しました"}`）として返る。二重付与は防げているが、想定内の重複という状況を500として扱っている | ログ監視上「サーバーエラー」として誤検知されうる（実害は小さい） | 未修正（対応要否は別途判断） |
 | DOC-1 | `docs/funcdocument.md` は `POST /api/cron/badges` と記載しているが、実装（`src/app/api/cron/badges/route.ts`）は `GET` のみ export（Vercel Cron の既定に合わせた実装として妥当）。ドキュメントの表記が実装と不一致 | ドキュメントのみ。動作に影響なし | 未修正（対応要否は別途判断） |
 | BUG-3 | パスワード再設定メールのリンクをタップしても、新しいパスワード入力画面に遷移しない不具合。原因は複合的だった：(1) Vercel本番環境に `NEXT_PUBLIC_SITE_URL` が未設定/`localhost`のままで、`resetPasswordForEmail` の `redirectTo` が本番ドメインを指していなかった、(2) Supabase Dashboard の Authentication > URL Configuration で本番ドメインが Redirect URLs に未登録だった、(3) `NEXT_PUBLIC_SITE_URL` の値に末尾スラッシュが付いていたため `${siteUrl}/auth/reset-password` が二重スラッシュになり、Redirect URLs 登録後もSupabase側の許可リストと一致せずSite URL（トップページ）にフォールバックしていた。加えて `src/app/auth/reset-password/page.tsx` がリンク無効・期限切れ時のエラーを検知せず空フォームを表示するだけだった | 全ユーザーがパスワード再設定機能を利用できない状態だった | ✅ 2026-08-22 修正済み。Vercelの `NEXT_PUBLIC_SITE_URL` を本番ドメイン（末尾スラッシュなし）に設定し直し、Supabase Dashboard の Redirect URLs に `https://hibi-wellnessclub.jp/**` を登録。あわせて `LoginForm.tsx`・`impact/page.tsx`・`api/payments/paypay/route.ts` で `NEXT_PUBLIC_SITE_URL` 使用時に末尾スラッシュを除去する防御的処理を追加し、`reset-password/page.tsx` を作り直して `onAuthStateChange` の `PASSWORD_RECOVERY` イベント検知・エラーパラメータ検知・タイムアウトによる「リンクが無効です」表示を実装。本番でメールリンク→パスワード再設定→ログインまで一連の動作を確認 |
+| BUG-4 | 本番（`https://hibi-wellnessclub.jp/login`）のSIGN UPタブで、iPhone 15実機（Safari）表示時に DATE OF BIRTH の入力欄（`input[type="date"]`）が他の入力欄と揃った角丸カードの枠からはみ出して表示される。iOS Safari が `input[type="date"]` の内部表示（年/月/日）にCSS指定幅を超える最小幅を確保することがある既知のWebKitの挙動が原因 | 新規登録フォームの見た目が崩れる（入力・登録自体は可能） | 🟡 2026-08-23 修正実施・実機確認待ち。`src/app/login/LoginForm.tsx` の DATE OF BIRTH入力欄を `overflow-hidden rounded-xl` のラッパーで囲み、はみ出し分をカード内側でクリップするよう修正。ローカル（Chromium・モバイルエミュレーション）では枠内に収まることを確認したが、iOS Safari特有の挙動のためツール上では完全な再現ができておらず、実機iPhone 15での最終確認が未実施 |
+| BUG-5（重大） | 定員に達したイベントでも、まだそのイベントを予約していない一般ユーザーからは満席と認識されず、予約が通ってしまう（定員超過の予約が作成される）。原因は`bookings`テーブルのRLS（本人の行のみ閲覧可）により、予約確定前の残席チェック・詳細画面の残り枠表示・決済画面への到達可否判定が、いずれもログインユーザー自身のRLS付きセッションで「他人の予約件数」を数えており、常に0件として扱われていたため。3-6の確認中にユーザーが「別アカウントで満席表示にならない」ことを発見し、実際に定員1のテストイベントで2件の確定予約（2/1）が作られていたことをDBで確認して発覚 | 一般ユーザーの予約フロー全体で定員超過（オーバーブッキング）が発生しうる、本番でも再現する重大な不具合 | ✅ 2026-08-23 修正済み。`api/payments/square/route.ts`・`api/payments/paypay/route.ts`・`events/[id]/page.tsx`・`events/[id]/checkout/page.tsx`の残席カウントを`createServiceClient()`（service_role、RLS迂回・集計目的のみ）経由に変更。`npm run test`（93件）全通過を確認。なお同時リクエストによる競合（check-then-insertのTOCTOU）は今回の修正範囲外で、4-8として別途未確認のまま |
 
 ---
 
@@ -49,7 +51,7 @@
 | 2-2 | 予約済みイベントが0件のとき | ホーム上部の「予約済みイベント」セクション自体が非表示になる（`upcomingBookings.length > 0` の場合のみ表示。「次回のイベント」欄は予約有無に関わらず、直近の公開イベントを常に表示する） | - | ✅ 2026-08-18（項目の記述を実装に合わせて修正） |
 | 2-3 | 今日のジャーナル未記録のとき | 気分・体調・気づき入力フォームが表示される | - | ✅ 2026-08-18 |
 | 2-4 | 今日のジャーナル記録済みのとき | 「今日の記録は完了しています」表示に切り替わる | - | ✅ 2026-08-18 |
-| 2-5 | ホーム画面ロード時、未付与ポイント（参加・月間ボーナス・紹介）がある場合 | `checkAndAwardPendingPoints` が実行されポイントが加算される | `points.test.ts` | 未確認（実イベント参加後） |
+| 2-5 | ホーム画面ロード時、未付与ポイント（参加・月間ボーナス・紹介）がある場合 | `checkAndAwardPendingPoints` が実行されポイントが加算される | `points.test.ts` | 🟡 2026-08-23（参加ポイントのみ確認済み）。price=0の過去日時テストイベントを作成・予約→`/home`ロードで`points_log`に`event_participation`理由で30pt（Seedランク）記録、`profiles.points`が0→30に加算されることをDBで確認。月間全イベント参加ボーナス（500pt）・紹介報酬（200pt）の未付与分付与は別経路のため未確認 |
 
 ## 3. イベント一覧・詳細（`/events`, `/events/[id]`）
 
@@ -59,8 +61,8 @@
 | 3-2 | 開催日時が本日より前のイベント | 一覧に表示されない（`status=published` かつ `start_at` が未来のみ） | - | ✅ 2026-08-18（本セッションで修正・確認） |
 | 3-3 | `status` が `draft` / `cancelled` のイベント | 一般ユーザーの一覧・詳細に表示されない（RLS） | - | ✅ 2026-08-18（`supabase/migrations/001_initial_schema.sql`のRLSポリシー`status='published'`を確認。現DBにdraft/cancelledイベントが無くUI上の実地確認は未実施） |
 | 3-4 | `/events/[id]` 詳細表示 | 日時・場所・参加費・残り枠（n / capacity）・詳細・キャンセルポリシーが表示される | - | ✅ 2026-08-18 |
-| 3-5 | `meeting_place`・`remarks`・`belongings` が設定されているイベントの詳細 | 集合場所・備考・持ち物が表示される | - | 未確認（該当イベントなし） |
-| 3-6 | 満席（残り0）のイベント詳細 | 予約ボタンが無効化される、または満席表示になる | - | 未確認 |
+| 3-5 | `meeting_place`・`remarks`・`belongings` が設定されているイベントの詳細 | 集合場所・備考・持ち物が表示される | - | ✅ 2026-08-23（テストイベント「testイベント」で集合場所・備考・持ち物の3項目すべてが表示されることを確認） |
+| 3-6 | 満席（残り0）のイベント詳細 | 予約ボタンが無効化される、または満席表示になる | - | ✅ 2026-08-23 BUG-5修正後、定員1・確定予約1件の状態で未予約の別アカウントから開き、「残り枠：満席」＋予約ボタンがdisabledで「満席」表示になることを確認 |
 
 ## 4. 予約・決済（`/events/[id]/checkout`）
 
@@ -80,9 +82,9 @@
 | # | 確認項目 | 期待結果 | 自動テスト | 状態 |
 |---|---------|---------|-----------|------|
 | 5-1 | 予約が0件のとき `/bookings` を開く | 「予約中のイベントはありません」＋「イベントを探す」導線 | - | ✅ 2026-08-18 |
-| 5-2 | 予約済みイベントがあるとき | 予約一覧が表示され、キャンセルボタンがある | - | 未確認（要実予約） |
-| 5-3 | イベント2日前までにキャンセル | 全額返金（現金分＋充当ポイント両方が払い戻される） | `cancel/route.test.ts` | 未確認（UI通し） |
-| 5-4 | イベント1日前・当日にキャンセル | キャンセル自体は可能だが返金・ポイント払い戻し対象外 | `cancel/route.test.ts` | 未確認（UI通し） |
+| 5-2 | 予約済みイベントがあるとき | 予約一覧が表示され、キャンセルボタンがある | - | ✅ 2026-08-23（テスト予約で`/bookings`に一覧・キャンセルボタン表示を確認） |
+| 5-3 | イベント2日前までにキャンセル | 全額返金（現金分＋充当ポイント両方が払い戻される） | `cancel/route.test.ts` | ✅ 2026-08-23（価格20円・開始5日後のテストイベントを20pt全額充当で予約→キャンセルし、`profiles.points`が20pt払い戻され元の残高に復元することをDBで確認。現金決済なし＝amount_charged=0のため現金返金経路は本テストでは検証していない） |
+| 5-4 | イベント1日前・当日にキャンセル | キャンセル自体は可能だが返金・ポイント払い戻し対象外 | `cancel/route.test.ts` | ✅ 2026-08-23（価格20円・開始が数時間後（当日）のテストイベントを20pt全額充当で予約→キャンセル。予約は正常にキャンセルされるが`points_log`の`booking_discount`(-20pt)は削除されず、`profiles.points`も10ptのまま（払い戻しなし）であることをDBで確認） |
 | 5-5 | 無料イベント（price=0）のキャンセル | 返金処理なしでキャンセルできる | `cancel/route.test.ts` | 未確認 |
 | 5-6 | キャンセル時、付与済みイベント参加ポイントがある場合 | `points_log` から削除、`profiles.points` から減算（0未満にならない） | `points.test.ts` | 未確認 |
 
@@ -121,11 +123,11 @@
 |---|---------|---------|-----------|------|
 | 9-1 | 非管理者が `/admin/events` にアクセス | `/home` にリダイレクト | `admin.test.ts` | ✅ 2026-08-18 |
 | 9-2 | 未認証で `/admin/events` にアクセス | `/login` にリダイレクト | - | 未確認 |
-| 9-3 | 管理者で `/admin/events` を開く | 全ステータス（draft/published/cancelled）のイベント一覧が表示される | - | 未実施（管理者権限未付与） |
+| 9-3 | 管理者で `/admin/events` を開く | draft/publishedのイベント一覧が表示される（cancelledは一覧から除外） | - | ✅ 2026-08-23（管理者アカウントで確認。あわせて仕様変更：削除済み(cancelled)イベントは一覧から非表示にするようDB取得クエリに`.neq("status","cancelled")`を追加し、`docs/requirements.md`・`docs/architecture.md`を更新） |
 | 9-4 | `/admin/events/new` でイベントを新規作成 | `POST /api/admin/events` が成功し一覧に反映される | `admin/events/route.test.ts` | 未実施 |
 | 9-5 | 不正な入力（定員0以下、価格負数など）で作成 | バリデーションエラーで作成されない | `eventValidation` 関連 | 未実施 |
 | 9-6 | `/admin/events/[id]` で既存イベントを編集 | `PATCH /api/admin/events/[id]` が成功し変更が反映される | `admin/events/[id]/route.test.ts` | 未実施 |
-| 9-7 | `/admin/events/[id]` の削除ボタン | 確認ダイアログ→`DELETE /api/admin/events/[id]`で論理削除（`status=cancelled`）。予約履歴は保持される | `admin/events/[id]/route.test.ts` | 未実施 |
+| 9-7 | `/admin/events/[id]` の削除ボタン | 確認ダイアログ→`DELETE /api/admin/events/[id]`で論理削除（`status=cancelled`）。予約履歴は保持される | `admin/events/[id]/route.test.ts` | ✅ 2026-08-23（テストイベント「ポイント確認テスト」で確認。確認ダイアログ→論理削除まで正常動作。削除後、管理者一覧に「削除済み」表示のまま残る仕様だったが、9-3の仕様変更に伴い一覧からは非表示に変更） |
 | 9-8 | `/admin/events/[id]/participants` で参加者一覧表示 | 予約者一覧が表示される | - | 未実施 |
 | 9-9 | 参加者一覧のCSVエクスポート | `GET /api/admin/events/[id]/participants/export` でCSVがダウンロードされ、氏名等が正しく復号されている | `participants/export/route.test.ts` | 未実施 |
 | 9-10 | 一般ユーザーが `/api/admin/events` 系APIを直接叩く | 401/403で拒否される | `admin/events/route.test.ts` | 未実施（本セッションでは未検証） |
@@ -150,3 +152,7 @@
 | 2026-08-18 | 決済・管理者機能以外の未確認項目を追加確認。BUG-1（紹介ポイント未付与）・BUG-2（ジャーナル重複時500）・DOC-1（cronのPOST/GET不一致）を発見し記録 |
 | 2026-08-18 | BUG-1を修正（`NAME_ROMAN_REGEX`をUnicode全般許容に変更、`LoginForm.tsx`にレスポンスチェック＋リトライ＋失敗時警告表示を追加）。`npm run test`（93件）全通過を確認のうえ、長音入り氏名での紹介フローを再テストし正常動作を確認。BUG-2・DOC-1は未修正のまま |
 | 2026-08-22 | BUG-3（パスワード再設定リンクが機能しない）を発見・修正。Vercelの`NEXT_PUBLIC_SITE_URL`設定・Supabase DashboardのRedirect URLs登録・末尾スラッシュ除去・`reset-password/page.tsx`のリンク無効判定を対応し、本番環境で1-8を含む一連の動作を確認 |
+| 2026-08-23 | BUG-4（iPhone 15実機でSIGN UPのDATE OF BIRTH欄がカード枠からはみ出す）をユーザー報告により発見。`LoginForm.tsx`の日付入力欄を`overflow-hidden`ラッパーで囲む修正を実施。ローカルのモバイルエミュレーションでは解消を確認したが、実機での最終確認は未実施 |
+| 2026-08-23 | 2-5（ホーム画面ロード時の未付与ポイント付与）を確認。price=0・過去日時のテストイベントを管理画面で作成し予約→`/home`ロードでイベント参加ポイント（30pt）が付与されることをDBで確認。月間ボーナス・紹介報酬分は未確認のまま |
+| 2026-08-23 | 9-3・9-7（管理者イベント一覧・削除）を確認。ユーザー報告を受け、削除済み(cancelled)イベントが管理者一覧に残り続ける挙動を仕様変更し、一覧から除外するよう`src/app/admin/events/page.tsx`を修正。`docs/requirements.md`・`docs/architecture.md`を合わせて更新 |
+| 2026-08-23 | 3-5を確認（meeting_place・remarks・belongingsの表示OK）。3-6の確認中にBUG-5（重大）＝定員超過の予約が作成できてしまう不具合を発見。`api/payments/square・paypay/route.ts`・`events/[id]/page.tsx`・`events/[id]/checkout/page.tsx`の残席カウントをservice_role経由に修正し、`npm run test`93件全通過を確認。修正後、未予約の別アカウントから満席イベントを開き「残り枠：満席」＋予約ボタンdisabled表示になることを確認し3-6を✅に更新 |
