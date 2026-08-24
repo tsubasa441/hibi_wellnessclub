@@ -363,14 +363,17 @@ function LoginFormInner() {
             {/* 生年月日 */}
             <div>
               <p className={labelClass}>DATE OF BIRTH</p>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                min="1900-01-01"
-                max={`${new Date().getFullYear()}-12-31`}
-                className={`${inputClass} [color-scheme:light]`}
-              />
+              {/* iOS Safari は input[type=date] の内部表示に CSS 幅を超える最小幅を確保することがあるため、rounded-xl の枠内にクリップする */}
+              <div className="overflow-hidden rounded-xl">
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  min="1900-01-01"
+                  max={`${new Date().getFullYear()}-12-31`}
+                  className={`${inputClass} [color-scheme:light]`}
+                />
+              </div>
             </div>
 
             {/* 紹介コード（任意） */}
