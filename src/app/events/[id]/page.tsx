@@ -101,9 +101,9 @@ export default async function EventDetailPage({ params }: { params: { id: string
                 </p>
               </div>
               <div className="bg-base-100 rounded-xl p-4">
-                <p className="font-maru text-xs text-ink-400 mb-1">残り枠</p>
+                <p className="font-maru text-xs text-ink-400 mb-1">予約状況</p>
                 <p className={`font-maru text-lg font-bold ${isSoldOut ? "text-red-500" : remaining <= 3 ? "text-amber-600" : "text-ink-700"}`}>
-                  {isSoldOut ? "満席" : `${remaining} / ${event.capacity} 名`}
+                  {isSoldOut ? "満席" : `${bookedCount ?? 0} / ${event.capacity} 名`}
                 </p>
               </div>
             </div>
