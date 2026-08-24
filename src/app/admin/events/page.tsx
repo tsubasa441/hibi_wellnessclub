@@ -32,6 +32,7 @@ export default async function AdminEventsPage() {
   const { data: events } = await supabase
     .from("events")
     .select("*")
+    .neq("status", "cancelled")
     .order("start_at", { ascending: false });
 
   return (

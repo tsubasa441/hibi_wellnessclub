@@ -62,7 +62,7 @@ src/
 │   │   ├── AdminNav.tsx          # 管理画面用ナビ（Client Component）
 │   │   ├── page.tsx              # /admin/events へ redirect
 │   │   └── events/
-│   │       ├── page.tsx          # イベント一覧（全ステータス）
+│   │       ├── page.tsx          # イベント一覧（削除済みは除く）
 │   │       ├── EventForm.tsx     # 作成/編集共通フォーム（Client Component）
 │   │       ├── new/page.tsx      # イベント新規作成
 │   │       └── [id]/
