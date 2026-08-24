@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
     .eq("id", eventId)
     .single();
 
-  const { count } = await supabase
+  // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
+  const { count } = await createServiceClient()
     .from("bookings")
     .select("*", { count: "exact", head: true })
     .eq("event_id", eventId)

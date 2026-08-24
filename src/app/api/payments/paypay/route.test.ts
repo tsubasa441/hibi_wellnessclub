@@ -94,9 +94,6 @@ function setupSupabase({
   const { from } = createSupabaseMock();
   from.mockReturnValueOnce(chainable({ data: existing })); // 重複予約チェック
   from.mockReturnValueOnce(chainable({ data: event })); // イベント取得
-  if (event) {
-    from.mockReturnValueOnce(chainable({ count })); // 残席カウント
-  }
   const insertSpy = vi.fn();
   from.mockReturnValueOnce(chainable(bookingInsertResult, { insert: insertSpy })); // bookings insert
 
@@ -106,7 +103,11 @@ function setupSupabase({
 
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
 
-  return { from, insertSpy, updateSpy };
+  // 残席カウントは service_role クライアント経由
+  const serviceFrom = vi.fn().mockReturnValue(chainable({ count }));
+  mocks.createServiceClient.mockReturnValue({ from: serviceFrom });
+
+  return { from, insertSpy, updateSpy, serviceFrom };
 }
 
 beforeEach(() => {

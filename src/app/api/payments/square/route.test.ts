@@ -101,7 +101,6 @@ function setupSupabase({
   const { from } = createSupabaseMock();
   from.mockReturnValueOnce(chainable({ data: existing })); // 重複予約チェック
   from.mockReturnValueOnce(chainable({ data: event })); // イベント取得
-  from.mockReturnValueOnce(chainable({ count })); // 残席カウント
 
   const insertSpy = vi.fn();
   from.mockReturnValueOnce(chainable({ error: insertError }, { insert: insertSpy })); // bookings insert
@@ -109,7 +108,11 @@ function setupSupabase({
 
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
 
-  return { from, insertSpy };
+  // 残席カウントは service_role クライアント経由
+  const serviceFrom = vi.fn().mockReturnValue(chainable({ count }));
+  mocks.createServiceClient.mockReturnValue({ from: serviceFrom });
+
+  return { from, insertSpy, serviceFrom };
 }
 
 beforeEach(() => {
@@ -205,7 +208,7 @@ describe("POST /api/payments/square", () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toContain("ポイント残高が不足");
-    expect(from).toHaveBeenCalledTimes(3); // insert には到達しない
+    expect(from).toHaveBeenCalledTimes(2); // insert には到達しない（残席カウントは service_role 側）
   });
 
   it("通常のSquare決済が成功した場合、amountToChargeで課金し予約を確定する", async () => {
