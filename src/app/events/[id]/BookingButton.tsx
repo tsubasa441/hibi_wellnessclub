@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Event = { id: string; price: number; title: string };
 type User = { id: string };
@@ -25,7 +25,15 @@ export default function BookingButton({
 
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
-  const [cancelled, setCancelled] = useState(false);
+
+  // userBooking がサーバーの最新データに切り替わったタイミングでのみ
+  // loading/cancelLoading をリセットする。fetch 直後に即リセットすると、
+  // router.refresh() の反映が届く前に一瞬ボタンが再度押せる状態になり、
+  // 二重予約・二重キャンセルにつながるため（BUG-5と同種の懸念）。
+  useEffect(() => {
+    setLoading(false);
+    setCancelLoading(false);
+  }, [userBooking]);
 
   async function handleCancel() {
     if (!userBooking) return;
@@ -39,11 +47,12 @@ export default function BookingButton({
       setCancelLoading(false);
       return;
     }
-    setCancelled(true);
+    // サーバーから最新の userBooking が届くまでボタンを無効化したまま待ち、
+    // 反映前に「予約する」ボタンへ切り替わって誤タップされるのを防ぐ
     router.refresh();
   }
 
-  if (userBooking && !cancelled) {
+  if (userBooking) {
     return (
       <div className="space-y-3">
         <div className="bg-sage-100 border border-sage-200 rounded-xl p-4 text-center">
@@ -85,6 +94,8 @@ export default function BookingButton({
       setError(data.error ?? "予約に失敗しました。もう一度お試しください。");
       setLoading(false);
     } else {
+      // サーバーから最新の userBooking が届くまでボタンを無効化したまま待つ
+      // （届いた時点で上の useEffect が loading をリセットする）
       router.refresh();
     }
   }
@@ -100,7 +111,7 @@ export default function BookingButton({
           disabled={loading}
           className="w-full bg-sage-500 text-white font-maru font-medium py-3 rounded-full hover:bg-sage-600 transition disabled:opacity-60"
         >
-          {loading ? "予約中..." : "無料で予約する"}
+          {loading ? "予約中..." : "予約する"}
         </button>
       ) : (
         <Link
