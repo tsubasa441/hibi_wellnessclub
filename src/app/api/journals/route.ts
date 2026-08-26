@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { awardJournalPoints } from "@/lib/points";
+import { getTodayJst } from "@/lib/date";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
   const { mood, energy, note } = await req.json();
   if (!mood || !energy) return NextResponse.json({ error: "気分と体調は必須です" }, { status: 400 });
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayJst();
 
   const { error } = await supabase
     .from("journals")
@@ -28,7 +29,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayJst();
   const { data } = await supabase
     .from("journals")
     .select("*")

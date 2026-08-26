@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { toJstDateTimeLocal, fromJstDateTimeLocal } from "@/lib/date";
 
 const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-ink-300 transition";
 const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-1.5 block";
@@ -36,12 +37,6 @@ type EventRecord = {
   status: string;
 };
 
-function toLocalInputValue(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 export default function EventForm({
   mode,
   initialEvent,
@@ -53,8 +48,8 @@ export default function EventForm({
   const [title, setTitle] = useState(initialEvent?.title ?? "");
   const [description, setDescription] = useState(initialEvent?.description ?? "");
   const [eventType, setEventType] = useState(initialEvent?.event_type ?? "yoga");
-  const [startAt, setStartAt] = useState(initialEvent ? toLocalInputValue(initialEvent.start_at) : "");
-  const [endAt, setEndAt] = useState(initialEvent ? toLocalInputValue(initialEvent.end_at) : "");
+  const [startAt, setStartAt] = useState(initialEvent ? toJstDateTimeLocal(initialEvent.start_at) : "");
+  const [endAt, setEndAt] = useState(initialEvent ? toJstDateTimeLocal(initialEvent.end_at) : "");
   const [location, setLocation] = useState(initialEvent?.location ?? "");
   const [meetingPlace, setMeetingPlace] = useState(initialEvent?.meeting_place ?? "");
   const [remarks, setRemarks] = useState(initialEvent?.remarks ?? "");
@@ -74,8 +69,8 @@ export default function EventForm({
       title,
       description,
       eventType,
-      startAt: startAt ? new Date(startAt).toISOString() : "",
-      endAt: endAt ? new Date(endAt).toISOString() : "",
+      startAt: startAt ? fromJstDateTimeLocal(startAt) : "",
+      endAt: endAt ? fromJstDateTimeLocal(endAt) : "",
       location,
       meetingPlace,
       remarks,

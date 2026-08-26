@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getRankByLevel } from "@/lib/ranks";
+import { getYearMonthJst, getJstMonthBounds } from "@/lib/date";
 
 type AwardResult = { awarded: boolean; points?: number };
 
@@ -81,16 +82,15 @@ export async function checkAndAwardPendingPoints(
     const startAt = new Date((ev as { start_at: string }).start_at);
     const endAt = new Date(startAt);
     endAt.setHours(endAt.getHours() + 2);
-    const lastDay = new Date(startAt.getFullYear(), startAt.getMonth() + 1, 0);
-    if (lastDay < now && endAt <= now) {
-      months.add(`${startAt.getFullYear()}-${String(startAt.getMonth() + 1).padStart(2, "0")}`);
+    const eventYearMonth = getYearMonthJst(startAt);
+    const monthEndAt = new Date(getJstMonthBounds(eventYearMonth).end);
+    if (monthEndAt < now && endAt <= now) {
+      months.add(eventYearMonth);
     }
   }
 
   for (const yearMonth of months) {
-    const [year, month] = yearMonth.split("-").map(Number);
-    const monthStart = new Date(year, month - 1, 1).toISOString();
-    const monthEnd = new Date(year, month, 0, 23, 59, 59).toISOString();
+    const { start: monthStart, end: monthEnd } = getJstMonthBounds(yearMonth);
 
     const { data: monthEvents } = await supabase
       .from("events")

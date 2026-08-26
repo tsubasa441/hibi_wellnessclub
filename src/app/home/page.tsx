@@ -10,18 +10,17 @@ import JournalQuickEntry from "./JournalQuickEntry";
 import RankIcon from "@/components/RankIcon";
 import RankUpModal from "./RankUpModal";
 import RankGuideModal from "./RankGuideModal";
+import { getTodayJst, getJstParts } from "@/lib/date";
 
 const MOCK_PROFILE = { name: "Tsubasa Yamamoto", points: 120, created_at: "2026-01-15T00:00:00Z" };
 
 function formatDateTime(iso: string) {
-  const d = new Date(iso);
   const DAYS = ["日", "月", "火", "水", "木", "金", "土"];
-  const y = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const h = d.getHours();
-  const mi = String(d.getMinutes()).padStart(2, "0");
-  return `${y}/${mo}/${day}（${DAYS[d.getDay()]}） ${h % 12 || 12}:${mi} ${h < 12 ? "AM" : "PM"}`;
+  const { year: y, month, day: d, hours: h, minutes: mi, dayOfWeek } = getJstParts(new Date(iso));
+  const mo = String(month).padStart(2, "0");
+  const day = String(d).padStart(2, "0");
+  const min = String(mi).padStart(2, "0");
+  return `${y}/${mo}/${day}（${DAYS[dayOfWeek]}） ${h % 12 || 12}:${min} ${h < 12 ? "AM" : "PM"}`;
 }
 
 export default async function HomePage() {
@@ -29,7 +28,7 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayJst();
   const now = new Date().toISOString();
 
   await checkAndAwardPendingPoints(supabase, user.id);
@@ -80,7 +79,10 @@ export default async function HomePage() {
     });
 
   const memberSince = profile.created_at
-    ? new Date(profile.created_at).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, ".")
+    ? (() => {
+        const { year, month, day } = getJstParts(new Date(profile.created_at));
+        return `${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}.${year}`;
+      })()
     : "";
 
   const currentRank = getRankByLevel(profile.rank_level ?? 1);

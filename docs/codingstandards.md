@@ -89,6 +89,25 @@ const data: any = await supabase...;
 
 ---
 
+## 日付・時刻の扱い
+
+Hibi は日本国内向けのため、日付・時刻は常に日本時間（JST）を基準に扱う。ローカル開発機とVercel（本番）でサーバーの実行タイムゾーンが異なる（Vercelのサーバーレス関数はUTCで動作する）ため、`getHours()`・`getMonth()`・`getDate()`・`getDay()`等のローカルタイムゾーン依存メソッドや、`timeZone`未指定の`toLocaleString()`/`toLocaleDateString()`は使用禁止（BUG-8参照、@docs/testplan.md）。
+
+```ts
+// ❌ サーバーの実行タイムゾーンに依存する（ローカルではJSTでも本番ではUTCになり9時間ズレる）
+const hour = new Date(iso).getHours();
+const today = new Date().toISOString().split("T")[0];
+
+// ✅ src/lib/date.ts 経由でJST基準の値を取得する
+import { getJstParts, getTodayJst } from "@/lib/date";
+const { hours } = getJstParts(new Date(iso));
+const today = getTodayJst();
+```
+
+`toLocaleDateString`/`toLocaleString`をそのまま使う場合も、必ず`timeZone: "Asia/Tokyo"`を明示する。
+
+---
+
 ## 個人情報保護
 
 **個人情報が流出する実装は絶対にしない。個人情報保護を徹底した実装にする。**

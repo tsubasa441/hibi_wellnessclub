@@ -4,16 +4,15 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import CancelButton from "@/app/home/CancelButton";
+import { getJstParts } from "@/lib/date";
 
 function formatDateTime(iso: string) {
-  const d = new Date(iso);
   const DAYS = ["日", "月", "火", "水", "木", "金", "土"];
-  const y = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const h = d.getHours();
-  const mi = String(d.getMinutes()).padStart(2, "0");
-  return `${y}/${mo}/${day}（${DAYS[d.getDay()]}） ${h % 12 || 12}:${mi} ${h < 12 ? "AM" : "PM"}`;
+  const { year: y, month, day: dayNum, hours: h, minutes: mi, dayOfWeek } = getJstParts(new Date(iso));
+  const mo = String(month).padStart(2, "0");
+  const day = String(dayNum).padStart(2, "0");
+  const min = String(mi).padStart(2, "0");
+  return `${y}/${mo}/${day}（${DAYS[dayOfWeek]}） ${h % 12 || 12}:${min} ${h < 12 ? "AM" : "PM"}`;
 }
 
 export default async function BookingsPage() {

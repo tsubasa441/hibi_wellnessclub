@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getJstParts } from "@/lib/date";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,14 +20,12 @@ type BookingConfirmationParams = {
 };
 
 function formatDateTime(iso: string): string {
-  const d = new Date(iso);
   const DAYS = ["日", "月", "火", "水", "木", "金", "土"];
-  const y = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const h = d.getHours();
-  const mi = String(d.getMinutes()).padStart(2, "0");
-  return `${y}年${mo}月${day}日（${DAYS[d.getDay()]}） ${h}:${mi}`;
+  const { year: y, month, day: dayNum, hours: h, minutes: mi, dayOfWeek } = getJstParts(new Date(iso));
+  const mo = String(month).padStart(2, "0");
+  const day = String(dayNum).padStart(2, "0");
+  const min = String(mi).padStart(2, "0");
+  return `${y}年${mo}月${day}日（${DAYS[dayOfWeek]}） ${h}:${min}`;
 }
 
 type CancellationNotificationParams = {

@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import BookingButton from "./BookingButton";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import { getJstParts } from "@/lib/date";
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   yoga:     { label: "ヨガ",         color: "bg-sage-100 text-ink-700" },
@@ -16,8 +17,8 @@ const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 function fmt12(d: Date): string {
-  const h = d.getHours();
-  const m = String(d.getMinutes()).padStart(2, "0");
+  const { hours: h, minutes } = getJstParts(d);
+  const m = String(minutes).padStart(2, "0");
   const ampm = h < 12 ? "AM" : "PM";
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}:${m} ${ampm}`;
@@ -26,10 +27,10 @@ function fmt12(d: Date): string {
 function formatDate(startStr: string, endStr?: string | null): { date: string; time: string } {
   const d = new Date(startStr);
   const DAYS = ["日", "月", "火", "水", "木", "金", "土"];
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const weekday = DAYS[d.getDay()];
+  const { year: y, month, day: dayNum, dayOfWeek } = getJstParts(d);
+  const m = String(month).padStart(2, "0");
+  const day = String(dayNum).padStart(2, "0");
+  const weekday = DAYS[dayOfWeek];
   const timeStr = endStr
     ? `${fmt12(d)} 〜 ${fmt12(new Date(endStr))}`
     : fmt12(d);

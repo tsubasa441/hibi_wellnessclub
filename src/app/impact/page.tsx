@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import ReferralShare from "@/app/impact/ReferralShare";
 import { getRankByLevel, getNextRank, RANKS } from "@/lib/ranks";
 import RankIcon from "@/components/RankIcon";
+import { getYearMonthJst, getJstMonthBounds, getJstParts } from "@/lib/date";
 
 // ---- バッジ型定義 ----
 type BadgeRow = {
@@ -71,9 +72,8 @@ export default async function ImpactPage() {
   if (!user) redirect("/login");
 
   const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
+  const thisMonth = getYearMonthJst(now);
+  const { start: monthStart, end: monthEnd } = getJstMonthBounds(thisMonth);
 
   const [
     { data: profile },
@@ -332,7 +332,7 @@ export default async function ImpactPage() {
         <div className="nm-card px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-200">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-outfit font-semibold text-base text-ink-700">月間バッジ</h2>
-            <p className="font-dm text-xs text-ink-300">{now.getMonth() + 1}月</p>
+            <p className="font-dm text-xs text-ink-300">{getJstParts(now).month}月</p>
           </div>
 
           {/* クラス初参加 */}
@@ -482,7 +482,7 @@ export default async function ImpactPage() {
                     <div>
                       <p className="font-outfit font-medium text-sm text-ink-700">{refName ?? "ユーザー"}</p>
                       <p className="font-dm text-xs text-ink-300">
-                        {new Date(r.created_at).toLocaleDateString("ja-JP", { month: "short", day: "numeric" })} 登録
+                        {new Date(r.created_at).toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" })} 登録
                       </p>
                     </div>
                     <span className={`font-outfit text-xs font-medium px-3 py-1 rounded-full ${

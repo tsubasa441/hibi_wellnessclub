@@ -1,16 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-
-function currentYearMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function monthBounds(yearMonth: string): { start: string; end: string } {
-  const [y, m] = yearMonth.split("-").map(Number);
-  const start = new Date(y, m - 1, 1).toISOString();
-  const end = new Date(y, m, 0, 23, 59, 59, 999).toISOString();
-  return { start, end };
-}
+import { getYearMonthJst, getJstMonthBounds } from "@/lib/date";
 
 async function award(
   supabase: SupabaseClient,
@@ -37,8 +26,8 @@ export async function checkEventBadges(
   supabase: SupabaseClient,
   userId: string
 ): Promise<void> {
-  const ym = currentYearMonth();
-  const { start, end } = monthBounds(ym);
+  const ym = getYearMonthJst();
+  const { start, end } = getJstMonthBounds(ym);
 
   // 今月確定した予約とそのイベント種別を取得
   const { data: bookings } = await supabase
@@ -85,8 +74,8 @@ export async function checkReferralBadges(
   supabase: SupabaseClient,
   userId: string
 ): Promise<void> {
-  const ym = currentYearMonth();
-  const { start, end } = monthBounds(ym);
+  const ym = getYearMonthJst();
+  const { start, end } = getJstMonthBounds(ym);
 
   const { count } = await supabase
     .from("referrals")

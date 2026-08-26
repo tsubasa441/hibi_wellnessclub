@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import CheckoutForm from "./CheckoutForm";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import { getJstParts } from "@/lib/date";
 
 export default async function CheckoutPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -49,18 +50,19 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
             {(() => {
               const DAYS = ["日","月","火","水","木","金","土"];
               const d = new Date(event.start_at);
-              const y = d.getFullYear();
-              const m = String(d.getMonth()+1).padStart(2,"0");
-              const day = String(d.getDate()).padStart(2,"0");
-              const h = d.getHours(); const mi = String(d.getMinutes()).padStart(2,"0");
-              const start = `${h%12||12}:${mi} ${h<12?"AM":"PM"}`;
+              const { year: y, month: mo, day: dayNum, hours: h, minutes: mi, dayOfWeek } = getJstParts(d);
+              const m = String(mo).padStart(2,"0");
+              const day = String(dayNum).padStart(2,"0");
+              const min = String(mi).padStart(2,"0");
+              const start = `${h%12||12}:${min} ${h<12?"AM":"PM"}`;
               if (event.end_at) {
                 const e = new Date(event.end_at);
-                const eh = e.getHours(); const emi = String(e.getMinutes()).padStart(2,"0");
+                const { hours: eh, minutes: emiNum } = getJstParts(e);
+                const emi = String(emiNum).padStart(2,"0");
                 const end = `${eh%12||12}:${emi} ${eh<12?"AM":"PM"}`;
-                return `${y}/${m}/${day}（${DAYS[d.getDay()]}） ${start} 〜 ${end}`;
+                return `${y}/${m}/${day}（${DAYS[dayOfWeek]}） ${start} 〜 ${end}`;
               }
-              return `${y}/${m}/${day}（${DAYS[d.getDay()]}） ${start}`;
+              return `${y}/${m}/${day}（${DAYS[dayOfWeek]}） ${start}`;
             })()}
           </p>
           <p className="font-dm text-sm text-ink-300">{event.location}</p>

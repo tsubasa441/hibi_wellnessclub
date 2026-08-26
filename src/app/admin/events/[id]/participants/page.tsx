@@ -88,7 +88,7 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
                     </td>
                     <td className="font-dm text-sm text-ink-500 px-4 py-3">{b.points_used ?? 0}pt</td>
                     <td className="font-dm text-sm text-ink-300 px-4 py-3">
-                      {new Date(b.created_at).toLocaleString("ja-JP", { dateStyle: "medium", timeStyle: "short" })}
+                      {new Date(b.created_at).toLocaleString("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" })}
                     </td>
                   </tr>
                 );

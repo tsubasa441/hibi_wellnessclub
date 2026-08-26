@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt } from "@/lib/encrypt";
 import { awardPoints } from "@/lib/points";
 import { checkReferralBadges } from "@/lib/badges";
+import { getJstParts } from "@/lib/date";
 
 const NAME_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
 // ローマ字変換（kuroshiro）は長音を ō 等のマクロン付き文字で返すため、
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "生年月日の形式が正しくありません" }, { status: 400 });
   }
   const birthYear = Number(body.birthDate.slice(0, 4));
-  if (birthYear < 1900 || birthYear > new Date().getFullYear()) {
+  if (birthYear < 1900 || birthYear > getJstParts(new Date()).year) {
     return NextResponse.json({ error: "生年月日の年を正しく入力してください" }, { status: 400 });
   }
   if (body.referralCode && !REFERRAL_CODE_REGEX.test(body.referralCode)) {

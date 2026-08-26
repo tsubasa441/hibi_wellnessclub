@@ -96,6 +96,7 @@ src/
 │   ├── admin.ts                # 管理者判定（isAdmin）
 │   ├── badges.ts               # バッジ付与ロジック
 │   ├── csv.ts                  # CSV生成ヘルパー
+│   ├── date.ts                 # JST基準の日付・時刻ヘルパー（サーバーの実行タイムゾーンに依存しないための共通処理）
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号
 │   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）
