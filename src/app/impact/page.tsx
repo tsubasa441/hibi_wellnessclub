@@ -231,8 +231,8 @@ export default async function ImpactPage() {
             <div className="flex items-center gap-1.5 mt-0.5">
               <RankIcon level={currentRank.level} size={16} />
               <p className="font-outfit text-lg font-bold leading-tight">{currentRank.nameEn}</p>
+              <p className="font-outfit text-xs text-white/70">（{currentRank.nameJa}）</p>
             </div>
-            <p className="font-outfit text-xs text-white/70">{currentRank.nameJa}</p>
           </div>
           <div className="flex gap-5 mb-2">
             <div>
