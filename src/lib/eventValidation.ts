@@ -1,4 +1,4 @@
-export const EVENT_TYPES = new Set(["yoga", "training", "running", "boxing"]);
+export const EVENT_TYPES = new Set(["yoga", "training", "running", "boxing", "pilates"]);
 export const EVENT_STATUSES = new Set(["draft", "published", "cancelled"]);
 
 export type EventInput = {

@@ -154,6 +154,7 @@ function eventTypeLabel(type: string): string {
     training: "トレーニング",
     running: "ランニング",
     boxing: "ボクシング",
+    pilates: "ピラティス",
   };
   return map[type] ?? type;
 }

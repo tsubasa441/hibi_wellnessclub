@@ -43,7 +43,7 @@
 | id | uuid | PK |
 | title | text | イベント名 |
 | description | text | 説明文 |
-| event_type | text | yoga / training / running / boxing |
+| event_type | text | yoga / training / running / boxing / pilates |
 | start_at | timestamptz | 開催日時 |
 | end_at | timestamptz | 終了日時 |
 | location | text | 開催場所 |
@@ -77,7 +77,7 @@
 | id | uuid | PK |
 | name | text | バッジ名 |
 | description | text | 説明 |
-| condition_type | text | monthly_first_running / monthly_first_yoga / monthly_first_training / monthly_first_boxing / monthly_event_count / monthly_referral_count |
+| condition_type | text | monthly_first_running / monthly_first_yoga / monthly_first_training / monthly_first_boxing / monthly_first_pilates / monthly_event_count / monthly_referral_count |
 | condition_value | integer | 達成条件の数値 |
 | icon_url | text | アイコン画像 |
 
@@ -171,6 +171,7 @@
 | Yoga First | 今月ヨガクラスに初参加 | monthly_first_yoga | 1 |
 | Training First | 今月トレーニングクラスに初参加 | monthly_first_training | 1 |
 | Boxing First | 今月ボクシングクラスに初参加 | monthly_first_boxing | 1 |
+| Pilates First | 今月ピラティスクラスに初参加 | monthly_first_pilates | 1 |
 | 3 Classes | 今月3回クラスに参加 | monthly_event_count | 3 |
 | 5 Classes | 今月5回クラスに参加 | monthly_event_count | 5 |
 | Bridge Builder | 今月友人を1人招待 | monthly_referral_count | 1 |

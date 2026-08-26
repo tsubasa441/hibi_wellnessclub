@@ -8,6 +8,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   training: "トレーニング",
   running: "ランニング",
   boxing: "ボクシング",
+  pilates: "ピラティス",
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {

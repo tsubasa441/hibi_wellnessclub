@@ -66,6 +66,7 @@ export async function checkEventBadges(
     yoga:     "monthly_first_yoga",
     training: "monthly_first_training",
     boxing:   "monthly_first_boxing",
+    pilates:  "monthly_first_pilates",
   };
 
   for (const [type, conditionType] of Object.entries(typeMap)) {

@@ -11,6 +11,7 @@ const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   training: { label: "トレーニング", color: "bg-sage-100 text-ink-700" },
   running:  { label: "ランニング",   color: "bg-sage-100 text-ink-700" },
   boxing:   { label: "ボクシング",   color: "bg-sage-100 text-ink-700" },
+  pilates:  { label: "ピラティス",   color: "bg-sage-100 text-ink-700" },
 };
 
 function formatDate(dateStr: string) {

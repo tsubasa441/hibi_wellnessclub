@@ -11,6 +11,7 @@ const EVENT_TYPE_OPTIONS = [
   { value: "training", label: "トレーニング" },
   { value: "running", label: "ランニング" },
   { value: "boxing", label: "ボクシング" },
+  { value: "pilates", label: "ピラティス" },
 ];
 
 const STATUS_OPTIONS = [

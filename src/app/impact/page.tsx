@@ -167,6 +167,7 @@ export default async function ImpactPage() {
     { label: "Yoga",    conditionType: "monthly_first_yoga",    hasType: monthlyEventTypes.has("yoga") },
     { label: "Training",conditionType: "monthly_first_training",hasType: monthlyEventTypes.has("training") },
     { label: "Boxing",  conditionType: "monthly_first_boxing",  hasType: monthlyEventTypes.has("boxing") },
+    { label: "Pilates", conditionType: "monthly_first_pilates", hasType: monthlyEventTypes.has("pilates") },
   ];
 
   // ---- 参加回数バッジ（3 → 5） ----
@@ -208,6 +209,7 @@ export default async function ImpactPage() {
     monthly_first_yoga:     "Yog",
     monthly_first_training: "Trn",
     monthly_first_boxing:   "Box",
+    monthly_first_pilates:  "Pil",
     monthly_event_count:    "",    // value で上書き
     monthly_referral_count: "",
   };
