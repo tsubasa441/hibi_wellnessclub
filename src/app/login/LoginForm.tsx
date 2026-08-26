@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
@@ -301,7 +302,7 @@ function LoginFormInner() {
             </div>
             <div>
               <p className={labelClass}>PASSWORD</p>
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
             </div>
             <div className="text-center">
               <button
@@ -378,7 +379,7 @@ function LoginFormInner() {
             </div>
             <div>
               <p className={labelClass}>PASSWORD</p>
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
               <p className="font-dm text-xs text-ink-300 mt-1">8〜15文字で、以下をすべて含めてください</p>
               <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
             </div>

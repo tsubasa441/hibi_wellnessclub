@@ -17,6 +17,7 @@
 | Header | `src/components/Header.tsx` | ロゴ・ログアウトボタン |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
+| PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
 
 ボタン・カードは共通コンポーネント化せず、下記バリエーションのユーティリティクラスをその都度使用する。
 
