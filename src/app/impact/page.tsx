@@ -118,7 +118,6 @@ export default async function ImpactPage() {
 
   // ---- 紹介 ----
   const rewardedCount = (referrals ?? []).filter((r: { status: string }) => r.status === "rewarded").length;
-  const totalPoints = rewardedCount * 200;
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
@@ -454,7 +453,7 @@ export default async function ImpactPage() {
         </div>
 
         {/* 紹介実績 */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <div className="nm-card p-3 text-center">
             <p className="font-outfit text-2xl font-bold text-ink-700">{(referrals ?? []).length}</p>
             <p className="font-dm text-xs text-ink-300 mt-1">紹介した人数</p>
@@ -462,10 +461,6 @@ export default async function ImpactPage() {
           <div className="nm-card p-3 text-center">
             <p className="font-outfit text-2xl font-bold text-ink-500">{rewardedCount}</p>
             <p className="font-dm text-xs text-ink-300 mt-1">初回参加完了</p>
-          </div>
-          <div className="nm-card p-3 text-center">
-            <p className="font-outfit text-2xl font-bold text-ink-700">{totalPoints}</p>
-            <p className="font-dm text-xs text-ink-300 mt-1">獲得ポイント</p>
           </div>
         </div>
 
