@@ -446,21 +446,21 @@ export default async function ImpactPage() {
         </div>
 
         {/* 紹介コード・シェアボタン */}
-        <div className="nm-card px-4 py-3">
-          <p className="font-outfit text-xs text-ink-300 mb-1">あなたの紹介コード</p>
-          <p className="font-outfit font-bold text-xl text-ink-700 tracking-widest mb-2">{profile?.referral_code}</p>
+        <div className="nm-card px-4 py-2.5">
+          <p className="font-outfit text-xs text-ink-300 mb-0.5">あなたの紹介コード</p>
+          <p className="font-outfit font-bold text-lg text-ink-700 tracking-widest mb-1.5">{profile?.referral_code}</p>
           <ReferralShare referralUrl={referralUrl} code={profile?.referral_code ?? ""} />
         </div>
 
         {/* 紹介実績 */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <div className="nm-card p-3 text-center">
-            <p className="font-outfit text-2xl font-bold text-ink-700">{(referrals ?? []).length}</p>
-            <p className="font-dm text-xs text-ink-300 mt-1">紹介した人数</p>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          <div className="nm-card p-2.5 text-center">
+            <p className="font-outfit text-xl font-bold text-ink-700">{(referrals ?? []).length}</p>
+            <p className="font-dm text-xs text-ink-300 mt-0.5">紹介した人数</p>
           </div>
-          <div className="nm-card p-3 text-center">
-            <p className="font-outfit text-2xl font-bold text-ink-500">{rewardedCount}</p>
-            <p className="font-dm text-xs text-ink-300 mt-1">初回参加完了</p>
+          <div className="nm-card p-2.5 text-center">
+            <p className="font-outfit text-xl font-bold text-ink-500">{rewardedCount}</p>
+            <p className="font-dm text-xs text-ink-300 mt-0.5">初回参加完了</p>
           </div>
         </div>
 

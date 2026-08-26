@@ -25,16 +25,16 @@ export default function ReferralShare({ referralUrl, code }: Props) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <button
         onClick={handleShare}
-        className="w-full font-outfit font-semibold text-sm nm-btn-primary text-white py-2.5"
+        className="w-full font-outfit font-semibold text-xs nm-btn-primary text-white py-2"
       >
         紹介リンクをシェア
       </button>
       <button
         onClick={handleCopy}
-        className="w-full font-outfit text-sm text-ink-500 border border-ink-500 rounded-xl py-2.5 hover:bg-base-100 transition"
+        className="w-full font-outfit text-xs text-ink-500 border border-ink-500 rounded-xl py-2 hover:bg-base-100 transition"
       >
         {copied ? "コピーしました" : "リンクをコピー"}
       </button>
