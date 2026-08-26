@@ -13,12 +13,13 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 ### 新規登録（/login の SIGN UP タブ）
 
 ```
-1. ユーザーが名前・メール・パスワード・性別・生年月日・紹介コード（任意）を入力
+1. ユーザーが名前・ニックネーム・メール・パスワード・性別・生年月日・紹介コード（任意）を入力
 2. supabase.auth.signUp() を呼び出す（options.data に name のみ渡す）
 3. Supabase の auth.users にレコード作成
 4. DB トリガーで profiles テーブルにレコード作成
    - referral_code をランダム生成して付与
 5. POST /api/signup/profile を呼び出し、性別・生年月日・紹介コードを暗号化して profiles に保存
+   - ニックネームは表示専用の情報のため暗号化せず平文で保存する（@docs/codingstandards.md 参照）
    - 紹介コードがある場合、紹介者を特定し referrals レコードを作成、双方に 200pt 付与
 6. /register-complete にリダイレクト
 ```

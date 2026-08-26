@@ -126,7 +126,7 @@
 
 - SIGN IN / SIGN UP を1ページ内でタブ切り替え（`useState` で制御）
 - SIGN IN フォーム: EMAIL・PASSWORD
-- SIGN UP フォーム: NAME・EMAIL・PASSWORD
+- SIGN UP フォーム: NAME・NICKNAME・EMAIL・PASSWORD
 - タブ切り替え時にフォームをリセット
 - SIGN IN 成功後 `/home` へ、SIGN UP 成功後 `/register-complete` へ遷移
 - カラー・シャドウはアプリ全体と同じニューモーフィズムトークン（`base-*` / `ink-*` / `sage-*`、`.nm-card` / `.nm-inset` / `.nm-btn-primary`）を使用

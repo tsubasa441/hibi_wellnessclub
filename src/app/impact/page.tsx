@@ -103,8 +103,11 @@ export default async function ImpactPage() {
     supabase.rpc("get_my_referred_names"),
   ]);
 
-  const referredNameMap = new Map<string, string>(
-    (referredNames ?? []).map((r: { referee_id: string; name: string }) => [r.referee_id, r.name])
+  const referredNameMap = new Map<string, { nickname: string; name: string }>(
+    (referredNames ?? []).map((r: { referee_id: string; nickname: string; name: string }) => [
+      r.referee_id,
+      { nickname: r.nickname, name: r.name },
+    ])
   );
 
   const totalCount = (bookings ?? []).length;
@@ -470,8 +473,8 @@ export default async function ImpactPage() {
           {(referrals ?? []).length > 0 ? (
             <div className="space-y-3">
               {(referrals ?? []).map((r: { id: string; referee_id: string; created_at: string; status: string }) => {
-                const refNameEncrypted = referredNameMap.get(r.referee_id);
-                const refName = refNameEncrypted ? decrypt(refNameEncrypted) : null;
+                const referred = referredNameMap.get(r.referee_id);
+                const refName = referred?.nickname || (referred?.name ? decrypt(referred.name) : null);
                 return (
                   <div key={r.id} className="nm-card-sm flex items-center justify-between p-3">
                     <div>

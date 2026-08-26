@@ -107,7 +107,7 @@ export default async function HomePage() {
               <p className="font-outfit text-xs text-white/70">（{currentRank.nameJa}）</p>
             </div>
           </div>
-          <p className="font-outfit text-xl font-semibold tracking-wide mt-2 truncate">{profile.name_roman || profile.name || "User"}</p>
+          <p className="font-outfit text-xl font-semibold tracking-wide mt-2 truncate">{profile.nickname || profile.name_roman || profile.name || "User"}</p>
 
           <div className="flex items-center gap-6 mt-3">
             <div>

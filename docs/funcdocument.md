@@ -27,7 +27,8 @@
 | カラム | 型 | 備考 |
 |--------|-----|------|
 | id | uuid | PK、auth.users と連携 |
-| name | text | 表示名 |
+| name | text | 氏名（暗号化）。管理者画面・CSVエクスポート・メール等、本人特定が必要な場面でのみ使用 |
+| nickname | text | ニックネーム（平文、最大20文字）。ユーザーが見るUI画面の表示名はすべてこちらを使用する |
 | avatar_url | text | プロフィール画像 |
 | referral_code | text | UNIQUE、紹介コード |
 | referred_by | uuid | FK → profiles.id |

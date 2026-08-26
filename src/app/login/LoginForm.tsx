@@ -23,6 +23,7 @@ function LoginFormInner() {
   const formTopRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
@@ -39,6 +40,7 @@ function LoginFormInner() {
 
   function resetForm() {
     setName("");
+    setNickname("");
     setEmail("");
     setPassword("");
     setGender("");
@@ -93,7 +95,7 @@ function LoginFormInner() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!name || !email || !password || !gender || !birthDate) {
+    if (!name || !nickname || !email || !password || !gender || !birthDate) {
       showError("未入力項目があります");
       return;
     }
@@ -107,6 +109,18 @@ function LoginFormInner() {
     const nameRegex = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
     if (!nameRegex.test(trimmedName)) {
       showError("お名前は日本語・英字のみ入力してください");
+      return;
+    }
+
+    // ニックネーム：日本語・英数字・スペースのみ、1〜20文字
+    const trimmedNickname = nickname.trim();
+    if (trimmedNickname.length > 20) {
+      showError("ニックネームは20文字以内で入力してください");
+      return;
+    }
+    const nicknameRegex = /^[a-zA-Z0-9぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,20}$/;
+    if (!nicknameRegex.test(trimmedNickname)) {
+      showError("ニックネームは日本語・英数字のみ入力してください");
       return;
     }
 
@@ -197,6 +211,7 @@ function LoginFormInner() {
       const profileBody = JSON.stringify({
         name: name.trim(),
         nameRoman,
+        nickname: nickname.trim(),
         gender,
         birthDate,
         referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
@@ -331,6 +346,10 @@ function LoginFormInner() {
             <div>
               <p className={labelClass}>NAME</p>
               <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="山田 太郎" />
+            </div>
+            <div>
+              <p className={labelClass}>NICKNAME</p>
+              <input type="text" required value={nickname} onChange={(e) => setNickname(e.target.value)} className={inputClass} placeholder="たろう" />
             </div>
             <div>
               <p className={labelClass}>EMAIL</p>
