@@ -54,6 +54,9 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
           <Link href={`/admin/events/${event.id}`} className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition">
             イベント編集へ戻る
           </Link>
+          <Link href="/admin/events" className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition">
+            イベント一覧へ戻る
+          </Link>
         </div>
       </div>
 
