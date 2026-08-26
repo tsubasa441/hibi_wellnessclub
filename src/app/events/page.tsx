@@ -5,6 +5,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import { getJstParts } from "@/lib/date";
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
   yoga:     { label: "ヨガ",         color: "bg-sage-100 text-ink-700" },
@@ -16,14 +17,16 @@ const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  return d.toLocaleDateString("ja-JP", {
+  const dateLabel = d.toLocaleDateString("ja-JP", {
     month: "long",
     day: "numeric",
     weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
     timeZone: "Asia/Tokyo",
   });
+  const { hours: h, minutes } = getJstParts(d);
+  const mi = String(minutes).padStart(2, "0");
+  const timeLabel = `${h % 12 || 12}:${mi} ${h < 12 ? "AM" : "PM"}`;
+  return `${dateLabel} ${timeLabel}`;
 }
 
 export default async function EventsPage() {

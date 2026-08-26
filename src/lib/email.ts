@@ -25,7 +25,7 @@ function formatDateTime(iso: string): string {
   const mo = String(month).padStart(2, "0");
   const day = String(dayNum).padStart(2, "0");
   const min = String(mi).padStart(2, "0");
-  return `${y}年${mo}月${day}日（${DAYS[dayOfWeek]}） ${h}:${min}`;
+  return `${y}年${mo}月${day}日（${DAYS[dayOfWeek]}） ${h % 12 || 12}:${min} ${h < 12 ? "AM" : "PM"}`;
 }
 
 type CancellationNotificationParams = {
