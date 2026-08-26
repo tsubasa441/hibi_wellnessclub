@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -27,11 +27,37 @@ function LoginFormInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
-  const [birthDate, setBirthDate] = useState("");
+  const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthDay, setBirthDay] = useState("");
   const [referralCode, setReferralCode] = useState(searchParams.get("ref") ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  const currentYear = new Date().getFullYear();
+  const YEAR_OPTIONS = useMemo(
+    () => Array.from({ length: currentYear - 1900 + 1 }, (_, i) => currentYear - i),
+    [currentYear]
+  );
+  const MONTH_OPTIONS = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), []);
+  const daysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
+  const DAY_OPTIONS = useMemo(() => {
+    const max = birthYear && birthMonth ? daysInMonth(Number(birthYear), Number(birthMonth)) : 31;
+    return Array.from({ length: max }, (_, i) => i + 1);
+  }, [birthYear, birthMonth]);
+
+  // 年・月を変更した結果、選択済みの日がその月に存在しなくなった場合はリセットする（例: 31日→2月）
+  useEffect(() => {
+    if (birthYear && birthMonth && birthDay && Number(birthDay) > daysInMonth(Number(birthYear), Number(birthMonth))) {
+      setBirthDay("");
+    }
+  }, [birthYear, birthMonth, birthDay]);
+
+  const birthDate =
+    birthYear && birthMonth && birthDay
+      ? `${birthYear}-${String(birthMonth).padStart(2, "0")}-${String(birthDay).padStart(2, "0")}`
+      : "";
 
   function showError(msg: string) {
     setError(msg);
@@ -44,7 +70,9 @@ function LoginFormInner() {
     setEmail("");
     setPassword("");
     setGender("");
-    setBirthDate("");
+    setBirthYear("");
+    setBirthMonth("");
+    setBirthDay("");
     setReferralCode(searchParams.get("ref") ?? "");
     setError(null);
     setResetSent(false);
@@ -128,13 +156,6 @@ function LoginFormInner() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email) || email.length > 254) {
       showError("メールアドレスの形式が正しくありません");
-      return;
-    }
-
-    // 生年月日：年が4桁であること
-    const birthYear = new Date(birthDate).getFullYear();
-    if (birthYear < 1900 || birthYear > new Date().getFullYear()) {
-      showError("生年月日を正しく入力してください");
       return;
     }
 
@@ -382,16 +403,39 @@ function LoginFormInner() {
             {/* 生年月日 */}
             <div>
               <p className={labelClass}>DATE OF BIRTH</p>
-              {/* iOS Safari は input[type=date] の内部表示に CSS 幅を超える最小幅を確保することがあるため、rounded-xl の枠内にクリップする */}
-              <div className="overflow-hidden rounded-xl">
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  min="1900-01-01"
-                  max={`${new Date().getFullYear()}-12-31`}
+              {/* iOS Safari の input[type=date] は内部表示が枠のCSS幅を超えてはみ出すことがあるため、
+                  ネイティブの描画に依存しないプルダウン（年・月・日）で入力させる */}
+              <div className="flex gap-2">
+                <select
+                  value={birthYear}
+                  onChange={(e) => setBirthYear(e.target.value)}
                   className={`${inputClass} [color-scheme:light]`}
-                />
+                >
+                  <option value="">年</option>
+                  {YEAR_OPTIONS.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={birthMonth}
+                  onChange={(e) => setBirthMonth(e.target.value)}
+                  className={`${inputClass} [color-scheme:light]`}
+                >
+                  <option value="">月</option>
+                  {MONTH_OPTIONS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <select
+                  value={birthDay}
+                  onChange={(e) => setBirthDay(e.target.value)}
+                  className={`${inputClass} [color-scheme:light]`}
+                >
+                  <option value="">日</option>
+                  {DAY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

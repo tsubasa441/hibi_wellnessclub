@@ -126,7 +126,7 @@
 | GET / POST | `/api/journals` | ジャーナル取得・記録 | 必要 |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・紹介報酬付与 | 必要 |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 必要 |
-| POST | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron） | 不要（Cron Secret） |
+| GET | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron。GETのみexport、Vercel Cronの既定に合わせた実装） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
 | POST | `/api/admin/events` | イベント作成 | 必要（管理者のみ） |
 | PATCH | `/api/admin/events/[id]` | イベント更新 | 必要（管理者のみ） |
