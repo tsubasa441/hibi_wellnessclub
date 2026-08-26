@@ -349,7 +349,7 @@ function LoginFormInner() {
             </div>
             <div>
               <p className={labelClass}>NICKNAME</p>
-              <input type="text" required value={nickname} onChange={(e) => setNickname(e.target.value)} className={inputClass} placeholder="たろう" />
+              <input type="text" required value={nickname} onChange={(e) => setNickname(e.target.value)} className={inputClass} placeholder="タロウ" />
             </div>
             <div>
               <p className={labelClass}>EMAIL</p>
