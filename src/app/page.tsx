@@ -22,13 +22,11 @@ export default function HomePage() {
         </p>
         <div className="flex flex-col items-center gap-3 text-center animate-fade-up animate-delay-300">
           <p className="font-dm text-sm text-white font-medium drop-shadow">
-            大人になった今でも心躍る毎日を
+            なんでもない日々が、輝きだす。
           </p>
           <p className="font-cormorant text-[10px] text-white/80 leading-loose tracking-wide drop-shadow max-w-xs">
-            福岡と東京を拠点としたウェルネスコミュニティ。<br />
-            ランニング、トレーニング、ヨガ、ボクシングなどのイベントを通じて、
-            新しい「自分」、「つながり」、「ライフスタイル」を<br />
-            見つけるきっかけに。
+            からだを動かし、気の合う仲間と出会い、毎日に新しい彩りが生まれる。<br />
+            運動からはじまる、大人のウェルネスコミュニティ。
           </p>
         </div>
         <Link
