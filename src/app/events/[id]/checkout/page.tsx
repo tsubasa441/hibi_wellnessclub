@@ -7,21 +7,52 @@ import CheckoutForm from "./CheckoutForm";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import { getJstParts } from "@/lib/date";
+import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 
-export default async function CheckoutPage({ params }: { params: { id: string } }) {
+function parseOpts(raw: string | undefined) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function CheckoutPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { opts?: string };
+}) {
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
-  const [{ data: event }, { count: bookedCount }, { data: profile }] = await Promise.all([
+  const [{ data: event }, { count: bookedCount }, { data: profile }, { data: eventOptions }] = await Promise.all([
     supabase.from("events").select("*").eq("id", params.id).single(),
     createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", params.id).eq("status", "confirmed"),
     supabase.from("profiles").select("points").eq("id", user.id).single(),
+    supabase
+      .from("event_options")
+      .select("id, label, choices, multi_select, required, sort_order")
+      .eq("event_id", params.id)
+      .order("sort_order", { ascending: true }),
   ]);
 
   if (!event) notFound();
+
+  const submittedOptions = parseOpts(searchParams.opts);
+  const { error: optionError, selections: optionSelections } = buildOptionSelections(
+    (eventOptions ?? []) as EventOptionRow[],
+    submittedOptions
+  );
+  // 必須の選択項目が未回答のままここに来た場合は詳細画面に戻す
+  if (optionError) redirect(`/events/${params.id}`);
+  const checkoutOptionPayload = optionSelections.map((s) => ({ optionId: s.option_id, values: s.values }));
 
   const { data: existingBooking } = await supabase
     .from("bookings")
@@ -74,6 +105,20 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
           </div>
         </div>
 
+        {optionSelections.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(44,53,49,0.08)] p-5 mb-6">
+            <p className="font-outfit text-xs text-ink-300 mb-2">選択内容</p>
+            {optionSelections.map((s) => (
+              <p key={s.option_id} className="font-dm text-sm text-ink-700">
+                {s.label}：{s.values.join("、")}
+              </p>
+            ))}
+            <p className="font-dm text-xs text-ink-300 mt-2">
+              変更する場合は前の画面に戻って選び直してください。
+            </p>
+          </div>
+        )}
+
         <div className="bg-base-100 border border-sage-200 rounded-xl p-4 mb-6 text-sm text-ink-700">
           <p className="font-outfit font-semibold mb-1">キャンセルポリシー</p>
           <ul className="font-dm space-y-0.5">
@@ -89,6 +134,7 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
           userId={user.id}
           locationId={process.env.SQUARE_LOCATION_ID!}
           pointsBalance={profile?.points ?? 0}
+          optionSelections={checkoutOptionPayload}
         />
       </div>
       <BottomNav />

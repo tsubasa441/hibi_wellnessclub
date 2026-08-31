@@ -55,6 +55,23 @@
 | status | text | draft / published / cancelled |
 | created_at | timestamptz | |
 
+### event_options
+
+イベントごとの「選択項目」。管理者がイベント作成/編集時に任意個数（最大10）設定でき、ユーザーはイベント詳細画面でプルダウン選択してから予約する。**金額・ポイント・返金には一切影響しない**（無料の情報項目）。
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| event_id | uuid | FK → events.id（`on delete cascade`） |
+| label | text | 項目名（例「Tシャツサイズ」）。1〜50文字 |
+| choices | jsonb | 選択肢の文字列配列。1〜20個、各1〜50文字、重複不可 |
+| multi_select | boolean | 複数選択可。既定 false |
+| required | boolean | 回答必須。既定 false |
+| sort_order | integer | 表示順 |
+| created_at | timestamptz | |
+
+編集時は置き換え方式（既存の `event_options` を全削除して再作成）。既存予約の回答は `bookings.option_selections` にスナップショット済みのため影響しない。
+
 ### bookings
 
 | カラム | 型 | 備考 |
@@ -68,6 +85,7 @@
 | status | text | confirmed / cancelled |
 | points_used | integer | 予約時に充当したポイント数（1pt = 1円）。デフォルト0 |
 | amount_charged | integer | Square / PayPay に実際に請求した金額（円）。ポイント全額充当時は0。価格変動時の返金額算出にはこの値を使う（`events.price` は使わない） |
+| option_selections | jsonb | 予約時の選択項目（`event_options`）の回答スナップショット。形: `[{ "option_id": uuid, "label": text, "values": [text] }]`。既定 `[]`。決済額・返金には無関係 |
 | created_at | timestamptz | |
 
 ### badges
@@ -128,12 +146,12 @@
 | POST | `/api/convert-name` | 名前ローマ字変換 | 必要 |
 | GET | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron。GETのみexport、Vercel Cronの既定に合わせた実装） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
-| POST | `/api/admin/events` | イベント作成 | 必要（管理者のみ） |
-| PATCH | `/api/admin/events/[id]` | イベント更新 | 必要（管理者のみ） |
+| POST | `/api/admin/events` | イベント作成（`event_options` の作成を含む） | 必要（管理者のみ） |
+| PATCH | `/api/admin/events/[id]` | イベント更新（`event_options` を置き換え方式で更新） | 必要（管理者のみ） |
 | DELETE | `/api/admin/events/[id]` | イベント削除（論理削除。`status` を `cancelled` に更新するのみ） | 必要（管理者のみ） |
 | GET | `/api/admin/events/[id]/participants/export` | 参加者一覧の CSV エクスポート | 必要（管理者のみ） |
 
-イベント一覧・詳細・プロフィールの取得は API Routes を介さず、Server Component から Supabase に直接クエリする（`docs/architecture.md` のデータフロー参照）。管理画面のイベント一覧・編集・参加者一覧も同様に Server Component から直接クエリし、書き込み（作成・更新・削除・CSV）のみ上記 API Routes を介する。
+イベント一覧・詳細・プロフィールの取得は API Routes を介さず、Server Component から Supabase に直接クエリする（`docs/architecture.md` のデータフロー参照）。管理画面のイベント一覧・編集・参加者一覧も同様に Server Component から直接クエリし、書き込み（作成・更新・削除・CSV）のみ上記 API Routes を介する。`event_options` の取得（イベント詳細・決済画面・管理編集画面）も Server Component から直接クエリする。選択項目の回答は決済 API（`/api/payments/*`）でサーバー側検証（必須・選択肢の妥当性・単一/複数）してから `bookings.option_selections` に保存する。
 
 ---
 

@@ -28,16 +28,20 @@ interface SquareCard {
   destroy: () => Promise<void>;
 }
 
+type OptionSelectionPayload = { optionId: string; values: string[] };
+
 export default function CheckoutForm({
   event,
   userId,
   locationId,
   pointsBalance,
+  optionSelections = [],
 }: {
   event: Event;
   userId: string;
   locationId: string;
   pointsBalance: number;
+  optionSelections?: OptionSelectionPayload[];
 }) {
   const router = useRouter();
   const [method, setMethod] = useState<PaymentMethod>("square");
@@ -117,7 +121,7 @@ export default function CheckoutForm({
       const res = await fetch(`/api/payments/${method}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId: event.id, userId, sourceId, pointsToUse }),
+        body: JSON.stringify({ eventId: event.id, userId, sourceId, pointsToUse, optionSelections }),
       });
 
       const data = await res.json();

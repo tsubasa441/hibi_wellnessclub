@@ -86,6 +86,8 @@ describe("PATCH /api/admin/events/[id]", () => {
     from.mockReturnValueOnce(
       chainable({ data: { id: "event-1", ...VALID_BODY }, error: null }, { update: updateSpy })
     );
+    // event_options の置き換え（delete → 再 insert）
+    from.mockReturnValueOnce(chainable({ error: null }));
 
     const res = await PATCH(makeRequest(VALID_BODY), { params: { id: "event-1" } });
     const json = await res.json();

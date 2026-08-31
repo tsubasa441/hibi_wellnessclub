@@ -48,6 +48,7 @@ src/
 │   │   └── [id]/
 │   │       ├── page.tsx        # イベント詳細
 │   │       ├── BookingButton.tsx
+│   │       ├── EventOptionFields.tsx  # 選択項目の入力UI（単一=select / 複数=チェックボックスパネル）
 │   │       └── checkout/
 │   │           ├── page.tsx
 │   │           └── CheckoutForm.tsx
@@ -99,7 +100,7 @@ src/
 │   ├── date.ts                 # JST基準の日付・時刻ヘルパー（サーバーの実行タイムゾーンに依存しないための共通処理）
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号
-│   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）
+│   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）・選択項目の検証とスナップショット組み立て
 │   ├── points.ts               # ポイント付与・取り消しロジック
 │   ├── ranks.ts                # ランク定義・ランクアップ判定
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）

@@ -63,6 +63,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
     mocks.isAdmin.mockResolvedValueOnce(true);
     setupServiceClient();
     from.mockReturnValueOnce(chainable({ data: [], error: null }));
+    from.mockReturnValueOnce(chainable({ data: [], error: null }));
 
     const res = await GET(DUMMY_REQUEST, { params: { id: "event-1" } });
     const buffer = await res.arrayBuffer();
@@ -96,6 +97,12 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
             profiles: { name: "enc:taro" },
           },
         ],
+        error: null,
+      })
+    );
+    from.mockReturnValueOnce(
+      chainable({
+        data: [{ label: "Tシャツサイズ", sort_order: 0 }],
         error: null,
       })
     );

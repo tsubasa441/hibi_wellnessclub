@@ -47,9 +47,14 @@ export default async function EventDetailPage({ params }: { params: { id: string
   if (!user) redirect("/login");
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
-  const [{ data: event }, { count: bookedCount }] = await Promise.all([
+  const [{ data: event }, { count: bookedCount }, { data: eventOptions }] = await Promise.all([
     supabase.from("events").select("*").eq("id", params.id).single(),
     createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", params.id).eq("status", "confirmed"),
+    supabase
+      .from("event_options")
+      .select("id, label, choices, multi_select, required, sort_order")
+      .eq("event_id", params.id)
+      .order("sort_order", { ascending: true }),
   ]);
 
   if (!event) notFound();
@@ -153,6 +158,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
               user={user}
               userBooking={userBooking}
               isSoldOut={isSoldOut}
+              options={eventOptions ?? []}
             />
           </div>
         </div>

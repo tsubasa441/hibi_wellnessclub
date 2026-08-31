@@ -6,6 +6,7 @@ import { checkRankUp } from "@/lib/ranks";
 import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
 import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
+import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 
 PAYPAY.Configure({
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
   }
 
-  const { eventId, pointsToUse } = await req.json();
+  const { eventId, pointsToUse, optionSelections } = await req.json();
 
   if (!eventId) {
     return NextResponse.json({ error: "イベントIDが必要です" }, { status: 400 });
@@ -66,6 +67,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "満席です" }, { status: 400 });
   }
 
+  // 選択項目の回答を検証し、保存用スナップショットを組み立てる（金額には影響しない）
+  const { data: eventOptions } = await createServiceClient()
+    .from("event_options")
+    .select("id, label, choices, multi_select, required, sort_order")
+    .eq("event_id", eventId)
+    .order("sort_order", { ascending: true });
+  const { error: optionError, selections: optionSelectionSnapshot } = buildOptionSelections(
+    (eventOptions ?? []) as EventOptionRow[],
+    optionSelections
+  );
+  if (optionError) {
+    return NextResponse.json({ error: optionError }, { status: 400 });
+  }
+
   // ポイント充当額（参加費が上限、1pt = 1円）
   const requestedPoints = Math.max(0, Math.min(Math.floor(Number(pointsToUse) || 0), event.price));
   const amountToCharge = event.price - requestedPoints;
@@ -91,6 +106,7 @@ export async function POST(req: NextRequest) {
       status: "confirmed",
       points_used: requestedPoints,
       amount_charged: amountToCharge,
+      option_selections: optionSelectionSnapshot,
     })
     .select("id")
     .single();

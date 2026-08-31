@@ -6,11 +6,14 @@ import { decrypt } from "@/lib/encrypt";
 const PAYMENT_LABELS: Record<string, string> = { square: "Square", paypay: "PayPay", free: "無料" };
 const STATUS_LABELS: Record<string, string> = { pending: "未払い", paid: "支払済み", refunded: "返金済み" };
 
+type OptionSelection = { option_id: string; label: string; values: string[] };
+
 type BookingRow = {
   id: string;
   payment_method: string | null;
   payment_status: string;
   points_used: number | null;
+  option_selections: OptionSelection[] | null;
   created_at: string;
   profiles: { name: string } | { name: string }[] | null;
 };
@@ -28,12 +31,13 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, payment_method, payment_status, points_used, created_at, profiles(name)")
+    .select("id, payment_method, payment_status, points_used, option_selections, created_at, profiles(name)")
     .eq("event_id", params.id)
     .eq("status", "confirmed")
     .order("created_at", { ascending: true });
 
   const bookings = (data ?? []) as unknown as BookingRow[];
+  const hasOptions = bookings.some((b) => (b.option_selections ?? []).length > 0);
 
   return (
     <div>
@@ -69,6 +73,9 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">決済方法</th>
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">決済状況</th>
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">使用ポイント</th>
+                {hasOptions && (
+                  <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">選択項目</th>
+                )}
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">予約日時</th>
               </tr>
             </thead>
@@ -87,6 +94,17 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
                       {STATUS_LABELS[b.payment_status] ?? b.payment_status}
                     </td>
                     <td className="font-dm text-sm text-ink-500 px-4 py-3">{b.points_used ?? 0}pt</td>
+                    {hasOptions && (
+                      <td className="font-dm text-sm text-ink-500 px-4 py-3">
+                        {(b.option_selections ?? []).length > 0
+                          ? (b.option_selections ?? []).map((s) => (
+                              <span key={s.option_id} className="block">
+                                {s.label}：{s.values.join("、")}
+                              </span>
+                            ))
+                          : "-"}
+                      </td>
+                    )}
                     <td className="font-dm text-sm text-ink-300 px-4 py-3">
                       {new Date(b.created_at).toLocaleString("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" })}
                     </td>

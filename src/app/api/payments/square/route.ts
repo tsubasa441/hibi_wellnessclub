@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/encrypt";
 import { checkRankUp } from "@/lib/ranks";
 import { checkEventBadges } from "@/lib/badges";
 import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
+import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 
 const squareClient = new SquareClient({
   token: process.env.SQUARE_ACCESS_TOKEN!,
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
   }
 
-  const { eventId, sourceId, pointsToUse } = await req.json();
+  const { eventId, sourceId, pointsToUse, optionSelections } = await req.json();
 
   if (!eventId || !sourceId) {
     return NextResponse.json({ error: "パラメータが不足しています" }, { status: 400 });
@@ -61,6 +62,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "満席です" }, { status: 400 });
   }
 
+  // 選択項目の回答を検証し、保存用スナップショットを組み立てる（金額には影響しない）
+  const { data: eventOptions } = await createServiceClient()
+    .from("event_options")
+    .select("id, label, choices, multi_select, required, sort_order")
+    .eq("event_id", eventId)
+    .order("sort_order", { ascending: true });
+  const { error: optionError, selections: optionSelectionSnapshot } = buildOptionSelections(
+    (eventOptions ?? []) as EventOptionRow[],
+    optionSelections
+  );
+  if (optionError) {
+    return NextResponse.json({ error: optionError }, { status: 400 });
+  }
+
   // 無料イベントはSquare決済不要
   if (event.price === 0) {
     const { error } = await supabase.from("bookings").insert({
@@ -70,6 +85,7 @@ export async function POST(req: NextRequest) {
       payment_status: "paid",
       payment_id: null,
       status: "confirmed",
+      option_selections: optionSelectionSnapshot,
     });
     if (error) return NextResponse.json({ error: "予約の作成に失敗しました" }, { status: 500 });
 
@@ -117,6 +133,7 @@ export async function POST(req: NextRequest) {
       status: "confirmed",
       points_used: requestedPoints,
       amount_charged: 0,
+      option_selections: optionSelectionSnapshot,
     });
 
     if (bookingError) {
@@ -174,6 +191,7 @@ export async function POST(req: NextRequest) {
       status: "confirmed",
       points_used: requestedPoints,
       amount_charged: amountToCharge,
+      option_selections: optionSelectionSnapshot,
     });
 
     if (bookingError) {

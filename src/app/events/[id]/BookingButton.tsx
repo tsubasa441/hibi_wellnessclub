@@ -1,23 +1,26 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import EventOptionFields, { EventOption } from "./EventOptionFields";
 
 type Event = { id: string; price: number; title: string };
 type User = { id: string };
-type Booking = { id: string } | null;
+type OptionSelectionSnapshot = { option_id: string; label: string; values: string[] };
+type Booking = { id: string; option_selections?: OptionSelectionSnapshot[] | null } | null;
 
 export default function BookingButton({
   event,
   user,
   userBooking,
   isSoldOut,
+  options = [],
 }: {
   event: Event;
   user: User;
   userBooking: Booking;
   isSoldOut: boolean;
+  options?: EventOption[];
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -25,6 +28,13 @@ export default function BookingButton({
 
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+
+  const [selections, setSelections] = useState<Record<string, string[]>>({});
+
+  const missingRequired = useMemo(
+    () => options.some((o) => o.required && (selections[o.id]?.length ?? 0) === 0),
+    [options, selections]
+  );
 
   // userBooking がサーバーの最新データに切り替わったタイミングでのみ
   // loading/cancelLoading をリセットする。fetch 直後に即リセットすると、
@@ -53,12 +63,23 @@ export default function BookingButton({
   }
 
   if (userBooking) {
+    const answered = (userBooking.option_selections ?? []).filter((s) => s.values.length > 0);
     return (
       <div className="space-y-3">
         <div className="bg-sage-100 border border-sage-200 rounded-xl p-4 text-center">
           <p className="font-maru font-semibold text-ink-700">予約済みです</p>
           <p className="font-maru text-sm text-ink-500 mt-1">このイベントへの参加が確定しています。</p>
         </div>
+        {answered.length > 0 && (
+          <div className="bg-base-100 rounded-xl p-4">
+            <p className="font-maru text-xs text-ink-400 mb-1">選択内容</p>
+            {answered.map((s) => (
+              <p key={s.option_id} className="font-maru text-sm font-medium text-ink-700">
+                {s.label}：{s.values.join("、")}
+              </p>
+            ))}
+          </div>
+        )}
         {cancelError && (
           <div className="bg-red-50 text-red-600 font-maru text-sm rounded-lg px-4 py-3">{cancelError}</div>
         )}
@@ -81,13 +102,21 @@ export default function BookingButton({
     );
   }
 
+  function buildOptionPayload() {
+    return options.map((o) => ({ optionId: o.id, values: selections[o.id] ?? [] }));
+  }
+
   async function handleFreeBooking() {
+    if (missingRequired) {
+      setError("必須の選択項目を選んでください");
+      return;
+    }
     setLoading(true);
     setError(null);
     const res = await fetch("/api/payments/square", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventId: event.id, sourceId: "FREE" }),
+      body: JSON.stringify({ eventId: event.id, sourceId: "FREE", optionSelections: buildOptionPayload() }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -100,8 +129,20 @@ export default function BookingButton({
     }
   }
 
+  function handleGoToCheckout() {
+    if (missingRequired) {
+      setError("必須の選択項目を選んでください");
+      return;
+    }
+    const query = new URLSearchParams({ opts: JSON.stringify(buildOptionPayload()) });
+    router.push(`/events/${event.id}/checkout?${query.toString()}`);
+  }
+
   return (
     <div className="space-y-3">
+      {options.length > 0 && (
+        <EventOptionFields options={options} value={selections} onChange={setSelections} />
+      )}
       {error && (
         <div className="bg-red-50 text-red-600 font-maru text-sm rounded-lg px-4 py-3">{error}</div>
       )}
@@ -114,12 +155,12 @@ export default function BookingButton({
           {loading ? "予約中..." : "予約する"}
         </button>
       ) : (
-        <Link
-          href={`/events/${event.id}/checkout`}
-          className="block w-full text-center bg-sage-500 text-white font-maru font-medium py-3 rounded-full hover:bg-sage-600 transition"
+        <button
+          onClick={handleGoToCheckout}
+          className="w-full text-center bg-sage-500 text-white font-maru font-medium py-3 rounded-full hover:bg-sage-600 transition"
         >
           予約する
-        </Link>
+        </button>
       )}
     </div>
   );

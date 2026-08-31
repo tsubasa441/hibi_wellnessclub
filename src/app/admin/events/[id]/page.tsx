@@ -6,11 +6,14 @@ import DeleteEventButton from "./DeleteEventButton";
 
 export default async function EditEventPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const { data: event } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  const [{ data: event }, { data: options }] = await Promise.all([
+    supabase.from("events").select("*").eq("id", params.id).single(),
+    supabase
+      .from("event_options")
+      .select("id, label, choices, multi_select, required, sort_order")
+      .eq("event_id", params.id)
+      .order("sort_order", { ascending: true }),
+  ]);
 
   if (!event) notFound();
 
@@ -31,7 +34,7 @@ export default async function EditEventPage({ params }: { params: { id: string }
         </div>
       </div>
 
-      <EventForm mode="edit" initialEvent={event} />
+      <EventForm mode="edit" initialEvent={event} initialOptions={options ?? []} />
 
       <div className="mt-8 pt-6 border-t border-base-200">
         <DeleteEventButton eventId={event.id} disabled={event.status === "cancelled"} />
