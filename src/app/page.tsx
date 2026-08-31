@@ -31,7 +31,11 @@ export default function HomePage() {
         </div>
         <Link
           href="/login"
-          className="mt-4 bg-white/90 text-ink-700 font-outfit font-medium text-sm px-8 py-3 rounded-full hover:bg-white transition tracking-wider animate-fade-up animate-delay-500"
+          className="mt-4 bg-white text-ink-700 font-outfit font-semibold text-sm px-8 py-3.5 rounded-full tracking-wider transition-all duration-150 will-change-transform
+            shadow-[0_10px_22px_-6px_rgba(0,0,0,0.38),0_2px_4px_rgba(0,0,0,0.22),inset_0_2px_1px_rgba(255,255,255,0.95),inset_0_-4px_5px_rgba(44,53,49,0.14)]
+            hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-6px_rgba(0,0,0,0.42),0_3px_6px_rgba(0,0,0,0.26),inset_0_2px_1px_rgba(255,255,255,0.95),inset_0_-4px_5px_rgba(44,53,49,0.14)]
+            active:translate-y-1 active:shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_3px_6px_rgba(44,53,49,0.22)]
+            animate-fade-up animate-delay-500"
         >
           イベントご参加の方はこちら
         </Link>
