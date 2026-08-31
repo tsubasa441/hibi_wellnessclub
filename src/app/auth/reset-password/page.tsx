@@ -13,6 +13,7 @@ type LinkStatus = "checking" | "ready" | "invalid";
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [linkStatus, setLinkStatus] = useState<LinkStatus>("checking");
+  const [invalidDetail, setInvalidDetail] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,36 +22,59 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    let settled = false;
+
+    const markReady = () => {
+      if (settled) return;
+      settled = true;
+      setLinkStatus("ready");
+    };
+    const markInvalid = (detail?: string | null) => {
+      if (settled) return;
+      settled = true;
+      if (detail) setInvalidDetail(detail);
+      setLinkStatus("invalid");
+    };
 
     // Supabaseはリンク無効時にhashまたはqueryへerror系パラメータを付与してリダイレクトしてくる
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const queryParams = new URLSearchParams(window.location.search);
-    if (hashParams.get("error") || queryParams.get("error")) {
-      setLinkStatus("invalid");
+    const errParam = hashParams.get("error") || queryParams.get("error");
+    const errDesc =
+      hashParams.get("error_description") ||
+      queryParams.get("error_description") ||
+      hashParams.get("error_code") ||
+      queryParams.get("error_code");
+    if (errParam) {
+      markInvalid(errDesc ? decodeURIComponent(errDesc.replace(/\+/g, " ")) : null);
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setLinkStatus("ready");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        markReady();
       }
     });
 
-    // イベント発火前に既にリカバリーセッションが確立している場合のフォールバック
-    supabase.auth.getSession().then(({ data }) => {
+    // /auth/confirm がサーバー側で verifyOtp 済みなら Cookie にセッションがある。
+    // hash/クエリのトークン検出（detectSessionInUrl）が非同期で走るケースも含め、
+    // 数回 getSession をポーリングして確立を待つ。
+    let tries = 0;
+    const poll = setInterval(async () => {
+      tries += 1;
+      const { data } = await supabase.auth.getSession();
       if (data.session) {
-        setLinkStatus((s) => (s === "checking" ? "ready" : s));
+        clearInterval(poll);
+        markReady();
+      } else if (tries >= 16) {
+        clearInterval(poll);
+        markInvalid();
       }
-    });
-
-    // リンクが壊れている等でイベントが一切発火しないケースを一定時間で無効判定にする
-    const timeout = setTimeout(() => {
-      setLinkStatus((s) => (s === "checking" ? "invalid" : s));
-    }, 5000);
+    }, 500);
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timeout);
+      clearInterval(poll);
     };
   }, []);
 
@@ -119,6 +143,11 @@ export default function ResetPasswordPage() {
               <p className="font-dm text-sm text-ink-300 leading-relaxed">
                 このリンクの有効期限が切れているか、既に使用されています。お手数ですが、もう一度パスワード再設定をお試しください。
               </p>
+              {invalidDetail && (
+                <p className="font-dm text-[11px] text-ink-200 leading-relaxed break-all">
+                  {invalidDetail}
+                </p>
+              )}
             </div>
             <button
               type="button"

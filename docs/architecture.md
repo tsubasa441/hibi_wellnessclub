@@ -54,7 +54,8 @@ src/
 │   │           └── CheckoutForm.tsx
 │   ├── bookings/page.tsx        # 予約済みイベント一覧・キャンセル
 │   ├── auth/
-│   │   └── reset-password/page.tsx  # パスワード再設定（リセットメールのリンク先）
+│   │   ├── confirm/route.ts         # 再設定メールのリンク先。token_hash を verifyOtp して /auth/reset-password へ
+│   │   └── reset-password/page.tsx  # パスワード再設定（confirm 経由でリカバリーセッション確立後に表示）
 │   ├── impact/
 │   │   ├── page.tsx            # Impact（プロフィール・参加履歴・バッジ・紹介）
 │   │   └── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）

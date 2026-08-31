@@ -46,7 +46,16 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 1. ユーザーがメールアドレスを入力
 2. supabase.auth.resetPasswordForEmail() を呼び出す（redirectTo: /auth/reset-password）
 3. Supabase からリセットリンク付きメールが送信される
-4. ユーザーがメール内のリンクをクリックし /auth/reset-password に遷移（Supabase が一時的なリカバリーセッションを発行）
+   - メールテンプレート（Supabase Dashboard > Authentication > Email Templates > Reset Password）は
+     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` を指す（token_hash 方式）
+4. ユーザーがリンクをクリック → GET /auth/confirm（route handler）が
+   supabase.auth.verifyOtp({ type: "recovery", token_hash }) をサーバー側で実行し、
+   Cookie にリカバリーセッションを確立してから /auth/reset-password へリダイレクトする
+   - PKCE の code_verifier に依存しないため、リセット申請した端末と別の端末・ブラウザで
+     メールを開いてもパスワード再設定できる（@supabase/ssr の createBrowserClient は
+     flowType を pkce に固定するため、`?code=` 方式だと別端末で verifier が無く失敗する）
+   - 検証失敗時は /auth/reset-password?error=invalid_link へ。reset-password 画面は
+     error 系パラメータと getSession のポーリングで「リンクが無効です」を表示する
 5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す
 6. 同ページ内に再設定完了画面を表示し、「ログイン画面へ」ボタンからリカバリーセッションを signOut() した上で /login へ遷移
 ```
