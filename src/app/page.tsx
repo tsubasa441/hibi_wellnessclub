@@ -31,7 +31,7 @@ export default function HomePage() {
         </div>
         <Link
           href="/login"
-          className="mt-4 bg-white/90 text-ink-700 font-outfit font-medium text-xs px-6 py-1.5 rounded-full hover:bg-white transition tracking-wider animate-fade-up animate-delay-500"
+          className="mt-4 bg-white/90 text-ink-700 font-outfit font-medium text-sm px-8 py-3 rounded-full hover:bg-white transition tracking-wider animate-fade-up animate-delay-500"
         >
           イベントご参加の方はこちら
         </Link>
