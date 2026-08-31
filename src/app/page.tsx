@@ -31,13 +31,26 @@ export default function HomePage() {
         </div>
         <Link
           href="/login"
-          className="mt-4 bg-white text-ink-700 font-outfit font-semibold text-sm px-8 py-3.5 rounded-full tracking-wider transition-all duration-150 will-change-transform
+          className="mt-4 inline-flex items-center gap-2 whitespace-nowrap bg-white text-ink-700 font-outfit font-semibold text-sm px-7 py-3.5 rounded-full tracking-wide transition-all duration-150 will-change-transform
             shadow-[0_10px_22px_-6px_rgba(0,0,0,0.38),0_2px_4px_rgba(0,0,0,0.22),inset_0_2px_1px_rgba(255,255,255,0.95),inset_0_-4px_5px_rgba(44,53,49,0.14)]
             hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-6px_rgba(0,0,0,0.42),0_3px_6px_rgba(0,0,0,0.26),inset_0_2px_1px_rgba(255,255,255,0.95),inset_0_-4px_5px_rgba(44,53,49,0.14)]
             active:translate-y-1 active:shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_3px_6px_rgba(44,53,49,0.22)]
             animate-fade-up animate-delay-500"
         >
           イベントご参加の方はこちら
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            className="text-ink-700 shrink-0 -mr-1"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor" strokeLinejoin="round" />
+          </svg>
         </Link>
       </div>
     </main>
