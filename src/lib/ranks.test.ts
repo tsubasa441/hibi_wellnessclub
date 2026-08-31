@@ -28,16 +28,18 @@ describe("getNextRank", () => {
 });
 
 describe("checkRankUp", () => {
-  it("条件を満たしたら現在ランクより高いレベルに更新する", async () => {
+  it("条件を満たしたら現在ランクより高いレベルに更新する（累計はチェックイン済みのみ）", async () => {
     const { supabase, from } = createSupabaseMock();
     const update = { fn: mockUpdate() };
-    from.mockReturnValueOnce(chainable({ count: 30 })); // bookings（confirmed）
+    const notSpy = vi.fn();
+    from.mockReturnValueOnce(chainable({ count: 30 }, { not: notSpy })); // bookings（confirmed & checked_in）
     from.mockReturnValueOnce(chainable({ count: 3 })); // referrals（rewarded）
     from.mockReturnValueOnce(chainable({ data: { rank_level: 1 } })); // profiles select
     from.mockReturnValueOnce(chainable(undefined, { update: update.fn })); // profiles update
 
     await checkRankUp(supabase, "user-1");
 
+    expect(notSpy).toHaveBeenCalledWith("checked_in_at", "is", null);
     expect(update.fn).toHaveBeenCalledWith(
       expect.objectContaining({ rank_level: 4, rank_inactive_penalty: false })
     );

@@ -203,8 +203,9 @@ describe("POST /api/payments/paypay", () => {
     expect(body.success).toBe(true);
     expect(mocks.qrCodeCreate).not.toHaveBeenCalled();
     expect(updateSpy).toHaveBeenCalledWith({ payment_status: "paid" });
-    expect(mocks.checkRankUp).toHaveBeenCalled();
-    expect(mocks.checkEventBadges).toHaveBeenCalled();
+    // ランク・バッジは予約時ではなくチェックイン時に判定する
+    expect(mocks.checkRankUp).not.toHaveBeenCalled();
+    expect(mocks.checkEventBadges).not.toHaveBeenCalled();
   });
 
   it("通常のPayPay決済が成功した場合、amountToChargeでQRコードを作成する", async () => {

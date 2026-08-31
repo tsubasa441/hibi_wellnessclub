@@ -86,6 +86,7 @@
 | points_used | integer | 予約時に充当したポイント数（1pt = 1円）。デフォルト0 |
 | amount_charged | integer | Square / PayPay に実際に請求した金額（円）。ポイント全額充当時は0。価格変動時の返金額算出にはこの値を使う（`events.price` は使わない） |
 | option_selections | jsonb | 予約時の選択項目（`event_options`）の回答スナップショット。形: `[{ "option_id": uuid, "label": text, "values": [text] }]`。既定 `[]`。決済額・返金には無関係 |
+| checked_in_at | timestamptz | チェックイン日時。`null` = 未チェックイン。**チェックインが「参加」の唯一の条件**（参加ポイント・月間ボーナス・クラスバッジ・ランクの累計参加回数はチェックイン済みの予約のみでカウント）。ユーザーがイベント開始時刻〜終了時刻の間に `POST /api/bookings/[id]/checkin` でセットする。書き込みは API が service_role で行う（`bookings` の UPDATE RLS は不可のまま） |
 | created_at | timestamptz | |
 
 ### badges
@@ -141,6 +142,7 @@
 | POST | `/api/payments/square` | Square 決済処理（予約作成込み） | 必要 |
 | POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み） | 必要 |
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
+| POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
 | GET / POST | `/api/journals` | ジャーナル取得・記録 | 必要 |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・紹介報酬付与 | 必要 |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 必要 |
@@ -160,8 +162,8 @@
 | アクション | 付与ポイント | 付与タイミング | 失効 |
 |-----------|------------|--------------|------|
 | ジャーナル回答（1日1回） | 3pt | ジャーナル保存時 | なし |
-| イベント参加（ランク別 30〜100pt） | ランク依存 | イベント翌日以降、ホーム画面ロード時 | なし |
-| 月間全イベント参加ボーナス | 500pt | 月末を過ぎた後、ホーム画面ロード時 | なし |
+| イベント参加（ランク別 30〜100pt） | ランク依存 | **チェックイン済み** かつ イベント翌日以降、ホーム画面ロード時 | なし |
+| 月間全イベント参加ボーナス | 500pt | 月末を過ぎた後、ホーム画面ロード時（その月の公開イベントすべてに**チェックイン済み**の場合） | なし |
 | 紹介者への報酬 | 200pt | 被紹介者のサインアップ完了時（`POST /api/signup/profile`）に即時付与 | なし |
 | 被紹介者への報酬 | 200pt | 自身のサインアップ完了時（`POST /api/signup/profile`）に即時付与 | なし |
 | バッジ獲得数ボーナス（月次） | 3個:300pt / 5個:500pt / 9個:1000pt | 翌月1日 Cron 実行時 | なし |
@@ -181,7 +183,7 @@
 
 ## 5. バッジ設計
 
-バッジは**月間バッジ**のみ（累計参加数によるマイルストーンバッジは廃止）。`period`（"YYYY-MM"）単位で毎月リセットされ、`condition_type` + `condition_value` の組み合わせで判定する。
+バッジは**月間バッジ**のみ（累計参加数によるマイルストーンバッジは廃止）。`period`（"YYYY-MM"）単位で毎月リセットされ、`condition_type` + `condition_value` の組み合わせで判定する。クラス系バッジ（初参加・回数）は**チェックイン済み**の予約のみをカウントし、チェックイン時（`POST /api/bookings/[id]/checkin`）と月末 Cron で判定する。
 
 | バッジ名 | 条件 | condition_type | condition_value |
 |---------|------|----------------|-----------------|

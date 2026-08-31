@@ -35,7 +35,7 @@ export default async function HomePage() {
 
   const [profileRes, sessionRes, eventsRes, journalRes, bookingsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase.from("bookings").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "confirmed"),
+    supabase.from("bookings").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "confirmed").not("checked_in_at", "is", null),
     supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(1),
     supabase.from("journals").select("id").eq("user_id", user.id).eq("recorded_at", today).maybeSingle(),
     supabase

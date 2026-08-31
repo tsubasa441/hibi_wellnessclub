@@ -110,7 +110,11 @@ export default async function ImpactPage() {
     ])
   );
 
-  const totalCount = (bookings ?? []).length;
+  // チェックイン済みの予約のみを「参加」としてカウントする
+  const checkedInBookings = (bookings ?? []).filter(
+    (b: { checked_in_at: string | null }) => b.checked_in_at != null
+  );
+  const totalCount = checkedInBookings.length;
 
   // ---- ランク計算 ----
   const currentRank = getRankByLevel(profile?.rank_level ?? 1);
@@ -122,9 +126,10 @@ export default async function ImpactPage() {
   const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
   // ---- バッジ集計 ----
-  // 今月確定した予約（created_at ベース）
-  const thisMonthBookings = (bookings ?? []).filter(
-    (b: { created_at: string }) => b.created_at >= monthStart && b.created_at <= monthEnd
+  // 今月チェックインした予約（checked_in_at ベース。checkEventBadges と一致させる）
+  const thisMonthBookings = checkedInBookings.filter(
+    (b: { checked_in_at: string | null }) =>
+      b.checked_in_at != null && b.checked_in_at >= monthStart && b.checked_in_at <= monthEnd
   );
   const monthlyEventCount = thisMonthBookings.length;
   const monthlyEventTypes = new Set(

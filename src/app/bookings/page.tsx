@@ -4,6 +4,7 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import CancelButton from "@/app/home/CancelButton";
+import CheckInButton from "./CheckInButton";
 import { getJstParts } from "@/lib/date";
 
 function formatDateTime(iso: string) {
@@ -20,20 +21,23 @@ export default async function BookingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  type EventInfo = { title: string; start_at: string; end_at: string | null; location: string };
   type BookingRaw = {
     id: string;
     event_id: string;
-    events: { title: string; start_at: string; location: string } | { title: string; start_at: string; location: string }[] | null;
+    checked_in_at: string | null;
+    events: EventInfo | EventInfo[] | null;
   };
   type Booking = {
     id: string;
     event_id: string;
-    events: { title: string; start_at: string; location: string };
+    checked_in_at: string | null;
+    events: EventInfo;
   };
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, event_id, events(title, start_at, location)")
+    .select("id, event_id, checked_in_at, events(title, start_at, end_at, location)")
     .eq("user_id", user.id)
     .eq("status", "confirmed")
     .order("created_at", { ascending: true });
@@ -42,7 +46,7 @@ export default async function BookingsPage() {
   const bookings: Booking[] = ((data ?? []) as unknown as BookingRaw[])
     .map((b) => {
       const ev = Array.isArray(b.events) ? b.events[0] : b.events;
-      return ev ? { id: b.id, event_id: b.event_id, events: ev } : null;
+      return ev ? { id: b.id, event_id: b.event_id, checked_in_at: b.checked_in_at, events: ev } : null;
     })
     .filter((b): b is Booking => {
       if (!b) return false;
@@ -91,7 +95,13 @@ export default async function BookingsPage() {
                     </Link>
                     <span className="font-outfit text-xs font-medium text-ink-700 bg-sage-100 px-2 py-1 rounded-full shrink-0">予約済み</span>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-base-200">
+                  <div className="mt-3 pt-3 border-t border-base-200 flex items-start justify-between gap-3">
+                    <CheckInButton
+                      bookingId={booking.id}
+                      startAt={booking.events.start_at}
+                      endAt={booking.events.end_at}
+                      checkedInAt={booking.checked_in_at}
+                    />
                     <CancelButton bookingId={booking.id} refundable={refundable} />
                   </div>
                 </div>

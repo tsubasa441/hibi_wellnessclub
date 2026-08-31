@@ -21,7 +21,7 @@ async function award(
   await supabase.from("user_badges").insert({ user_id: userId, badge_id: badge.id, period });
 }
 
-// イベント予約確定後・cronから呼ぶ
+// チェックイン時・cronから呼ぶ
 export async function checkEventBadges(
   supabase: SupabaseClient,
   userId: string
@@ -29,14 +29,15 @@ export async function checkEventBadges(
   const ym = getYearMonthJst();
   const { start, end } = getJstMonthBounds(ym);
 
-  // 今月確定した予約とそのイベント種別を取得
+  // 今月チェックインした予約とそのイベント種別を取得（チェックインが参加の条件）
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("id, events(event_type)")
+    .select("id, checked_in_at, events(event_type)")
     .eq("user_id", userId)
     .eq("status", "confirmed")
-    .gte("created_at", start)
-    .lte("created_at", end);
+    .not("checked_in_at", "is", null)
+    .gte("checked_in_at", start)
+    .lte("checked_in_at", end);
 
   type BookingWithEvent = { events: { event_type: string } | { event_type: string }[] | null };
   const eventTypes = (bookings ?? [])

@@ -14,6 +14,7 @@ type BookingRow = {
   payment_status: string;
   points_used: number | null;
   option_selections: OptionSelection[] | null;
+  checked_in_at: string | null;
   created_at: string;
   profiles: { name: string } | { name: string }[] | null;
 };
@@ -31,13 +32,14 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, payment_method, payment_status, points_used, option_selections, created_at, profiles(name)")
+    .select("id, payment_method, payment_status, points_used, option_selections, checked_in_at, created_at, profiles(name)")
     .eq("event_id", params.id)
     .eq("status", "confirmed")
     .order("created_at", { ascending: true });
 
   const bookings = (data ?? []) as unknown as BookingRow[];
   const hasOptions = bookings.some((b) => (b.option_selections ?? []).length > 0);
+  const checkedInCount = bookings.filter((b) => b.checked_in_at != null).length;
 
   return (
     <div>
@@ -45,7 +47,7 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
         <div>
           <h1 className="font-cormorant text-2xl font-semibold text-ink-700">{event.title}</h1>
           <p className="font-dm text-sm text-ink-300 mt-1">
-            参加者 {bookings.length} / 定員 {event.capacity}名
+            参加者 {bookings.length} / 定員 {event.capacity}名 ・ チェックイン済 {checkedInCount}名
           </p>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
@@ -73,6 +75,7 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">決済方法</th>
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">決済状況</th>
                 <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">使用ポイント</th>
+                <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">チェックイン</th>
                 {hasOptions && (
                   <th className="font-outfit text-xs text-ink-300 font-medium px-4 py-3">選択項目</th>
                 )}
@@ -94,6 +97,15 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
                       {STATUS_LABELS[b.payment_status] ?? b.payment_status}
                     </td>
                     <td className="font-dm text-sm text-ink-500 px-4 py-3">{b.points_used ?? 0}pt</td>
+                    <td className="font-dm text-sm px-4 py-3">
+                      {b.checked_in_at ? (
+                        <span className="text-sage-600">
+                          {new Date(b.checked_in_at).toLocaleString("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" })}
+                        </span>
+                      ) : (
+                        <span className="text-ink-300">未</span>
+                      )}
+                    </td>
                     {hasOptions && (
                       <td className="font-dm text-sm text-ink-500 px-4 py-3">
                         {(b.option_selections ?? []).length > 0

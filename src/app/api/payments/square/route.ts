@@ -4,8 +4,6 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { SquareClient, SquareEnvironment } from "square";
 import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
-import { checkRankUp } from "@/lib/ranks";
-import { checkEventBadges } from "@/lib/badges";
 import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 
@@ -89,9 +87,6 @@ export async function POST(req: NextRequest) {
     });
     if (error) return NextResponse.json({ error: "予約の作成に失敗しました" }, { status: 500 });
 
-    await checkRankUp(supabase, user.id);
-    await checkEventBadges(createServiceClient(), user.id);
-
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({
       to: user.email!,
@@ -140,9 +135,6 @@ export async function POST(req: NextRequest) {
       await refundUsedPoints(supabase, user.id, bookingId);
       return NextResponse.json({ error: "予約の作成に失敗しました" }, { status: 500 });
     }
-
-    await checkRankUp(supabase, user.id);
-    await checkEventBadges(createServiceClient(), user.id);
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({
@@ -209,9 +201,6 @@ export async function POST(req: NextRequest) {
       if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
       return NextResponse.json({ error: "予約の作成に失敗したため、決済を取り消しました" }, { status: 500 });
     }
-
-    await checkRankUp(supabase, user.id);
-    await checkEventBadges(createServiceClient(), user.id);
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({

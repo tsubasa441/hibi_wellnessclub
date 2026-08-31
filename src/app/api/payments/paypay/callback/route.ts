@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { sendBookingConfirmation } from "@/lib/email";
-import { checkRankUp } from "@/lib/ranks";
-import { checkEventBadges } from "@/lib/badges";
 import { refundUsedPoints } from "@/lib/points";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 import { decrypt } from "@/lib/encrypt";
@@ -87,9 +84,6 @@ export async function GET(req: NextRequest) {
     .select("name")
     .eq("id", booking.user_id)
     .single();
-
-  await checkRankUp(supabase, booking.user_id);
-  await checkEventBadges(createServiceClient(), booking.user_id);
 
   if (event && userAuth.user?.email) {
     await sendBookingConfirmation({

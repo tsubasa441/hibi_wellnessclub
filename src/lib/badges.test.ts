@@ -20,12 +20,14 @@ function mockBadgeAward(from: ReturnType<typeof createSupabaseMock>["from"], bad
 }
 
 describe("checkEventBadges", () => {
-  it("今月の確定予約がなければバッジ判定を行わない", async () => {
+  it("今月のチェックイン済み予約がなければバッジ判定を行わない（checked_in_at で絞る）", async () => {
     const { supabase, from } = createSupabaseMock();
-    from.mockReturnValueOnce(chainable({ data: [] })); // bookings
+    const notSpy = vi.fn();
+    from.mockReturnValueOnce(chainable({ data: [] }, { not: notSpy })); // bookings
 
     await checkEventBadges(supabase, "user-1");
 
+    expect(notSpy).toHaveBeenCalledWith("checked_in_at", "is", null);
     expect(from).toHaveBeenCalledTimes(1);
   });
 

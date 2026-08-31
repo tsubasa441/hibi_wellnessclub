@@ -93,6 +93,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
             payment_status: "paid",
             points_used: 100,
             amount_charged: 2000,
+            checked_in_at: "2026-08-02T01:00:00Z",
             created_at: "2026-08-01T00:00:00Z",
             profiles: { name: "enc:taro" },
           },
@@ -116,5 +117,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
     expect(text).toContain("taro@example.com");
     expect(text).toContain("Square");
     expect(text).toContain("支払済み");
+    expect(text).toContain("チェックイン");
+    expect(text).toContain("2026-08-02T01:00:00Z");
   });
 });

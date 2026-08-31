@@ -171,8 +171,9 @@ describe("POST /api/payments/square", () => {
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
     expect(mocks.paymentsCreate).not.toHaveBeenCalled();
-    expect(mocks.checkRankUp).toHaveBeenCalled();
-    expect(mocks.checkEventBadges).toHaveBeenCalled();
+    // ランク・バッジは予約時ではなくチェックイン時に判定する
+    expect(mocks.checkRankUp).not.toHaveBeenCalled();
+    expect(mocks.checkEventBadges).not.toHaveBeenCalled();
     expect(mocks.sendBookingConfirmation).toHaveBeenCalledWith(
       expect.objectContaining({ price: 0, paymentMethod: "free" })
     );

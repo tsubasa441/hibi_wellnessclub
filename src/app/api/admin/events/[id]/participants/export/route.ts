@@ -18,6 +18,7 @@ type BookingRow = {
   points_used: number | null;
   amount_charged: number | null;
   option_selections: OptionSelection[] | null;
+  checked_in_at: string | null;
   created_at: string;
   profiles: { name: string } | { name: string }[] | null;
 };
@@ -41,7 +42,7 @@ export async function GET(
   const [{ data: bookings, error }, { data: eventOptions }] = await Promise.all([
     supabase
       .from("bookings")
-      .select("id, user_id, payment_method, payment_status, points_used, amount_charged, option_selections, created_at, profiles(name)")
+      .select("id, user_id, payment_method, payment_status, points_used, amount_charged, option_selections, checked_in_at, created_at, profiles(name)")
       .eq("event_id", params.id)
       .eq("status", "confirmed")
       .order("created_at", { ascending: true }),
@@ -93,6 +94,8 @@ export async function GET(
       決済ステータス: STATUS_LABELS[b.payment_status] ?? b.payment_status,
       使用ポイント: b.points_used ?? 0,
       請求金額: b.amount_charged ?? 0,
+      チェックイン: b.checked_in_at ? "済" : "未",
+      チェックイン時刻: b.checked_in_at ?? "",
       ...optionColumns,
     };
   });

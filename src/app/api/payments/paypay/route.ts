@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { checkEventBadges } from "@/lib/badges";
-import { checkRankUp } from "@/lib/ranks";
 import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
 import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
@@ -122,9 +120,6 @@ export async function POST(req: NextRequest) {
       .from("bookings")
       .update({ payment_status: "paid" })
       .eq("id", booking.id);
-
-    await checkRankUp(supabase, user.id);
-    await checkEventBadges(createServiceClient(), user.id);
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({

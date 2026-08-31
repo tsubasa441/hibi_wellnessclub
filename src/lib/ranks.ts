@@ -39,7 +39,7 @@ export function getNextRank(level: number): Rank | null {
   return RANKS.find((r) => r.level === level + 1) ?? null;
 }
 
-// 予約確定時に呼び出す（ランクアップ判定）
+// チェックイン時に呼び出す（ランクアップ判定）。累計参加回数はチェックイン済みの予約のみ数える。
 export async function checkRankUp(
   supabase: SupabaseClient,
   userId: string
@@ -53,7 +53,8 @@ export async function checkRankUp(
       .from("bookings")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("status", "confirmed"),
+      .eq("status", "confirmed")
+      .not("checked_in_at", "is", null),
     supabase
       .from("referrals")
       .select("id", { count: "exact", head: true })

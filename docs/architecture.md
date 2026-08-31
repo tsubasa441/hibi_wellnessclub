@@ -52,7 +52,9 @@ src/
 │   │       └── checkout/
 │   │           ├── page.tsx
 │   │           └── CheckoutForm.tsx
-│   ├── bookings/page.tsx        # 予約済みイベント一覧・キャンセル
+│   ├── bookings/
+│   │   ├── page.tsx            # 予約済みイベント一覧・キャンセル・チェックイン
+│   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。Client Component）
 │   ├── auth/
 │   │   ├── confirm/route.ts         # 再設定メールのリンク先。token_hash を verifyOtp して /auth/reset-password へ
 │   │   └── reset-password/page.tsx  # パスワード再設定（confirm 経由でリカバリーセッション確立後に表示）
@@ -72,7 +74,8 @@ src/
 │   │           ├── DeleteEventButton.tsx  # 論理削除ボタン（Client Component）
 │   │           └── participants/page.tsx  # 参加者一覧・CSVダウンロード導線
 │   └── api/
-│       ├── bookings/[id]/cancel/route.ts  # 予約キャンセル・返金処理
+│       ├── bookings/[id]/cancel/route.ts   # 予約キャンセル・返金処理
+│       ├── bookings/[id]/checkin/route.ts  # イベントチェックイン（時間ゲート・service_role更新）
 │       ├── convert-name/route.ts          # 名前ローマ字変換
 │       ├── cron/badges/route.ts           # バッジ付与 Cron（Vercel）
 │       ├── journals/route.ts              # ジャーナル記録

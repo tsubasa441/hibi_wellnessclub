@@ -53,12 +53,14 @@ export async function checkAndAwardPendingPoints(
   const rank = getRankByLevel(profile?.rank_level ?? 1);
   const eventPts = rank.eventPoints;
 
-  // イベント終了時刻（start_at + 2時間）を過ぎた confirmed 予約にランク応じたポイントを付与
+  // チェックイン済み かつ イベント終了時刻（start_at + 2時間）を過ぎた confirmed 予約に
+  // ランク応じたポイントを付与する。チェックインが参加の唯一の条件。
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("id, event_id, events(start_at)")
+    .select("id, event_id, checked_in_at, events(start_at)")
     .eq("user_id", userId)
-    .eq("status", "confirmed");
+    .eq("status", "confirmed")
+    .not("checked_in_at", "is", null);
 
   const pastBookings = (bookings ?? []).filter((b) => {
     const ev = Array.isArray(b.events) ? b.events[0] : b.events;
@@ -106,10 +108,11 @@ export async function checkAndAwardPendingPoints(
       .select("event_id")
       .eq("user_id", userId)
       .eq("status", "confirmed")
+      .not("checked_in_at", "is", null)
       .in("event_id", monthEvents.map((e) => e.id));
 
-    const bookedEventIds = new Set((monthBookings ?? []).map((b) => b.event_id));
-    const allParticipated = monthEvents.every((e) => bookedEventIds.has(e.id));
+    const checkedInEventIds = new Set((monthBookings ?? []).map((b) => b.event_id));
+    const allParticipated = monthEvents.every((e) => checkedInEventIds.has(e.id));
 
     if (allParticipated) {
       await awardPoints(supabase, userId, 500, "monthly_bonus", yearMonth);
