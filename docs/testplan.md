@@ -146,6 +146,41 @@
 | 10-4 | URLパラメータ・クエリストリングに個人情報が含まれていない | ネットワークタブで確認 | ✅ 2026-08-26（本セッションで操作したログイン・サインアップ・home・events・bookings・impact・admin各画面・CSVエクスポートのネットワークログを確認し、氏名・メール・生年月日等を含むクエリストリングは見られなかった。紹介リンクは`?ref=紹介コード`のみで個人情報ではない） |
 | 10-5 | 他ユーザーの `bookings`・`journals`・`profiles` に自分のアカウントでアクセスできない（RLS） | 403 または空レスポンス | ✅ 2026-08-26（非管理者テストアカウントから、管理者の実在する予約IDに対し`POST /api/bookings/[id]/cancel`を実行→RLSのSELECTで他人の行が返らず404「予約が見つかりません」。`journals`・`profiles`関連のAPIはいずれもセッションの`user.id`のみで参照しており、他人のIDを指定して取得する経路がコード上存在しないことも確認） |
 
+## 11. 選択項目（`event_options`）— 2026-08-31 追加
+
+| # | 確認項目 | 期待結果 | 自動テスト | 状態 |
+|---|---------|---------|-----------|------|
+| 11-1 | 管理者フォームで選択項目つきイベント作成 | `POST /api/admin/events` 成功、`event_options` が保存される | `eventValidation.test.ts` | ✅ 2026-09-01（管理者ログインで単一/必須・複数/任意の2項目つきイベントを作成、DBで確認） |
+| 11-2 | 編集画面で選択項目が復元・置き換え保存 | ラベル・選択肢・必須/複数フラグが復元。保存で全削除→再作成 | `admin/events/[id]/route.test.ts` | ✅ 2026-09-01（復元表示・1項目削除＋選択肢追加で置き換え保存をDBで確認、sort_order振り直しも確認） |
+| 11-3 | ユーザー詳細画面の選択項目 UI | 単一=`<select>`、複数=チェックボックスパネル型ドロップダウン。必須項目に「（必須）」表示 | - | ✅ 2026-09-02（`<select>`は[選択してください,S,M,L]、複数項目はボタン展開で健康/交流/その他のチェックボックス3件を確認） |
+| 11-4 | 必須項目を未選択のまま予約 | 予約されず「必須の選択項目を選んでください」表示、API 呼び出しなし | - | ✅ 2026-09-02（クライアント側でブロック、決済APIコールなしを確認） |
+| 11-5 | 無料イベント予約時の回答保存 | `bookings.option_selections` に `[{option_id,label,values}]` でスナップショット保存 | - | ✅ 2026-09-02（参加動機=[健康,交流]・Tシャツサイズ=[M]が正しく保存されることをDBで確認。重複予約はガードされ1件のみ） |
+| 11-6 | 決済API のサーバー側再検証 | 必須欠落・選択肢外の値・単一項目に複数値 → 400 | `eventValidation.test.ts` | ✅ 2026-09-02（`optionSelections:[]` を直接POSTし400「「Tシャツサイズ」を選択してください」を確認） |
+| 11-7 | 有料イベント：決済画面に「選択内容」サマリー表示・回答が引き継がれる | 詳細で選択→checkout に読み取り専用サマリー→決済APIに回答が渡る | `square/route.test.ts` 等 | 🟡 未（実決済を伴わない範囲で `?opts=` 経由の表示確認が可能） |
+| 11-8 | 参加者一覧「選択項目」列 | 選択項目つき予約がある時のみ列表示、`label：値` 形式 | - | 🟡 未 |
+| 11-9 | CSV エクスポート：選択項目の動的列 | 各選択項目ラベルが列見出し、回答がカンマ区切り | `participants/export/route.test.ts` | 🟡 未 |
+
+## 12. チェックイン & 「参加＝チェックイン」化 — 2026-09-01 追加
+
+| # | 確認項目 | 期待結果 | 自動テスト | 状態 |
+|---|---------|---------|-----------|------|
+| 12-1 | `/bookings` のチェックインボタン状態 | 開始前=非活性＋「開始時刻になると…」、開始〜終了=活性、済=「チェックイン済み」 | - | ✅ 2026-09-01（未来イベント非活性・開催中イベント活性・押下後「済」表示を確認） |
+| 12-2 | チェックイン実行 | `checked_in_at` セット、`checkEventBadges`/`checkRankUp` 再判定、冪等（2回目 `{already:true}`） | `checkin/route.test.ts` | ✅ 2026-09-01（DB・Yoga Firstバッジ付与・冪等を確認） |
+| 12-3 | 時間ゲート | 開始前 400「イベント開始前です」／終了後 400「イベントは終了しました」／他人の予約 403 | `checkin/route.test.ts` | ✅ 2026-09-01（開始前400・他人403を実地確認。終了後400は自動テストのみ） |
+| 12-4 | 参加ポイント：チェックイン済みのみ | 未チェックインの終了済み予約には `event_participation` が付かない（バックフィル分は付く） | `points.test.ts` | 🟡 部分（チェックイン済み→付与は確認。未チェックイン→非付与は自動テストのみ） |
+| 12-5 | 月間全イベント参加ボーナス500pt | その月の公開イベント全てに**チェックイン済み**予約がある場合のみ付与 | `points.test.ts` | 🟡 未 |
+| 12-6 | 累計参加数の表示 | ホーム/Impact の「累計参加数」がチェックイン済み予約数 | - | ✅ 2026-09-01（ホームで checked-in のみカウント＝2 を確認） |
+| 12-7 | 管理者 参加者一覧・CSV | 「チェックイン」列（時刻/未）、「チェックイン済 n名」、CSV に「チェックイン」「チェックイン時刻」2列 | `participants/export/route.test.ts` | ✅ 2026-09-01 |
+
+## 13. 紹介報酬の付与タイミング — 2026-09-01 変更
+
+| # | 確認項目 | 期待結果 | 自動テスト | 状態 |
+|---|---------|---------|-----------|------|
+| 13-1 | サインアップ時（紹介コードあり） | `referrals` が `pending` で作成される。**この時点で200pt付与なし** | - | 🟡 未（実サインアップ） |
+| 13-2 | 被紹介者の初回イベント参加後、ホームロード時 | 紹介者・被紹介者に各200pt（`referral_reward`/`referral_joined`）、`referrals` を `rewarded`、Bridge Builder 判定、冪等 | `referrals.test.ts` | ✅ 2026-09-01（E2E：referrer 536→736、referee 0→230(200+参加30)、rewarded、バッジ、2回目重複なしを確認） |
+| 13-3 | 未チェックイン / イベント未終了 → 報酬なし | `pending` のまま | `referrals.test.ts` | 🟡 自動テストのみ |
+| 13-4 | 紹介者の Impact 表示 | 紹介履歴が「参加待ち」→ 参加後「完了 +200pt」、「報酬確定」カウンター | - | 🟡 未 |
+
 ---
 
 ## 更新履歴
@@ -167,6 +202,7 @@
 | 2026-08-27 | 既知の不具合3件（BUG-2・BUG-4・DOC-1）をまとめてクローズ。BUG-2はローカルで同日2回目のジャーナル記録（直列・同一内容・並行送信）を複数パターン試したが500エラーは再現せず、`upsert`＋`onConflict`の実装通り正しく更新されることを確認しクローズ。DOC-1は`docs/funcdocument.md`のCron API表記をPOST→GETに修正。BUG-4はユーザーの実機確認で前回の`overflow-hidden`対応後も「若干見切れている」ことが判明したため、`input[type="date"]`自体を年・月・日の3つの`<select>`プルダウンに置き換える方式に変更（ブラウザ・OS依存のレンダリング差異が原理的に発生しなくなる）。うるう年を含む日数の動的絞り込み・不正な日の自動リセットをローカルで確認し、実際にサインアップも完了。`npm run test`93件・lintとも通過 |
 | 2026-08-27 | ユーザー依頼「テストしていない・考慮できていない項目の洗い出し」に対応する過程で、ローカル開発機（JST）と本番Vercel（UTC）で同一イベントの表示時刻が9時間ズレる問題（BUG-8・重大）を発見。サブエージェントによる全コード監査で、`getHours()`等のローカルタイムゾーン依存メソッドを使っている業務ロジック7箇所（月間バッジ・月間ボーナス集計期間、ジャーナルの「今日」判定等）・表示13箇所を特定。`src/lib/date.ts`にJST基準の共通ヘルパーを新設し全箇所を置き換え、`date.test.ts`で13件のユニットテスト（うるう年・年またぎ・往復変換）を追加。`TZ=UTC`／`TZ=Asia/Tokyo`双方で計算結果が一致することを直接検証し、修正前後で挙動の差（10時→19時に是正）を確認。管理画面のイベント編集フォーム（datetime-local⇔UTC変換）も往復で時刻がズレないことをDBで確認。`npm run build`の型チェック含め全通過（テスト106件・lint）。あわせて依存パッケージの脆弱性（`npm audit`で高4・中3件）、特定商取引法/プライバシーポリシーページの不在、レート制限・CSP等セキュリティヘッダー未設定、エラー監視の仕組みの不在、アカウント削除導線の不在、実機ブラウザ検証の手薄さなど、testplan.mdの範囲外の本番運用上の懸念点をあわせて洗い出しユーザーに報告（対応は今後の判断） |
 | 2026-08-30 | 未実施・保留だった 5-6・3-3 を確認しクローズ。**5-6**：コード解析で、`event_participation` ポイント付与（`checkAndAwardPendingPoints`、条件 `start_at+2h<=now`）と `revokeEventPoints` 呼び出し元の cancel ルート（`start_at+2h<=now` でキャンセル拒否）が完全排他のため、正規フローでは `revokeEventPoints` は常に空振りすると確定。唯一の到達経路は「参加ポイント付与後に管理者がイベントを未来日時へ延期」で、その場合は正しく30ptを取り消す（`decrement_points` は `greatest(0,...)` で0未満保護）。両分岐は `points.test.ts` の単体テストでカバー済みのため追加テストは不要と判断。**3-3**：本番DBに service_role で draft/cancelled/published のテストイベントを作成し、anonキー（非管理者ロール、events SELECT のRLSは `authenticated`/`anon` で挙動同一）で id指定取得・一覧取得ともに published のみ見えること、service_role では全件見えることを検証。`events/[id]/page.tsx` は status で絞らず RLS 依存だが draft/cancelled は0行→`notFound()` になる。テストイベントは検証後ハード削除。`npm run test` 114件全通過。残る未実施は 4-5・4-6（Square/PayPay 実決済、実課金の副作用があるため意図的に未実施。ロジックは `square/route.test.ts`・`paypay/route.test.ts` で網羅）のみ |
+| 2026-09-02 | セクション11（選択項目）・12（チェックイン）・13（紹介報酬）を新設し、2026-08〜09 の追加機能を正式なテスト項目化。11-3〜11-6（ユーザー詳細画面の選択項目UI・必須未選択ブロック・回答スナップショット保存・サーバー側再検証）をローカル＋セッション注入で確認しクローズ。テストデータは削除済み。残りの 🟡 項目は順次確認予定。 |
 | 2026-09-01 | 仕様変更：紹介報酬 200pt の付与タイミングを「被紹介者のサインアップ完了時に即時」→「被紹介者が初回イベントにチェックインし、そのイベント終了後、ホーム画面ロード時」に変更。`/api/signup/profile` は `referrals` を `pending` で作成するのみに変更（即時付与・`checkReferralBadges` 呼び出しを削除）。新規 `src/lib/referrals.ts` の `checkAndAwardReferralReward`（service_role、被紹介者ホームロード時に `checkAndAwardPendingPoints` の直後に実行）で、被紹介者に「confirmed かつ checked_in_at セット済み かつ 終了済み」の予約があれば紹介者・被紹介者双方に 200pt（`referral_reward`/`referral_joined`、冪等）・`referrals` を `rewarded` 化・`checkReferralBadges` を実行。新規 `referrals.test.ts`（5ケース）。本番の `referrals` は既存1件が既に `rewarded`・`pending` は0件のため遡及処理・マイグレーション不要。Impact 画面の文言を実装に合わせて微修正（「初回イベントに参加」「報酬確定」）。1-2・6-4・6-7 は次回この新フローで再確認予定。`npm run test` 142件・lint・build 通過。
 | 2026-09-01 | 新機能：イベントのチェックイン。予約済み画面（`/bookings`）の各カードに「チェックイン」ボタンを追加し、イベント開始時刻〜終了時刻（`end_at`、未設定時は開始+2時間）の間だけ活性（開始前・終了後は非活性）。`POST /api/bookings/[id]/checkin`（本人確認＋サーバー側時間ゲート＋service_role で `bookings.checked_in_at` を条件付き更新、冪等）。**チェックインを「参加」の唯一の条件に変更**：`checkAndAwardPendingPoints`（参加ポイント・月間ボーナス）・`checkEventBadges`（クラス初参加・回数バッジ）・`checkRankUp`（累計参加回数）・ホーム/Impact の「累計参加数」をすべて `checked_in_at IS NOT NULL` で絞る。`checkRankUp`/`checkEventBadges` の呼び出しを決済API（square/paypay/paypay callback）から削除し、チェックインAPI と月末 cron から呼ぶよう変更。マイグレーション `027_booking_checkin.sql`（`checked_in_at` カラム追加＋**既に終了したイベントの確定予約に `start_at` をバックフィル**＝過去分は参加済み扱い）。管理者の参加者一覧・CSV にチェックイン列（済/未・時刻）を追加。新規テスト `checkin/route.test.ts`（9ケース）、`points`/`ranks`/`badges` テストを checked_in ベースに更新。`npm run test` 137件・lint・build 通過。**本番適用時は `027_booking_checkin.sql` を Supabase Studio で実行すること。**
 | 2026-09-01 | BUG-9（別端末でパスワード再設定リンクが機能しない）をユーザー報告で発見・修正。token_hash 方式（`/auth/confirm` route handler ＋ `verifyOtp`）に切り替え、`reset-password` 画面のセッション待ちポーリング化・エラー詳細表示を追加。トップページ CTA ボタン拡大も別途反映済み。**本番で有効化するには Supabase Dashboard で以下が必要**：(1) Authentication > Email Templates > 「Reset Password」の本文リンクを `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">パスワードを再設定する</a>` に変更、(2) Authentication > URL Configuration の Site URL が `https://hibi-wellnessclub.jp`（末尾スラッシュなし）、Redirect URLs に `https://hibi-wellnessclub.jp/**` があること（BUG-3 で登録済みのはず）。テンプレート変更前は旧 `?code=` 方式のまま（同一ブラウザなら動作、別端末では従来どおり失敗）。 |
