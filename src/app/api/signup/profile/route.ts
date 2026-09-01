@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt } from "@/lib/encrypt";
-import { awardPoints } from "@/lib/points";
-import { checkReferralBadges } from "@/lib/badges";
 import { getJstParts } from "@/lib/date";
 
 const NAME_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
@@ -64,7 +62,9 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // 紹介コードがある場合、新規登録完了時点でポイントを付与
+  // 紹介コードがある場合、referrals レコードを pending で作成する。
+  // 200pt の付与は被紹介者が初回イベントにチェックインし、そのイベントが終了した後に
+  // ホーム画面ロード時の checkAndAwardReferralReward で確定する（src/lib/referrals.ts）。
   if (body.referralCode) {
     const svc = createServiceClient();
 
@@ -76,39 +76,17 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (referrer) {
-      // referrals レコードを取得または作成
-      let referralId: string | null = null;
-
       const { data: existing } = await svc
         .from("referrals")
-        .select("id, status")
+        .select("id")
         .eq("referrer_id", referrer.id)
         .eq("referee_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (existing) {
-        referralId = existing.id;
-      } else {
-        const { data: created } = await svc
-          .from("referrals")
-          .insert({ referrer_id: referrer.id, referee_id: user.id, status: "pending" })
-          .select("id")
-          .single();
-        referralId = created?.id ?? null;
-      }
-
-      if (referralId && existing?.status !== "rewarded") {
-        // 紹介者・被紹介者双方に 200pt 付与
-        await awardPoints(svc, referrer.id, 200, "referral_reward", referralId);
-        await awardPoints(svc, user.id, 200, "referral_joined", referralId);
-
-        // referrals を rewarded に更新
+      if (!existing) {
         await svc
           .from("referrals")
-          .update({ status: "rewarded", rewarded_at: new Date().toISOString() })
-          .eq("id", referralId);
-
-        await checkReferralBadges(svc, referrer.id);
+          .insert({ referrer_id: referrer.id, referee_id: user.id, status: "pending" });
       }
     }
   }

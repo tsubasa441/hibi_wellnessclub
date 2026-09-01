@@ -441,7 +441,7 @@ export default async function ImpactPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="bg-white text-ink-700 font-outfit font-bold rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0">2</span>
-              <p>友達がリンクから登録・初回参加を完了</p>
+              <p>友達がリンクから登録し、初回イベントに参加</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="bg-white text-ink-700 font-outfit font-bold rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0">3</span>
@@ -465,7 +465,7 @@ export default async function ImpactPage() {
           </div>
           <div className="nm-card p-2.5 text-center">
             <p className="font-outfit text-xl font-bold text-ink-500">{rewardedCount}</p>
-            <p className="font-dm text-xs text-ink-300 mt-0.5">初回参加完了</p>
+            <p className="font-dm text-xs text-ink-300 mt-0.5">報酬確定</p>
           </div>
         </div>
 

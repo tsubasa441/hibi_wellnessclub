@@ -144,7 +144,7 @@
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
 | GET / POST | `/api/journals` | ジャーナル取得・記録 | 必要 |
-| POST | `/api/signup/profile` | サインアップ時プロフィール作成・紹介報酬付与 | 必要 |
+| POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 必要 |
 | GET | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron。GETのみexport、Vercel Cronの既定に合わせた実装） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
@@ -164,8 +164,8 @@
 | ジャーナル回答（1日1回） | 3pt | ジャーナル保存時 | なし |
 | イベント参加（ランク別 30〜100pt） | ランク依存 | **チェックイン済み** かつ イベント翌日以降、ホーム画面ロード時 | なし |
 | 月間全イベント参加ボーナス | 500pt | 月末を過ぎた後、ホーム画面ロード時（その月の公開イベントすべてに**チェックイン済み**の場合） | なし |
-| 紹介者への報酬 | 200pt | 被紹介者のサインアップ完了時（`POST /api/signup/profile`）に即時付与 | なし |
-| 被紹介者への報酬 | 200pt | 自身のサインアップ完了時（`POST /api/signup/profile`）に即時付与 | なし |
+| 紹介者への報酬 | 200pt | 被紹介者が初回イベントにチェックインし、そのイベント終了後、被紹介者のホーム画面ロード時（`src/lib/referrals.ts` の `checkAndAwardReferralReward`） | なし |
+| 被紹介者への報酬 | 200pt | 同上（紹介者分と同時に付与） | なし |
 | バッジ獲得数ボーナス（月次） | 3個:300pt / 5個:500pt / 9個:1000pt | 翌月1日 Cron 実行時 | なし |
 
 **キャンセル時のポイント取り消し：** 予約キャンセル時、`event_participation` で付与済みのポイントを `points_log` から削除し `profiles.points` から減算する。`decrement_points` RPC を使用（最低0ptで保護）。

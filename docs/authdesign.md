@@ -20,7 +20,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
    - referral_code をランダム生成して付与
 5. POST /api/signup/profile を呼び出し、性別・生年月日・紹介コードを暗号化して profiles に保存
    - ニックネームは表示専用の情報のため暗号化せず平文で保存する（@docs/codingstandards.md 参照）
-   - 紹介コードがある場合、紹介者を特定し referrals レコードを作成、双方に 200pt 付与
+   - 紹介コードがある場合、紹介者を特定し referrals レコードを `status: pending` で作成する（**この時点では 200pt を付与しない**）。報酬確定は被紹介者の初回イベント参加後（下記「紹介コードの処理」参照）
 6. /register-complete にリダイレクト
 ```
 
@@ -126,4 +126,9 @@ if (!user) redirect("/login");
 
 1. `/login?ref=XXXX` のクエリパラメータを取得し、SIGN UP タブを自動選択・紹介コード欄に初期値としてセット
 2. サインアップ完了後、POST `/api/signup/profile` で紹介コードを送信
-3. サーバー側で紹介者を特定し `referrals` テーブルにレコード作成、紹介者・被紹介者双方に 200pt を即時付与（`referrals.status` を `rewarded` に更新）
+3. サーバー側で紹介者を特定し `referrals` テーブルにレコードを `status: pending` で作成する（この時点では報酬なし）
+4. 被紹介者が**初回イベントにチェックインし、そのイベントの終了時刻を過ぎた後**、被紹介者のホーム画面ロード時に `checkAndAwardReferralReward`（`src/lib/referrals.ts`、service_role で実行）が：
+   - 紹介者・被紹介者双方に 200pt を付与（`points_log` reason: `referral_reward` / `referral_joined`、unique 制約で冪等）
+   - `referrals.status` を `rewarded`・`rewarded_at` をセット
+   - 紹介者の月間紹介バッジ（Bridge Builder 等）を再判定
+   - `points_log` の INSERT RLS は「本人のみ」のため紹介者への付与には service_role が必須

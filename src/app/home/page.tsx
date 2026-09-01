@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { checkAndAwardPendingPoints } from "@/lib/points";
+import { checkAndAwardReferralReward } from "@/lib/referrals";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { decrypt } from "@/lib/encrypt";
 import Link from "next/link";
@@ -32,6 +34,7 @@ export default async function HomePage() {
   const now = new Date().toISOString();
 
   await checkAndAwardPendingPoints(supabase, user.id);
+  await checkAndAwardReferralReward(createServiceClient(), user.id);
 
   const [profileRes, sessionRes, eventsRes, journalRes, bookingsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
