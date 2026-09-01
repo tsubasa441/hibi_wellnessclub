@@ -38,19 +38,7 @@ export default function HomePage() {
             animate-fade-up animate-delay-500"
         >
           イベントご参加の方はこちら
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            className="text-ink-700 shrink-0 -mr-1"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="9.5" />
-            <path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor" strokeLinejoin="round" />
-          </svg>
+          <span aria-hidden="true" className="text-lg leading-none font-normal -mr-1">→</span>
         </Link>
       </div>
     </main>
