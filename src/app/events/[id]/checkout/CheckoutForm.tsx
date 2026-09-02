@@ -216,7 +216,11 @@ export default function CheckoutForm({
       {needsCard && (
         <div className="bg-white rounded-xl border border-base-200 p-4">
           <p className="font-outfit text-xs text-ink-300 mb-1">カード情報</p>
-          <p className="font-dm text-xs text-ink-300 mb-3">ZIPは「00000」と入力してください</p>
+          {process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT !== "production" && (
+            <p className="font-dm text-xs text-ink-300 mb-3">
+              テスト環境です。ZIPは「00000」と入力してください
+            </p>
+          )}
           <div id="card-container" />
         </div>
       )}
