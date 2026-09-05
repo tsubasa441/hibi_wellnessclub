@@ -18,6 +18,7 @@
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
+| Footer | `src/components/Footer.tsx` | 特定商取引法に基づく表記・プライバシーポリシーへのリンクを表示する共通フッター。トップ・ログイン・登録完了ページに設置（固定 BottomNav のある認証後画面には未設置） |
 
 ボタン・カードは共通コンポーネント化せず、下記バリエーションのユーティリティクラスをその都度使用する。
 
@@ -31,6 +32,7 @@
 | BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |
+| DeleteAccountButton | `app/impact/DeleteAccountButton.tsx` | アカウント削除ボタン。確認ダイアログ→`POST /api/account/delete` | ✅ |
 | EventOptionFields | `app/events/[id]/EventOptionFields.tsx` | イベント選択項目の入力（単一=`<select>` / 複数=チェックボックスパネル型ドロップダウン） | ✅ |
 | CheckInButton | `app/bookings/CheckInButton.tsx` | 予約カードのチェックインボタン。現在時刻を30秒ごとに再評価し、イベント開始〜終了時刻のみ活性。チェックイン済みは「チェックイン済み」表示 | ✅ |
 | AdminNav | `app/admin/AdminNav.tsx` | 管理画面用ナビ（ログアウト・ユーザー画面への導線） | ✅ |

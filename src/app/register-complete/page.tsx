@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 export default function RegisterCompletePage({
   searchParams,
@@ -8,6 +9,7 @@ export default function RegisterCompletePage({
   const profileError = searchParams.profileError === "1";
 
   return (
+    <>
     <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-16 sm:pt-0">
       <div className="relative z-10 w-full max-w-sm nm-card p-6 sm:p-8 text-center space-y-6 animate-fade-up animate-delay-100">
         <div>
@@ -36,5 +38,7 @@ export default function RegisterCompletePage({
         </Link>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }

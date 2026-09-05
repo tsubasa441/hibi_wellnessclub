@@ -1,8 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
+import Footer from "@/components/Footer";
 
-export default function HomePage() {
+export default function HomePage({
+  searchParams,
+}: {
+  searchParams: { accountDeleted?: string };
+}) {
+  const accountDeleted = searchParams.accountDeleted === "1";
+
   return (
+    <>
     <main className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
       <Image
         src="/images/top.png"
@@ -14,6 +22,11 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-black/20" />
 
       <div className="relative z-10 flex flex-col items-center mt-[25vh] gap-8 px-4">
+        {accountDeleted && (
+          <p className="font-dm text-xs text-white bg-black/40 rounded-full px-4 py-2 backdrop-blur-sm">
+            アカウントを削除しました。ご利用ありがとうございました。
+          </p>
+        )}
         <h1 className="font-outfit text-5xl font-medium text-white tracking-wide drop-shadow-lg animate-fade-up animate-delay-100">
           Hibi
         </h1>
@@ -42,5 +55,7 @@ export default function HomePage() {
         </Link>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }

@@ -27,6 +27,13 @@
 | 決済 | Square API / PayPay API | - |
 | ホスティング | Vercel | - |
 | フォント | Outfit / Cormorant Garamond / DM Sans | Google Fonts |
+| エラー監視 | Sentry（`@sentry/nextjs`） | - |
+
+セキュリティ関連の実装方針：
+- **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・ジャーナル・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する
+- **セキュリティヘッダー / CSP**: `next.config.mjs` の `headers()` で全ルートに `X-Frame-Options`・`X-Content-Type-Options`・`Referrer-Policy`・`Permissions-Policy`・`Strict-Transport-Security` を付与。`Content-Security-Policy` はまず `Content-Security-Policy-Report-Only` として段階導入し、Square決済iframe等を壊さないことを確認してから本適用に切り替える運用
+- **エラー監視**: `@sentry/nextjs` を導入（`sentry.server.config.ts`・`sentry.edge.config.ts`・`src/instrumentation.ts`・`src/instrumentation-client.ts`・`src/app/global-error.tsx`）。`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN` が未設定の場合はSDKが何もしない安全なno-op状態になる
+- **アカウント削除**: `/impact` の「アカウントを削除する」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
 
 ---
 
@@ -58,9 +65,13 @@ src/
 │   ├── auth/
 │   │   ├── confirm/route.ts         # 再設定メールのリンク先。token_hash を verifyOtp して /auth/reset-password へ
 │   │   └── reset-password/page.tsx  # パスワード再設定（confirm 経由でリカバリーセッション確立後に表示）
+│   ├── legal/
+│   │   ├── tokushoho/page.tsx   # 特定商取引法に基づく表記（認証不要・静的コンテンツ）
+│   │   └── privacy/page.tsx     # プライバシーポリシー（認証不要・静的コンテンツ）
 │   ├── impact/
 │   │   ├── page.tsx            # Impact（プロフィール・参加履歴・バッジ・紹介）
-│   │   └── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
+│   │   ├── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
+│   │   └── DeleteAccountButton.tsx  # アカウント削除ボタン（確認ダイアログ→POST /api/account/delete）
 │   ├── admin/                   # 管理者向け画面（is_admin のみアクセス可、layout.tsxでガード）
 │   │   ├── layout.tsx            # 認証・管理者判定・AdminNav表示
 │   │   ├── AdminNav.tsx          # 管理画面用ナビ（Client Component）
@@ -73,10 +84,12 @@ src/
 │   │           ├── page.tsx             # イベント編集
 │   │           ├── DeleteEventButton.tsx  # 論理削除ボタン（Client Component）
 │   │           └── participants/page.tsx  # 参加者一覧・CSVダウンロード導線
+│   ├── global-error.tsx         # ルートのエラーバウンダリ（Sentryへ送信）
 │   └── api/
+│       ├── account/delete/route.ts        # アカウント削除（個人情報の匿名化・auth.users無効化）
 │       ├── bookings/[id]/cancel/route.ts   # 予約キャンセル・返金処理
 │       ├── bookings/[id]/checkin/route.ts  # イベントチェックイン（時間ゲート・service_role更新）
-│       ├── convert-name/route.ts          # 名前ローマ字変換
+│       ├── convert-name/route.ts          # 名前ローマ字変換（未認証・IPアドレスでレート制限）
 │       ├── cron/badges/route.ts           # バッジ付与 Cron（Vercel）
 │       ├── journals/route.ts              # ジャーナル記録
 │       ├── payments/
@@ -92,7 +105,8 @@ src/
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + ログアウト）
-│   └── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
+│   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
+│   └── Footer.tsx              # 特定商取引法表記・プライバシーポリシーへのリンク（トップ・ログイン・登録完了ページに設置）
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts           # ブラウザ用クライアント
@@ -107,7 +121,12 @@ src/
 │   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）・選択項目の検証とスナップショット組み立て
 │   ├── points.ts               # ポイント付与・取り消しロジック
 │   ├── ranks.ts                # ランク定義・ランクアップ判定
+│   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）
+├── instrumentation.ts          # Sentry初期化フック（サーバー/Edge、Next.js標準の起動フック）
+└── instrumentation-client.ts   # Sentry初期化（ブラウザ側）
+sentry.server.config.ts         # Sentry初期化設定（Node.jsランタイム）
+sentry.edge.config.ts           # Sentry初期化設定（Edgeランタイム）
 public/
 └── images/
     └── top.png                 # トップ・ログイン背景画像
@@ -135,6 +154,8 @@ docs/                           # ドキュメント一式
 ```
 
 管理者（`profiles.is_admin = true`）は `/admin/events` から独立してイベント管理・参加者管理を行う。一般ユーザー導線とは接続しない（URLを直接開く運用）。管理者以外が `/admin/*` にアクセスした場合は `/home` へリダイレクトする。
+
+`/`・`/login`・`/register-complete` の下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/tokushoho`（特定商取引法に基づく表記）・`/legal/privacy`（プライバシーポリシー）へ遷移できる。この2画面は認証不要。
 
 ### BottomNav 構成（全認証済み画面共通）
 
