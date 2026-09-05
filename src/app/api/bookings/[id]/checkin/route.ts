@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkEventBadges } from "@/lib/badges";
 import { checkRankUp } from "@/lib/ranks";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
 // イベント終了時刻。end_at 未設定時は開始 + 2時間（既存コードの慣習に合わせる）。
 function eventEnd(startAt: string, endAt: string | null): Date {
@@ -23,6 +24,10 @@ export async function POST(
 
   if (!user) {
     return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
+  }
+
+  if (!(await checkRateLimit(`booking-checkin:${user.id}`, 20, 60))) {
+    return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
   const bookingId = params.id;

@@ -6,6 +6,7 @@ import { sendCancellationNotification } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
 import { SquareClient, SquareEnvironment } from "square";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
 const squareClient = new SquareClient({
   token: process.env.SQUARE_ACCESS_TOKEN!,
@@ -31,6 +32,10 @@ export async function POST(
 
   if (!user) {
     return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
+  }
+
+  if (!(await checkRateLimit(`booking-cancel:${user.id}`, 10, 60))) {
+    return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
   const bookingId = params.id;

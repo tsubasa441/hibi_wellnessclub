@@ -5,6 +5,7 @@ import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
 import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 
 PAYPAY.Configure({
@@ -22,6 +23,10 @@ export async function POST(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
+  }
+
+  if (!(await checkRateLimit(`payment:${user.id}`, 10, 60))) {
+    return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
   const { eventId, pointsToUse, optionSelections } = await req.json();

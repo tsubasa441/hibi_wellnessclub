@@ -4,6 +4,7 @@ import { decrypt } from "@/lib/encrypt";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import ReferralShare from "@/app/impact/ReferralShare";
+import DeleteAccountButton from "@/app/impact/DeleteAccountButton";
 import { getRankByLevel, getNextRank, RANKS } from "@/lib/ranks";
 import RankIcon from "@/components/RankIcon";
 import { getYearMonthJst, getJstMonthBounds, getJstParts } from "@/lib/date";
@@ -502,6 +503,9 @@ export default async function ImpactPage() {
             </p>
           )}
         </div>
+
+        {/* アカウント削除 */}
+        <DeleteAccountButton />
 
       </div>
       <BottomNav />

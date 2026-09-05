@@ -19,6 +19,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: mocks.createServerClient,
 }));
 
+vi.mock("@/lib/rateLimit", () => ({
+  checkRateLimit: vi.fn().mockResolvedValue(true),
+  RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
+}));
+
 vi.mock("@/lib/supabase/service", () => ({
   createServiceClient: mocks.createServiceClient,
 }));

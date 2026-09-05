@@ -14,6 +14,10 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@/lib/badges", () => ({ checkEventBadges: mocks.checkEventBadges }));
 vi.mock("@/lib/ranks", () => ({ checkRankUp: mocks.checkRankUp }));
+vi.mock("@/lib/rateLimit", () => ({
+  checkRateLimit: vi.fn().mockResolvedValue(true),
+  RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
+}));
 
 const { POST } = await import("./route");
 

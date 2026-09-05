@@ -181,6 +181,26 @@
 | 13-3 | 未チェックイン / イベント未終了 → 報酬なし | `pending` のまま | `referrals.test.ts` | ✅ 2026-09-03（被紹介者が終了済み予約を持つが `checked_in_at=null` の状態で `/home` ロード→`referrals` は `pending` のまま・双方 points 変化なしを確認） |
 | 13-4 | 紹介者の Impact 表示 | 紹介履歴が「参加待ち」→ 参加後「完了 +200pt」、「報酬確定」カウンター | - | ✅ 2026-09-03（報酬確定後の紹介者 Impact で「紹介した人数 1」「報酬確定 1」、紹介履歴に「テスト … 完了 +200pt」、ガイド文言「初回イベントに参加」を確認。`pending` 時の「参加待ち」表示は表示ロジックの三項演算子で担保） |
 
+## 14. セキュリティ運用（レート制限・セキュリティヘッダー・エラー監視・アカウント削除）— 2026-09-05 追加
+
+2026-08-27に洗い出した本番運用上の懸念点（レート制限・CSP等セキュリティヘッダー・エラー監視の仕組み・アカウント削除導線の不在）への対応。
+
+| # | 確認項目 | 期待結果 | 自動テスト | 状態 |
+|---|---------|---------|-----------|------|
+| 14-1 | 決済・ジャーナル・サインアッププロフィール・チェックイン・キャンセル・アカウント削除APIへの短時間の連続リクエスト | `check_rate_limit` RPCが上限超過を検知し429「リクエストが多すぎます。しばらくしてから再度お試しください。」を返す | `rateLimit.test.ts` | 🟡 ロジック（RPC呼び出し・fail open）は自動テストで確認済み。実際にSupabase上の`rate_limits`テーブル・`check_rate_limit`RPCを通したE2Eでの429発火は未確認（後述 migration 028 の本番適用が前提） |
+| 14-2 | 未認証で呼ばれる `/api/convert-name` のレート制限 | ユーザーIDが無いためIPアドレス単位（`x-forwarded-for`の先頭）で制限される | `rateLimit.test.ts` | ✅ 2026-09-05（`getClientIp`のユニットテストで`x-forwarded-for`優先・フォールバック・未設定時`"unknown"`を確認） |
+| 14-3 | RPC呼び出し自体が失敗した場合 | fail open（レート制限を理由に正規のリクエストを誤ってブロックしない） | `rateLimit.test.ts` | ✅ 2026-09-05 |
+| 14-4 | 本番ビルドでのセキュリティヘッダー配信 | 全ページで`X-Frame-Options`・`X-Content-Type-Options`・`Referrer-Policy`・`Permissions-Policy`・`Strict-Transport-Security`・`Content-Security-Policy-Report-Only`が返る | - | ✅ 2026-09-05（ローカルで`next build`→`next start`し、`/`・`/login`のレスポンスヘッダーを`fetch`で直接確認。ブラウザコンソールでCSP違反0件（開発モードのみ発生する`unsafe-eval`起因の大量ログは本番ビルドでは発生しないことも確認）） |
+| 14-5 | CSPがSquare決済のiframe/SDK読み込みを妨げないか | Report-Onlyのため実害はないが、本適用に備えconnect-src/frame-src/script-srcにsquarecdn.com等が許可されている | - | 🟡 静的なCSP設定の確認のみ。実際のカード入力を伴う決済フロー（4-5と同様の実カード決済）でのコンソール違反有無は未確認 |
+| 14-6 | Sentryへのエラー送信 | サーバー・クライアント双方の未捕捉エラーがSentryダッシュボードに記録される | - | 🟡 未実施。`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN`が未設定のため、SDKは意図的にno-op（DSN未設定時に何もしないことは公式SDKの既定動作）。依頼者がSentryアカウント作成・DSN発行・Vercel環境変数設定後、本番で意図的にエラーを発生させて実際に届くかの確認が必要 |
+| 14-7 | アカウント削除（`/impact`の「アカウントを削除する」） | 確認ダイアログ→`profiles`の氏名・ニックネーム・性別・生年月日・使用紹介コード・アバターURLが匿名化され、`auth.users`がban・メール/パスワード置換によりログイン不可になる。予約・決済・ポイント・紹介等の履歴は保持される | `route.test.ts`（6ケース：未認証401・レート制限429・管理者400・成功時の匿名化内容・profiles更新失敗時500・auth更新失敗時500） | 🟡 ユニットテストで分岐網羅済み。実際にSupabase上でテストアカウントを削除→ログイン不可・履歴保持・紹介実績表示に影響がないことをE2Eで確認する作業は未実施（本番データに影響するため実施は要判断） |
+| 14-8 | 管理者アカウントの削除ブロック | `is_admin=true`のアカウントは400で拒否され「運営にご連絡ください」と表示される | `route.test.ts` | ✅ 2026-09-05（ユニットテストで確認） |
+
+**本番適用に必要な作業（未実施）**：
+- `supabase/migrations/028_rate_limits.sql` を Supabase Studio の SQL Editor で本番に適用する（レート制限が実際に効くために必須）
+- Sentryでプロジェクトを作成し、`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN`（任意で`SENTRY_ORG`・`SENTRY_PROJECT`・`SENTRY_AUTH_TOKEN`）をVercelの環境変数に設定する
+- CSPを`Content-Security-Policy-Report-Only`から`Content-Security-Policy`（本適用）に切り替える判断。切り替え前に、本番相当の環境でSquare決済・PayPay決済を一通り操作しブラウザのコンソールに違反が出ないことを確認すること
+
 ---
 
 ## 更新履歴
@@ -211,3 +231,4 @@
 | 2026-09-01 | BUG-9（別端末でパスワード再設定リンクが機能しない）をユーザー報告で発見・修正。token_hash 方式（`/auth/confirm` route handler ＋ `verifyOtp`）に切り替え、`reset-password` 画面のセッション待ちポーリング化・エラー詳細表示を追加。トップページ CTA ボタン拡大も別途反映済み。**本番で有効化するには Supabase Dashboard で以下が必要**：(1) Authentication > Email Templates > 「Reset Password」の本文リンクを `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">パスワードを再設定する</a>` に変更、(2) Authentication > URL Configuration の Site URL が `https://hibi-wellnessclub.jp`（末尾スラッシュなし）、Redirect URLs に `https://hibi-wellnessclub.jp/**` があること（BUG-3 で登録済みのはず）。テンプレート変更前は旧 `?code=` 方式のまま（同一ブラウザなら動作、別端末では従来どおり失敗）。 |
 | 2026-08-31 | 新機能：イベントの「選択項目」（`event_options`）を追加。管理者がイベント作成/編集時に任意個数（最大10）のプルダウン選択項目を設定でき（項目名・選択肢・必須/任意・単一/複数選択）、ユーザーはイベント詳細画面で回答してから予約、回答は `bookings.option_selections` にスナップショット保存され参加者一覧・CSV（動的列）に表示される。金額・ポイント・返金には非関与。マイグレーション `026_event_options.sql`（新テーブル＋`bookings.option_selections` カラム）。`src/lib/eventValidation.ts` に `validateEventOptions`・`buildOptionSelections` を追加し `eventValidation.test.ts` で14ケース検証。決済API（square/paypay）でサーバー側再検証。定員（`price` の頭0スタート解消）に加え本機能を実装。`npm run test` 128件・lint・build 通過。**本番適用時は `026_event_options.sql` を Supabase Studio で実行すること。**
 | 2026-08-28 | 2-5の残り（月間全イベント参加ボーナス500pt・紹介報酬200ptの未付与分付与）を確認。既存の公開イベントが1件もない過去月（2026年6月）にテストイベント2件を作成し、新規テストアカウントで全予約→`/home`ロードで`points_log`に`event_participation`30pt×2・`monthly_bonus`（`reference_id: "2026-06"`）500ptが記録され、`profiles.points`が560になることをDBで確認。再ロードしても重複付与されないことも確認。紹介報酬200ptについては`checkAndAwardPendingPoints`のコードに紹介関連ロジックが存在しないことが判明し、実装はサインアップ完了時の即時付与（1-2・6-7で確認済み）のみであることが確定。`docs/funcdocument.md`の付与タイミング記載（「イベント翌日以降、ホーム画面ロード時」）を実装に合わせて修正。あわせて、コミットされずリポジトリに残っていた自動テスト2件（`src/lib/points.test.ts`への`checkAndAwardPendingPoints`テスト追加、新規`src/app/api/cron/badges/route.test.ts`）を発見。後者は`vi.setSystemTime()`で日時を偽装し、8-2で保留していた「月初(1日)のみ実行」というJST日付ゲート（UTC/JSTの年またぎ境界を含む4パターン）を検証済みだったため、8-2も✅に更新。`npm run test`114件（106件+新規8件）・lintとも通過。これでtestplan.mdの全項目が一巡し、残るは4-5・4-6（実決済のため意図的に未実施）・5-6（保留）のみ |
+| 2026-09-05 | 特定商取引法に基づく表記（`/legal/tokushoho`）・プライバシーポリシー（`/legal/privacy`）を新設し、共通`Footer`をトップ・ログイン・登録完了ページに設置。続けて、2026-08-27に洗い出していた本番運用上の懸念点のうち4点に対応：(1) レート制限：Supabaseに`rate_limits`テーブル＋`check_rate_limit` RPC（マイグレーション`028_rate_limits.sql`）を追加し、`src/lib/rateLimit.ts`経由で決済・ジャーナル・サインアッププロフィール・チェックイン・キャンセル・アカウント削除・名前のローマ字変換（未認証のためIP単位）に適用。(2) セキュリティヘッダー：`next.config.mjs`に`X-Frame-Options`等を追加し、`Content-Security-Policy`はまず`Content-Security-Policy-Report-Only`で段階導入（本番ビルドでヘッダー配信・コンソール違反0件を確認）。(3) エラー監視：`@sentry/nextjs`を導入（`instrumentation.ts`/`instrumentation-client.ts`/`sentry.server.config.ts`/`sentry.edge.config.ts`/`global-error.tsx`）。DSN未設定時はSDKがno-opになる設計のため、Sentryアカウント作成・DSN設定は依頼者側の作業として残す。(4) アカウント削除：`/impact`に削除ボタンを追加、`POST /api/account/delete`で個人情報のみ匿名化・`auth.users`をban_durationで無効化し、予約・決済・ポイント等の履歴は保持（管理者アカウントは削除不可）。新規テスト`rateLimit.test.ts`（7ケース）・`api/account/delete/route.test.ts`（6ケース）を追加し、既存の`square`/`paypay`/`cancel`/`checkin`route.test.tsに`rateLimit`のモックを追加。`npm run test`155件・lint・build通過。詳細はセクション14参照。**本番適用には別途 `028_rate_limits.sql` の適用・Sentry DSN設定・CSPの本適用判断が必要（未実施、セクション14末尾参照）** |

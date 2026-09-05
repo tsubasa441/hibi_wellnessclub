@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt } from "@/lib/encrypt";
 import { getJstParts } from "@/lib/date";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
 const NAME_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
 // ローマ字変換（kuroshiro）は長音を ō 等のマクロン付き文字で返すため、
@@ -17,6 +18,10 @@ export async function POST(req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!(await checkRateLimit(`signup-profile:${user.id}`, 5, 60))) {
+    return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+  }
 
   const body = await req.json() as {
     name?: string;

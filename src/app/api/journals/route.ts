@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { awardJournalPoints } from "@/lib/points";
 import { getTodayJst } from "@/lib/date";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
+
+  if (!(await checkRateLimit(`journal:${user.id}`, 10, 60))) {
+    return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+  }
 
   const { mood, energy, note } = await req.json();
   if (!mood || !energy) return NextResponse.json({ error: "気分と体調は必須です" }, { status: 400 });

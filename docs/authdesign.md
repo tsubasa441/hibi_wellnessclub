@@ -62,6 +62,25 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 
 ---
 
+### アカウント削除（/impact の「アカウントを削除する」）
+
+```
+1. ユーザーが /impact 下部の「アカウントを削除する」を押す
+2. 確認ダイアログ（削除内容の説明）→ POST /api/account/delete
+3. サーバー側（service_role）で:
+   - is_admin なら 400 で拒否（管理者は運営に連絡してもらう運用）
+   - profiles の氏名・ローマ字氏名・ニックネーム・性別・生年月日・使用した紹介コード・
+     アバターURLを匿名化（nickname は「退会済みユーザー」に置換、他はnull）
+   - auth.users は削除しない（profiles.id が auth.users(id) on delete cascade のため、
+     削除すると bookings・journals・referrals 等の履歴も連鎖的に消えてしまう）。
+     代わりに supabase.auth.admin.updateUserById() でメールアドレスを
+     `deleted-<uuid>@deleted.invalid` に、パスワードをランダム値に置き換え、
+     ban_duration（十分に長い期間）でログイン自体を無効化する
+4. クライアント側で supabase.auth.signOut() → / へリダイレクト
+```
+
+予約・決済・ポイント履歴・紹介関係（`bookings`・`points_log`・`referrals`等）は `user_id` を保持したまま残す。会計上の記録を保つことと、自分が紹介した相手の紹介実績表示（Impact画面）に影響を与えないことが理由。
+
 ## セッション管理
 
 - Supabase Auth のセッションはクッキーで管理
