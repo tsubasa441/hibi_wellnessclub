@@ -88,14 +88,22 @@ function LoginFormInner() {
       return;
     }
     setLoading(true);
-    const supabase = createClient();
-    // 末尾スラッシュがあるとSupabaseのRedirect URL許可リストと一致せずフォールバックされるため除去する
-    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/auth/reset-password`,
-    });
+    // ブラウザの supabase-js クライアントは flowType が既定でPKCEのため、ここから直接
+    // resetPasswordForEmail() を呼ぶとメールのリンクが別端末はもちろん同一端末でも
+    // 無効になる場合がある（BUG-9参照）。PKCEを使わないサーバー側API経由で送信する。
+    let ok = false;
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      ok = res.ok;
+    } catch {
+      ok = false;
+    }
     setLoading(false);
-    if (error) {
+    if (!ok) {
       showError("メールの送信に失敗しました。しばらく経ってから再試行してください。");
     } else {
       setError(null);

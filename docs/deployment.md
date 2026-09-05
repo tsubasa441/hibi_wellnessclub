@@ -35,6 +35,10 @@ PAYPAY_CLIENT_ID=
 PAYPAY_CLIENT_SECRET=
 PAYPAY_MERCHANT_ID=
 PAYPAY_PRODUCTION=true
+# PayPay本番APIはIP許可リスト制だが、Vercelのサーバーレス関数は既定でoutboundの送信元IPが
+# 固定されないため、固定IPプロキシ（QuotaGuard Static等）経由でPayPay SDK呼び出しのみを
+# ルーティングする（src/lib/paypayProxy.ts）。未設定時は従来通りプロキシなしで直接通信する。
+PAYPAY_PROXY_URL=
 
 # メール送信（Resend）
 RESEND_API_KEY=

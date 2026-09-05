@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendBookingConfirmation } from "@/lib/email";
 import { refundUsedPoints } from "@/lib/points";
+import { withPayPayProxy } from "@/lib/paypayProxy";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 import { decrypt } from "@/lib/encrypt";
 
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
   // PayPay決済状況を確認
   let paymentDetails: unknown;
   try {
-    paymentDetails = await PAYPAY.GetPaymentDetails([merchantPaymentId]);
+    paymentDetails = await withPayPayProxy(() => PAYPAY.GetPaymentDetails([merchantPaymentId]));
   } catch {
     return NextResponse.redirect(new URL("/home?payment=error", req.url));
   }

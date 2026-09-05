@@ -87,6 +87,7 @@ src/
 │   ├── global-error.tsx         # ルートのエラーバウンダリ（Sentryへ送信）
 │   └── api/
 │       ├── account/delete/route.ts        # アカウント削除（個人情報の匿名化・auth.users無効化）
+│       ├── auth/forgot-password/route.ts  # パスワード再設定メール送信（未認証・IPアドレスでレート制限。PKCEを使わないservice_roleクライアントでresetPasswordForEmail()を呼び、/auth/confirmのverifyOtpと互換性のあるtoken_hashを発行させる）
 │       ├── bookings/[id]/cancel/route.ts   # 予約キャンセル・返金処理
 │       ├── bookings/[id]/checkin/route.ts  # イベントチェックイン（時間ゲート・service_role更新）
 │       ├── convert-name/route.ts          # 名前ローマ字変換（未認証・IPアドレスでレート制限）
@@ -119,6 +120,7 @@ src/
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号
 │   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）・選択項目の検証とスナップショット組み立て
+│   ├── paypayProxy.ts          # PayPay SDK呼び出しを固定IPプロキシ経由にする一時ラッパー（PAYPAY_PROXY_URL未設定時は素通し）
 │   ├── points.ts               # ポイント付与・取り消しロジック
 │   ├── ranks.ts                # ランク定義・ランクアップ判定
 │   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）

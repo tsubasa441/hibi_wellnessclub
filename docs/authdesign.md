@@ -44,7 +44,14 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 
 ```
 1. ユーザーがメールアドレスを入力
-2. supabase.auth.resetPasswordForEmail() を呼び出す（redirectTo: /auth/reset-password）
+2. LoginForm.tsx が POST /api/auth/forgot-password を呼び出す（redirectTo: /auth/reset-password）
+   - サーバー側で service_role クライアント（src/lib/supabase/service.ts）から
+     resetPasswordForEmail() を呼ぶ。@supabase/ssr の createBrowserClient/createServerClient は
+     flowType が既定で "pkce" であり、ここから直接呼ぶと発行される token_hash が PKCE の
+     code_challenge に紐づいた値（`pkce_` プレフィックス）になり、次段の verifyOtp では検証
+     できない（同一端末でも失敗する）。service_role クライアント（@supabase/supabase-js の
+     createClient、flowType 既定 "implicit"）を使うことで、verifyOtp と互換性のある通常の
+     token_hash を発行させている（src/app/api/auth/forgot-password/route.ts 参照）
 3. Supabase からリセットリンク付きメールが送信される
    - メールテンプレート（Supabase Dashboard > Authentication > Email Templates > Reset Password）は
      `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` を指す（token_hash 方式）
@@ -52,8 +59,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
    supabase.auth.verifyOtp({ type: "recovery", token_hash }) をサーバー側で実行し、
    Cookie にリカバリーセッションを確立してから /auth/reset-password へリダイレクトする
    - PKCE の code_verifier に依存しないため、リセット申請した端末と別の端末・ブラウザで
-     メールを開いてもパスワード再設定できる（@supabase/ssr の createBrowserClient は
-     flowType を pkce に固定するため、`?code=` 方式だと別端末で verifier が無く失敗する）
+     メールを開いてもパスワード再設定できる
    - 検証失敗時は /auth/reset-password?error=invalid_link へ。reset-password 画面は
      error 系パラメータと getSession のポーリングで「リンクが無効です」を表示する
 5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す

@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/encrypt";
 import { SquareClient, SquareEnvironment } from "square";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
+import { withPayPayProxy } from "@/lib/paypayProxy";
 
 const squareClient = new SquareClient({
   token: process.env.SQUARE_ACCESS_TOKEN!,
@@ -118,7 +119,9 @@ export async function POST(
 
   if (willRefund && booking.payment_method === "paypay") {
     try {
-      await PAYPAY.PaymentRefund([booking.payment_id!, crypto.randomUUID(), booking.amount_charged]);
+      await withPayPayProxy(() =>
+        PAYPAY.PaymentRefund([booking.payment_id!, crypto.randomUUID(), booking.amount_charged])
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "PayPay 返金に失敗しました";
       return NextResponse.json({ error: `予約はキャンセルされましたが、${message}。サポートまでお問い合わせください。` }, { status: 500 });

@@ -6,6 +6,7 @@ import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
+import { withPayPayProxy } from "@/lib/paypayProxy";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 
 PAYPAY.Configure({
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
 
   let paypayResponse: unknown;
   try {
-    paypayResponse = await PAYPAY.QRCodeCreate(payload);
+    paypayResponse = await withPayPayProxy(() => PAYPAY.QRCodeCreate(payload));
   } catch {
     // PayPay API エラー時は pending 予約を削除
     await supabase.from("bookings").delete().eq("id", booking.id);

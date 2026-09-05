@@ -143,7 +143,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | count | integer | 直近の時間窓内のリクエスト数 |
 | window_start | timestamptz | 時間窓の開始時刻 |
 
-決済系API・ジャーナル・サインアッププロフィール作成・チェックイン・予約キャンセル・アカウント削除・名前のローマ字変換（未認証のためIPアドレス単位）に適用。RPC呼び出し自体が失敗した場合は fail open（正規のリクエストを誤ってブロックしない）。
+決済系API・ジャーナル・サインアッププロフィール作成・チェックイン・予約キャンセル・アカウント削除・名前のローマ字変換・パスワード再設定メール送信（未認証の2つはIPアドレス単位）に適用。RPC呼び出し自体が失敗した場合は fail open（正規のリクエストを誤ってブロックしない）。
 
 ---
 
@@ -158,6 +158,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | GET / POST | `/api/journals` | ジャーナル取得・記録 | 必要 |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
+| POST | `/api/auth/forgot-password` | パスワード再設定メール送信 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/account/delete` | アカウント削除（`profiles`の個人情報を匿名化・`auth.users`をban_durationで無効化。予約等の履歴は保持） | 必要（本人のみ、管理者は不可） |
 | GET | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron。GETのみexport、Vercel Cronの既定に合わせた実装） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
