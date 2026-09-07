@@ -4,6 +4,17 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS Safari は font-size が 16px 未満の入力欄にフォーカスすると自動でズームインし、
+   フォーカスを外してもズームが戻らない。SPA遷移でそのまま次の画面に持ち越され「画面が
+   収まらない」状態になるため、狭い画面ではフォーム要素の最小フォントサイズを 16px にする。 */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @theme {
   /* Primary: ベース（背景） */
   --color-base-50:  #FBFBFB;
