@@ -16,6 +16,10 @@ vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
 }));
+vi.mock("@/lib/encrypt", () => ({
+  encrypt: (text: string) => `enc(${text})`,
+  decrypt: (data: string) => data,
+}));
 
 const { POST } = await import("./route");
 
@@ -95,8 +99,6 @@ describe("POST /api/account/delete", () => {
     expect(json.ok).toBe(true);
     expect(profileUpdateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: null,
-        name_roman: null,
         nickname: "退会済みユーザー",
         gender: null,
         birth_date: null,
@@ -104,6 +106,16 @@ describe("POST /api/account/delete", () => {
         avatar_url: null,
       })
     );
+
+    // profiles.name / name_roman は NOT NULL 制約があるため null にすると本番で
+    // 「null value in column violates not-null constraint」で削除全体が 500 になる。
+    // 個人情報を含まない値を暗号化して入れること（原文のままにもしない）。
+    const payload = profileUpdateSpy.mock.calls[0][0];
+    expect(payload.name).toEqual(expect.any(String));
+    expect(payload.name).not.toBe("");
+    expect(payload.name_roman).toEqual(expect.any(String));
+    expect(payload.name_roman).not.toBe("");
+    expect(payload.name).not.toBe("退会済みユーザー"); // 平文で保存しない（暗号化する）
     expect(mocks.updateUserById).toHaveBeenCalledWith(
       "user-1",
       expect.objectContaining({

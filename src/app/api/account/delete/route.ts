@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
+import { encrypt } from "@/lib/encrypt";
 import { randomUUID } from "crypto";
+
+// 匿名化後の氏名。profiles.name / name_roman は NOT NULL 制約があるため null にはできず、
+// 他の氏名カラム同様「暗号文が入っている」前提のコード（管理者一覧・CSV の decrypt 等）を
+// 壊さないよう、個人情報を含まないプレースホルダを暗号化して入れる。
+const ANONYMIZED_NAME = "退会済みユーザー";
 
 // アカウント削除：氏名・性別・生年月日・メールアドレス等の個人情報のみ匿名化し、
 // 予約・決済・ポイント履歴等は user_id を保持したまま残す（会計上の記録、および
@@ -39,9 +45,9 @@ export async function POST(req: NextRequest) {
   const { error: profileError } = await service
     .from("profiles")
     .update({
-      name: null,
-      name_roman: null,
-      nickname: "退会済みユーザー",
+      name: encrypt(ANONYMIZED_NAME),
+      name_roman: encrypt(ANONYMIZED_NAME),
+      nickname: ANONYMIZED_NAME,
       gender: null,
       birth_date: null,
       referral_code_used: null,
