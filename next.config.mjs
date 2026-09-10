@@ -2,14 +2,43 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 
 /** @type {import('next').NextConfig} */
 
-// Content-Security-Policy は、まず Report-Only（違反をブラウザのコンソールに出すのみで
-// 実際のブロックはしない）で先行導入する。Square の決済用 iframe/SDK・Supabase への
-// 通信・Sentry へのエラー送信を壊さないことを確認してから、
-// Content-Security-Policy-Report-Only → Content-Security-Policy に切り替えて本適用する。
-// 開発時のみ、Next.js の webpack HMR（eval-source-map）が eval() を使うため 'unsafe-eval' が
-// 必要になる。本番ビルドでは付与しない（付与するとCSPの効果が大きく弱まるため）。
+// Content-Security-Policy は Report-Only（違反をブラウザのコンソールと report-uri に
+// 送るだけで実際のブロックはしない）で先行導入している。Square の決済用 iframe/SDK・
+// Supabase への通信・Sentry へのエラー送信を壊さないことを確認してから本適用に切り替える。
+//
+// 本適用への切り替えは環境変数で行う（next.config の headers() はビルド時に評価される
+// ため、Vercel で環境変数を変更したあと再デプロイが必要。ロールバックは環境変数を戻して
+// 再デプロイ、または Vercel の Instant Rollback で直前のデプロイに戻す）：
+//   CSP_REPORT_ONLY=false  → Content-Security-Policy（本適用・ブロックあり）
+//   未設定 / それ以外       → Content-Security-Policy-Report-Only（既定）
+//
+// NEXT_PUBLIC_SENTRY_DSN（または SENTRY_DSN）が設定されている場合、その DSN から
+// Sentry の CSP レポート受信エンドポイントを組み立てて report-uri に付与する。これにより
+// Report-Only 期間中の違反が Sentry に集約され、本適用の可否を実データで判断できる。
+//
+// 開発時のみ、Next.js の webpack HMR（eval-source-map）が eval() を使うため 'unsafe-eval'
+// が必要。本番ビルドでは付与しない（付与すると CSP の効果が大きく弱まるため）。
 const isDev = process.env.NODE_ENV !== "production";
+const cspReportOnly = process.env.CSP_REPORT_ONLY !== "false";
 
+function cspReportUri() {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN;
+  if (!dsn) return null;
+  try {
+    const u = new URL(dsn);
+    const projectId = u.pathname.replace(/\//g, "");
+    if (!projectId || !u.username) return null;
+    return `${u.protocol}//${u.host}/api/${projectId}/security/?sentry_key=${u.username}`;
+  } catch {
+    return null;
+  }
+}
+
+const reportUri = cspReportUri();
+
+// Square Web Payments SDK が必要とするドメイン（本番）。
+// 参照: https://developer.squareup.com/docs/web-payments/content-security-policy
+// sandbox.web.squarecdn.com はプレビュー環境での sandbox 決済確認のために残している。
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -19,11 +48,12 @@ const CSP_DIRECTIVES = [
   // （'unsafe-inline' はXSS対策としては弱いが、nonce導入は別途の作業とする）
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://web.squarecdn.com https://sandbox.web.squarecdn.com`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
+  "img-src 'self' data: blob: https://*.squarecdn.com",
+  "font-src 'self' data: https://square-fonts-production-f.squarecdn.com https://d1g145x70srn7h.cloudfront.net",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.squarecdn.com https://*.squareup.com https://*.sentry.io https://*.ingest.us.sentry.io",
-  "frame-src https://web.squarecdn.com https://sandbox.web.squarecdn.com",
+  "frame-src 'self' https://web.squarecdn.com https://sandbox.web.squarecdn.com",
   "form-action 'self'",
+  ...(reportUri ? [`report-uri ${reportUri}`] : []),
 ].join("; ");
 
 const securityHeaders = [
@@ -33,7 +63,10 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   // HTTPSでない場合ブラウザは無視するため、開発環境（http）でも安全に設定できる
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-  { key: "Content-Security-Policy-Report-Only", value: CSP_DIRECTIVES },
+  {
+    key: cspReportOnly ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy",
+    value: CSP_DIRECTIVES,
+  },
 ];
 
 const nextConfig = {

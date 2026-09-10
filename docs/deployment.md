@@ -52,7 +52,47 @@ ENCRYPTION_KEY=
 
 # サイトURL
 NEXT_PUBLIC_SITE_URL=https://your-domain.vercel.app
+
+# エラー監視（Sentry）。未設定なら SDK は no-op。
+# NEXT_PUBLIC_SENTRY_DSN を設定すると、その DSN から CSP レポート送信先も自動で組み立てる。
+SENTRY_DSN=
+NEXT_PUBLIC_SENTRY_DSN=
+SENTRY_ORG=
+SENTRY_PROJECT=
+SENTRY_AUTH_TOKEN=
+
+# Content-Security-Policy の適用モード。未設定=Report-Only（既定）、"false"=本適用。
+# next.config.mjs の headers() はビルド時評価のため、変更後は再デプロイが必要。
+CSP_REPORT_ONLY=
 ```
+
+---
+
+## Sentry（エラー監視）の有効化手順
+
+1. [sentry.io](https://sentry.io) でプロジェクトを作成（Platform: **Next.js**）。作成後に表示される DSN
+   （`https://<key>@o<org>.ingest.us.sentry.io/<project>`）を控える。
+2. Vercel の環境変数（Production / Preview）に設定：
+   - `SENTRY_DSN` と `NEXT_PUBLIC_SENTRY_DSN` … どちらも同じ DSN
+   - （任意）`SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` … ソースマップアップロード用
+3. 再デプロイ。
+4. 疎通確認（サーバー側）：`GET /api/debug/sentry?token=<CRON_SECRET>` を叩くと意図的に
+   500 エラーが発生する。数十秒後に Sentry の Issues に
+   「Sentry connectivity test: intentional error from GET /api/debug/sentry」が出れば OK。
+   トークンなし／不一致では 404 を返す（一般には存在しないエンドポイント）。
+5. クライアント側は、本番でわざと JS エラーを起こす（存在しないページ操作等）か、
+   `src/app/global-error.tsx` に到達する状況を作ると Issues に記録される。
+
+## CSP を本適用に切り替える手順（14-5）
+
+Report-Only 期間に Sentry の CSP レポート（Security カテゴリ）へ違反が集約される。
+Square 実カード決済（3-D セキュア含む）を含めて違反ゼロを確認してから：
+
+1. Vercel の環境変数（Production）に `CSP_REPORT_ONLY=false` を追加。
+2. 再デプロイ（headers() はビルド時評価のため必須）。
+3. レスポンスヘッダーが `Content-Security-Policy`（`-Report-Only` なし）に変わったことを確認。
+4. 決済フローを一通り再確認。問題があれば環境変数を削除して再デプロイ、または
+   Vercel Dashboard の Instant Rollback で直前のデプロイへ即時復帰。
 
 ---
 
