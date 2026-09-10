@@ -54,9 +54,10 @@ ENCRYPTION_KEY=
 NEXT_PUBLIC_SITE_URL=https://your-domain.vercel.app
 
 # エラー監視（Sentry）。未設定なら SDK は no-op。
-# NEXT_PUBLIC_SENTRY_DSN を設定すると、その DSN から CSP レポート送信先も自動で組み立てる。
-SENTRY_DSN=
+# NEXT_PUBLIC_SENTRY_DSN を設定すると、サーバー側もこれにフォールバックし、
+# その DSN から CSP レポート送信先も自動で組み立てる。SENTRY_DSN は明示用（任意）。
 NEXT_PUBLIC_SENTRY_DSN=
+SENTRY_DSN=
 SENTRY_ORG=
 SENTRY_PROJECT=
 SENTRY_AUTH_TOKEN=
@@ -73,13 +74,17 @@ CSP_REPORT_ONLY=
 1. [sentry.io](https://sentry.io) でプロジェクトを作成（Platform: **Next.js**）。作成後に表示される DSN
    （`https://<key>@o<org>.ingest.us.sentry.io/<project>`）を控える。
 2. Vercel の環境変数（Production / Preview）に設定：
-   - `SENTRY_DSN` と `NEXT_PUBLIC_SENTRY_DSN` … どちらも同じ DSN
+   - `NEXT_PUBLIC_SENTRY_DSN` … DSN。サーバー側 config もこれにフォールバックするので
+     基本これ1つでよい（`SENTRY_DSN` は明示したい場合のみ、同じ値を追加）
    - （任意）`SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` … ソースマップアップロード用
-3. 再デプロイ。
-4. 疎通確認（サーバー側）：`GET /api/debug/sentry?token=<CRON_SECRET>` を叩くと意図的に
-   500 エラーが発生する。数十秒後に Sentry の Issues に
+3. 再デプロイ（`NEXT_PUBLIC_*` はビルド時に埋め込まれるため env 追加だけでは反映されない）。
+4. 疎通確認（サーバー側）：`GET /api/debug/sentry?token=<CRON_SECRET>` が
+   `{"sentry":{"dsnConfigured":true,"eventId":"...","flushed":true}}` を返し、
+   数十秒後に Sentry の Issues に
    「Sentry connectivity test: intentional error from GET /api/debug/sentry」が出れば OK。
+   `dsnConfigured:false` ならサーバーに DSN が渡っていない。
    トークンなし／不一致では 404 を返す（一般には存在しないエンドポイント）。
+   `?throw=1` を付けると捕捉されない例外を投げ、フレームワーク経由の捕捉も試せる。
 5. クライアント側は、本番でわざと JS エラーを起こす（存在しないページ操作等）か、
    `src/app/global-error.tsx` に到達する状況を作ると Issues に記録される。
 
