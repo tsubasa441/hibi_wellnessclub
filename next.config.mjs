@@ -47,7 +47,9 @@ const CSP_DIRECTIVES = [
   // Next.js のインラインスクリプトや、既存コードに残るインライン style={{}} を当面許可する
   // （'unsafe-inline' はXSS対策としては弱いが、nonce導入は別途の作業とする）
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://web.squarecdn.com https://sandbox.web.squarecdn.com`,
-  "style-src 'self' 'unsafe-inline'",
+  // Square が top-level ドキュメントに直接スタイルを挿入する（2026-09-12 本番決済で
+  // style-src-elem 違反として web.squarecdn.com を検出）。
+  "style-src 'self' 'unsafe-inline' https://*.squarecdn.com",
   "img-src 'self' data: blob: https://*.squarecdn.com",
   // square-fonts-production-f.squarecdn.com・cash-f.squarecdn.com 等、squarecdn.com 配下の
   // フォントサブドメインは個別列挙すると漏れる（2026-09-12 本番決済で cash-f.squarecdn.com の
@@ -55,8 +57,14 @@ const CSP_DIRECTIVES = [
   // d1g145x70srn7h.cloudfront.net は squarecdn.com 配下ではないため個別に残す。
   "font-src 'self' data: https://*.squarecdn.com https://d1g145x70srn7h.cloudfront.net",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.squarecdn.com https://*.squareup.com https://*.sentry.io https://*.ingest.us.sentry.io",
-  "frame-src 'self' https://web.squarecdn.com https://sandbox.web.squarecdn.com",
-  "form-action 'self'",
+  // 3-Dセキュア（本人認証）の認証画面は、使用するカードの発行会社・提携する認証会社
+  // （例: acs-jcn.dnp-cdms.jp）によってドメインが変わり、事前に列挙できない
+  // （2026-09-12 本番決済で frame-src・form-action の両方で検出。Square 公式 CSP
+  // ガイドも3Dセキュアの要件には触れていない）。frame-ancestors 'none' により
+  // 「Hibi を他サイトへ埋め込む」方向は引き続き完全ブロックしたまま、
+  // 「Hibi が埋め込む／フォーム送信する」方向のみ HTTPS 全体を許可する。
+  "frame-src 'self' https:",
+  "form-action 'self' https:",
   ...(reportUri ? [`report-uri ${reportUri}`] : []),
 ].join("; ");
 
