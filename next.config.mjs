@@ -49,7 +49,11 @@ const CSP_DIRECTIVES = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://web.squarecdn.com https://sandbox.web.squarecdn.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.squarecdn.com",
-  "font-src 'self' data: https://square-fonts-production-f.squarecdn.com https://d1g145x70srn7h.cloudfront.net",
+  // square-fonts-production-f.squarecdn.com・cash-f.squarecdn.com 等、squarecdn.com 配下の
+  // フォントサブドメインは個別列挙すると漏れる（2026-09-12 本番決済で cash-f.squarecdn.com の
+  // font-src 違反を検出済み）。ワイルドカードでまとめて許可する。CloudFront の
+  // d1g145x70srn7h.cloudfront.net は squarecdn.com 配下ではないため個別に残す。
+  "font-src 'self' data: https://*.squarecdn.com https://d1g145x70srn7h.cloudfront.net",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.squarecdn.com https://*.squareup.com https://*.sentry.io https://*.ingest.us.sentry.io",
   "frame-src 'self' https://web.squarecdn.com https://sandbox.web.squarecdn.com",
   "form-action 'self'",
