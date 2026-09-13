@@ -6,8 +6,7 @@ import Header from "@/components/Header";
 import ProfileCard from "@/components/ProfileCard";
 import ReferralShare from "@/app/impact/ReferralShare";
 import DeleteAccountButton from "@/app/impact/DeleteAccountButton";
-import { getRankByLevel, getNextRank, RANKS } from "@/lib/ranks";
-import RankIcon from "@/components/RankIcon";
+import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { getYearMonthJst, getJstMonthBounds, getJstParts } from "@/lib/date";
 
 // ---- バッジ型定義 ----
@@ -243,49 +242,6 @@ export default async function ImpactPage() {
           nextRank={nextRank}
           countToNext={countToNext}
         />
-
-        {/* ランク一覧 */}
-        <div className="nm-card px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-150">
-          <h2 className="font-outfit font-semibold text-base text-ink-700 mb-3">ランク</h2>
-          <div className="space-y-1">
-            {RANKS.map((rank) => {
-              const isCurrent = rank.level === currentRank.level;
-              return (
-                <div
-                  key={rank.level}
-                  className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl transition ${
-                    isCurrent
-                      ? "bg-sage-300 text-white shadow-[4px_4px_10px_#3D483F,-2px_-2px_6px_#95AB9B]"
-                      : "nm-card-sm"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`font-outfit text-xs font-semibold w-4 shrink-0 text-center ${isCurrent ? "text-white/70" : "text-ink-300"}`}>
-                      {rank.level}
-                    </span>
-                    <div className="flex items-center gap-1 min-w-0">
-                      <RankIcon level={rank.level} size={13} className={isCurrent ? "text-white" : "text-ink-300"} />
-                      <p className={`font-outfit font-semibold text-sm truncate ${isCurrent ? "text-white" : "text-ink-300"}`}>{rank.nameEn}</p>
-                      <p className={`font-dm text-xs shrink-0 ${isCurrent ? "text-white/70" : "text-ink-300"}`}>（{rank.nameJa}）</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {rank.minCount > 0 && (
-                      <p className={`font-dm text-xs leading-tight ${isCurrent ? "text-white/70" : "text-ink-300"}`}>
-                        {`${rank.minCount}回〜`}
-                      </p>
-                    )}
-                    {rank.minReferrals > 0 && (
-                      <p className={`font-dm text-xs leading-tight ${isCurrent ? "text-white/70" : "text-ink-300"}`}>
-                        {`紹介 ${rank.minReferrals}人〜`}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
         {/* 月間バッジ */}
         <div className="nm-card px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-200">
