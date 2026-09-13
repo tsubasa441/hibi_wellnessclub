@@ -4,7 +4,10 @@ import HeroBackground, { type HeroSlide } from "./HeroBackground";
 
 // 動画・写真を用意でき次第、ここに追加すると自動でクロスフェード表示される
 // （例: { type: "video", src: "/videos/yoga.mp4" }）
-const HERO_SLIDES: HeroSlide[] = [{ type: "image", src: "/images/top.png" }];
+const HERO_SLIDES: HeroSlide[] = [
+  { type: "image", src: "/images/top.png" },
+  { type: "video", src: "/videos/hibi-top.mp4" },
+];
 
 export default function HomePage({
   searchParams,
