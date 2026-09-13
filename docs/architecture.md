@@ -45,6 +45,7 @@ src/
 │   ├── layout.tsx              # ルートレイアウト・フォント設定
 │   ├── globals.css             # カラー変数・グローバルスタイル・.app-bg
 │   ├── page.tsx                # トップページ（/）
+│   ├── HeroBackground.tsx      # トップページ背景の写真/動画クロスフェード切替（Client Component）
 │   ├── login/
 │   │   ├── page.tsx            # 認証チェック（認証済みなら /home へリダイレクト）
 │   │   └── LoginForm.tsx       # ログイン・新規登録フォーム（タブ切り替え・紹介コード対応）

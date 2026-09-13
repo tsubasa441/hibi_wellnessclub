@@ -1,6 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import Footer from "@/components/Footer";
+import HeroBackground, { type HeroSlide } from "./HeroBackground";
+
+// 動画・写真を用意でき次第、ここに追加すると自動でクロスフェード表示される
+// （例: { type: "video", src: "/videos/yoga.mp4" }）
+const HERO_SLIDES: HeroSlide[] = [{ type: "image", src: "/images/top.png" }];
 
 export default function HomePage({
   searchParams,
@@ -12,14 +16,14 @@ export default function HomePage({
   return (
     <>
     <main className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
-      <Image
-        src="/images/top.png"
-        alt="Hibi background"
-        fill
-        className="object-cover object-center"
-        priority
-      />
+      <HeroBackground slides={HERO_SLIDES} />
       <div className="absolute inset-0 bg-black/20" />
+
+      <header className="absolute top-0 inset-x-0 z-20 px-5 py-4 sm:px-8">
+        <Link href="/" className="font-outfit text-lg font-bold text-white tracking-wide drop-shadow">
+          Hibi
+        </Link>
+      </header>
 
       <div className="relative z-10 flex flex-col items-center mt-[25vh] gap-8 px-4">
         {accountDeleted && (

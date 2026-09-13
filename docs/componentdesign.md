@@ -98,7 +98,8 @@
 
 | エリア | 内容 |
 |--------|------|
-| 背景 | `public/images/top.png`（全画面・固定・黒オーバーレイ bg-black/20） |
+| ヘッダー | 画面上部に半透明オーバーレイで「Hibi」ロゴのみ（`src/app/HeroBackground.tsx` とは別に `page.tsx` 内に直接実装。ナビ項目は現状なし） |
+| 背景 | `HeroBackground`（Client Component）が写真・動画のスライドを一定間隔（7秒）でクロスフェード切り替え。黒オーバーレイ bg-black/20 は固定。スライドは `page.tsx` の `HERO_SLIDES` 配列で管理し、現状は `public/images/top.png` 1枚のみ（動画・追加写真は素材が揃い次第 `{ type: "video", src: "/videos/..." }` 等を追加） |
 | 中央上部 | 「Hibi」テキスト（font-outfit / text-5xl / white） |
 | Hibi直下 | 「Wellness Club」（font-cormorant / text-xs / white/90 / tracking-[0.3em]） |
 | 中央 | コンセプトコピー2行 |
