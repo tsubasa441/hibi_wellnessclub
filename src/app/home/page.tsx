@@ -8,9 +8,8 @@ import { decrypt } from "@/lib/encrypt";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
-import RankIcon from "@/components/RankIcon";
+import ProfileCard from "@/components/ProfileCard";
 import RankUpModal from "./RankUpModal";
-import RankGuideModal from "./RankGuideModal";
 import { getJstParts } from "@/lib/date";
 
 const MOCK_PROFILE = { name: "Tsubasa Yamamoto", points: 120, created_at: "2026-01-15T00:00:00Z" };
@@ -99,40 +98,16 @@ export default async function HomePage() {
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
 
         {/* プロフィールカード */}
-        <div className="bg-white text-ink-700 rounded-[20px] p-4 shadow-[0_1px_4px_rgba(44,53,49,0.08)] animate-fade-up animate-delay-100">
-          <div className="flex items-center justify-between gap-3">
-            <p className="font-dm text-xs text-ink-300">Member since {memberSince}</p>
-            <div className="flex items-center gap-1 text-sage-600">
-              <RankIcon level={currentRank.level} size={14} />
-              <p className="font-outfit text-sm font-bold leading-tight">{currentRank.nameEn}</p>
-              <p className="font-outfit text-xs text-sage-600/70">（{currentRank.nameJa}）</p>
-            </div>
-          </div>
-          <p className="font-outfit text-xl font-semibold tracking-wide mt-2 truncate">{profile.nickname || profile.name_roman || profile.name || "User"}</p>
-
-          <div className="flex items-center gap-6 mt-3">
-            <div>
-              <p className="font-outfit text-2xl font-bold text-sage-600">{sessionCount}</p>
-              <p className="font-dm text-xs text-ink-300 mt-0.5">累計参加数</p>
-            </div>
-            <div className="w-px h-8 bg-ink-200" />
-            <div>
-              <p className="font-outfit text-2xl font-bold text-sage-600">{profile.points ?? 0}</p>
-              <p className="font-dm text-xs text-ink-300 mt-0.5">Points</p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between mt-3">
-            {nextRank && countToNext !== null && countToNext > 0 ? (
-              <p className="font-dm text-xs text-ink-300">
-                次のランク <span className="font-outfit font-semibold text-sage-600">{nextRank.nameEn}</span> まであと <span className="font-semibold text-sage-600">{countToNext} 回</span>
-              </p>
-            ) : (
-              <p className="font-dm text-xs text-ink-300">最高ランク到達</p>
-            )}
-            <RankGuideModal currentLevel={currentRank.level} />
-          </div>
-        </div>
+        <ProfileCard
+          className="animate-fade-up animate-delay-100"
+          memberSince={memberSince}
+          displayName={profile.nickname || profile.name_roman || profile.name || "User"}
+          sessionCount={sessionCount}
+          points={profile.points ?? 0}
+          currentRank={currentRank}
+          nextRank={nextRank}
+          countToNext={countToNext}
+        />
 
         {/* 予約済みイベント */}
         {upcomingBookings.length > 0 && (

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/encrypt";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import ProfileCard from "@/components/ProfileCard";
 import ReferralShare from "@/app/impact/ReferralShare";
 import DeleteAccountButton from "@/app/impact/DeleteAccountButton";
 import { getRankByLevel, getNextRank, RANKS } from "@/lib/ranks";
@@ -120,6 +121,7 @@ export default async function ImpactPage() {
   // ---- ランク計算 ----
   const currentRank = getRankByLevel(profile?.rank_level ?? 1);
   const nextRank = getNextRank(currentRank.level);
+  const countToNext = nextRank ? nextRank.minCount - totalCount : null;
 
   // ---- 紹介 ----
   const rewardedCount = (referrals ?? []).filter((r: { status: string }) => r.status === "rewarded").length;
@@ -231,64 +233,16 @@ export default async function ImpactPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-8 sm:px-6 sm:py-10 space-y-6">
 
-        {/* ランク + 累計参加数 */}
-        <div className="bg-sage-300 text-white rounded-2xl shadow-[0_1px_4px_rgba(44,53,49,0.08)] px-4 py-3 animate-fade-up animate-delay-100">
-          <div className="mb-2">
-            <p className="font-dm text-xs text-white/70">現在のランク</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <RankIcon level={currentRank.level} size={16} />
-              <p className="font-outfit text-lg font-bold leading-tight">{currentRank.nameEn}</p>
-              <p className="font-outfit text-xs text-white/70">（{currentRank.nameJa}）</p>
-            </div>
-          </div>
-          <div className="flex gap-5 mb-2">
-            <div>
-              <p className="font-dm text-xs text-white/70">累計参加回数</p>
-              <div className="flex items-baseline gap-1">
-                <p className="font-outfit text-xl font-bold">{totalCount}</p>
-                <p className="font-dm text-white/70 text-xs">回</p>
-              </div>
-            </div>
-            <div>
-              <p className="font-dm text-xs text-white/70">ポイント残高</p>
-              <div className="flex items-baseline gap-1">
-                <p className="font-outfit text-xl font-bold">{(profile?.points ?? 0).toLocaleString()}</p>
-                <p className="font-dm text-white/70 text-xs">pt</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            {nextRank ? (
-              <>
-                <div className="flex justify-between mb-1">
-                  <span className="font-dm text-xs text-white/70">{currentRank.nameEn}</span>
-                  <span className="font-dm text-xs text-white/70">{nextRank.nameEn}</span>
-                </div>
-                <div className="w-full bg-white/25 rounded-full h-1 mb-1">
-                  <div
-                    className="bg-white rounded-full h-1 transition-all"
-                    style={{ width: `${Math.min(((totalCount - currentRank.minCount) / (nextRank.minCount - currentRank.minCount)) * 100, 100)}%` }}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                  <span className="font-dm text-xs text-white/70">
-                    参加 {totalCount} / {nextRank.minCount}回
-                    {totalCount >= nextRank.minCount && <span className="text-white ml-1">✓</span>}
-                  </span>
-                  {nextRank.minReferrals > 0 && (
-                    <span className="font-dm text-xs text-white/70">
-                      インパクト {rewardedCount} / {nextRank.minReferrals}人
-                      {rewardedCount >= nextRank.minReferrals && <span className="text-white ml-1">✓</span>}
-                    </span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="font-dm text-xs text-white/70 text-center">最高ランク到達</p>
-            )}
-          </div>
-        </div>
+        {/* プロフィールカード（Home と共通コンポーネント。ヘッダー部分のみ variant で切替） */}
+        <ProfileCard
+          variant="impact"
+          className="animate-fade-up animate-delay-100"
+          sessionCount={totalCount}
+          points={profile?.points ?? 0}
+          currentRank={currentRank}
+          nextRank={nextRank}
+          countToNext={countToNext}
+        />
 
         {/* ランク一覧 */}
         <div className="nm-card px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-150">
