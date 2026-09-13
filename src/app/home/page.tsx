@@ -8,11 +8,10 @@ import { decrypt } from "@/lib/encrypt";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
-import JournalQuickEntry from "./JournalQuickEntry";
 import RankIcon from "@/components/RankIcon";
 import RankUpModal from "./RankUpModal";
 import RankGuideModal from "./RankGuideModal";
-import { getTodayJst, getJstParts } from "@/lib/date";
+import { getJstParts } from "@/lib/date";
 
 const MOCK_PROFILE = { name: "Tsubasa Yamamoto", points: 120, created_at: "2026-01-15T00:00:00Z" };
 
@@ -30,17 +29,15 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = getTodayJst();
   const now = new Date().toISOString();
 
   await checkAndAwardPendingPoints(supabase, user.id);
   await checkAndAwardReferralReward(createServiceClient(), user.id);
 
-  const [profileRes, sessionRes, eventsRes, journalRes, bookingsRes] = await Promise.all([
+  const [profileRes, sessionRes, eventsRes, bookingsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("bookings").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "confirmed").not("checked_in_at", "is", null),
     supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(1),
-    supabase.from("journals").select("id").eq("user_id", user.id).eq("recorded_at", today).maybeSingle(),
     supabase
       .from("bookings")
       .select("id, event_id, events(title, start_at, location)")
@@ -57,7 +54,6 @@ export default async function HomePage() {
   };
   const sessionCount = sessionRes.count ?? 0;
   const nextEvent = eventsRes.data?.[0] ?? null;
-  const todayJournal = journalRes.data;
 
   type BookingRaw = {
     id: string;
@@ -183,11 +179,6 @@ export default async function HomePage() {
               <p className="font-dm text-sm text-ink-300">現在開催予定のイベントはありません</p>
             </div>
           )}
-        </div>
-
-        {/* ジャーナル */}
-        <div className="animate-fade-up animate-delay-300">
-          <JournalQuickEntry alreadyRecorded={!!todayJournal} />
         </div>
 
       </div>

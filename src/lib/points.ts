@@ -27,16 +27,6 @@ export async function awardPoints(
   return { awarded: true, points };
 }
 
-// ジャーナル記録時（1日1回 3pt）
-export async function awardJournalPoints(
-  supabase: SupabaseClient,
-  userId: string,
-  date: string // "YYYY-MM-DD"
-): Promise<AwardResult> {
-  return awardPoints(supabase, userId, 3, "journal", date);
-}
-
-
 // ホーム画面ロード時（イベント参加・月間ボーナスの未付与分を一括チェック）
 export async function checkAndAwardPendingPoints(
   supabase: SupabaseClient,

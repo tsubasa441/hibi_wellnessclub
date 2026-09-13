@@ -55,8 +55,8 @@
 |---|---------|---------|-----------|------|
 | 2-1 | ホーム画面表示 | ランク・累計参加数・Points・次回イベント・「次のランクまであと n 回」が表示される | - | ✅ 2026-08-18 |
 | 2-2 | 予約済みイベントが0件のとき | ホーム上部の「予約済みイベント」セクション自体が非表示になる（`upcomingBookings.length > 0` の場合のみ表示。「次回のイベント」欄は予約有無に関わらず、直近の公開イベントを常に表示する） | - | ✅ 2026-08-18（項目の記述を実装に合わせて修正） |
-| 2-3 | 今日のジャーナル未記録のとき | 気分・体調・気づき入力フォームが表示される | - | ✅ 2026-08-18 |
-| 2-4 | 今日のジャーナル記録済みのとき | 「今日の記録は完了しています」表示に切り替わる | - | ✅ 2026-08-18 |
+| 2-3 | ~~今日のジャーナル未記録のとき~~ | ~~気分・体調・気づき入力フォームが表示される~~ | - | 🛑 2026-09-13 機能停止によりホーム画面から入力導線を撤去。対象外（セクション7参照） |
+| 2-4 | ~~今日のジャーナル記録済みのとき~~ | ~~「今日の記録は完了しています」表示に切り替わる~~ | - | 🛑 2026-09-13 機能停止によりホーム画面から入力導線を撤去。対象外（セクション7参照） |
 | 2-5 | ホーム画面ロード時、未付与ポイント（参加・月間ボーナス）がある場合 | `checkAndAwardPendingPoints` が実行されポイントが加算される | `points.test.ts` | ✅ 2026-08-28（参加ポイント：price=0の過去日時テストイベントを作成・予約→`/home`ロードで`points_log`に`event_participation`理由で30pt記録、`profiles.points`加算をDBで確認（2026-08-23）。月間全イベント参加ボーナス：既存イベントが1件もない過去月（2026年6月）にテストイベント2件を作成・全予約→`/home`ロードで`points_log`に`monthly_bonus`理由（`reference_id: "2026-06"`）で500pt記録、参加ポイント2件（30pt×2）と合計してprofile.pointsが560になることを確認。再度`/home`をロードしても重複付与されないことも確認。**紹介報酬（200pt）はこの一括付与処理の対象外と判明**——`checkAndAwardPendingPoints`のコードを確認したところ紹介関連のロジックは実装されておらず、実際はサインアップ完了時（`/api/signup/profile`）に即時付与される別経路（1-2・6-7で確認済み）。`docs/funcdocument.md`の「イベント翌日以降、ホーム画面ロード時」という記載は実装と不一致だったため修正した） |
 
 ## 3. イベント一覧・詳細（`/events`, `/events/[id]`）
@@ -106,13 +106,15 @@
 | 6-6 | 「紹介リンクをシェア」「リンクをコピー」ボタン | クリックでエラーが出ない（共有 or クリップボードにコピー） | - | ✅ 2026-08-18 |
 | 6-7 | 紹介実績（紹介人数・初回参加完了数・履歴） | 紹介した人がいる場合に一覧表示される | - | ✅ 2026-08-18（BUG-1修正後に再テスト。紹介した人数1・初回参加完了1・紹介履歴に相手の名前と+200ptが表示されることを確認）。2026-08-27にユーザー依頼で「獲得ポイント」カードを削除（`docs/requirements.md`も合わせて更新） |
 
-## 7. ジャーナル
+## 7. ジャーナル（🛑 2026-09-13 機能停止。次フェーズで再実装予定。以下は停止前の実績として保持）
+
+`src/app/home/JournalQuickEntry.tsx`・`src/app/api/journals/route.ts`・`src/lib/points.ts` の `awardJournalPoints` を削除し、ホーム画面の入力導線を撤去。`journals` テーブルと既存データ・レート制限設定（`rate_limits`）はそのまま保持。再実装時はこのセクションの過去実績を参照する。
 
 | # | 確認項目 | 期待結果 | 自動テスト | 状態 |
 |---|---------|---------|-----------|------|
-| 7-1 | ホーム画面から気分・体調を選択し記録する | 保存成功、3pt付与、「記録済み」表示に切り替わる | - | ✅ 2026-08-18 |
-| 7-2 | 同じ日に2回目の記録を試みる | 1日1回のみ（`journals` に同日重複レコードが作られない） | - | ✅ 2026-08-18（重複挿入は防止されポイントも二重付与なし。ただしBUG-2としてレスポンスが500になる点は別記） |
-| 7-3 | 気づき（note）を空のまま記録 | 任意項目のため記録できる | - | ✅ 2026-08-18 |
+| 7-1 | ホーム画面から気分・体調を選択し記録する | 保存成功、3pt付与、「記録済み」表示に切り替わる | - | ✅ 2026-08-18（機能停止前の実績） |
+| 7-2 | 同じ日に2回目の記録を試みる | 1日1回のみ（`journals` に同日重複レコードが作られない） | - | ✅ 2026-08-18（機能停止前の実績。重複挿入は防止されポイントも二重付与なし。ただしBUG-2としてレスポンスが500になる点は別記） |
+| 7-3 | 気づき（note）を空のまま記録 | 任意項目のため記録できる | - | ✅ 2026-08-18（機能停止前の実績） |
 
 ## 8. Cron・バックエンドロジック
 
@@ -242,3 +244,4 @@
 | 2026-09-10 | 14-5・14-6 の本適用に向けたコード整備。**14-5 CSP**：Square 公式ドキュメント（web-payments/content-security-policy）と突き合わせ、`font-src` に `square-fonts-production-f.squarecdn.com`・`d1g145x70srn7h.cloudfront.net`、`img-src`/`frame-src` に squarecdn を追加。`next.config.mjs` に `CSP_REPORT_ONLY` トグル（未設定=Report-Only、`false`=本適用）と、`NEXT_PUBLIC_SENTRY_DSN` からの CSP `report-uri` 自動組み立てを実装。`CSP_REPORT_ONLY=false` でビルド→`next start` し、`/`・`/login`・`/events`・`/events/[id]`・`/legal/*` を enforcing CSP でブラウザ表示してコンソール違反0件を確認（認証必須の checkout/Square SDK は実カード決済でのみ検証可能なため依頼者タスク）。**14-6 Sentry**：疎通確認用 `GET /api/debug/sentry?token=<CRON_SECRET>`（不一致404・一致時に意図的500）を追加、`debug/sentry/route.test.ts` 4ケース。`docs/deployment.md` に Sentry 有効化手順・CSP 本適用手順、`.env.local.example`/deployment.md に `CSP_REPORT_ONLY`・Sentry 変数を追記。`npm run test` 167件・lint・build（Report-Only／enforcing 両モード）通過。依頼者作業：Sentry プロジェクト作成＋DSN を Vercel 設定→`/api/debug/sentry` で疎通確認（14-6 クローズ）／Report-Only で CSP レポート違反ゼロを確認後 `CSP_REPORT_ONLY=false` 再デプロイ（14-5 クローズ）。 |
 | 2026-09-11 | **14-6 クローズ**（詳細は14-6参照）。依頼者が Sentry プロジェクト「hibi」（US）を作成・DSN を Vercel `NEXT_PUBLIC_SENTRY_DSN` に設定・再デプロイ。クライアント側は本番ブラウザで捕捉・送信を確認したが、サーバー側は `/api/debug/sentry` のテストエラーが Issues に出ず調査。Sentry ingest への直接 curl POST（200・受理確認）で「受信自体は正常、反映遅延」を切り分けた後、疎通確認エンドポイントを `Sentry.captureException`+`flush` を明示する診断API（`{dsnConfigured,eventId,flushed}` を返す）に強化したところ **`dsnConfigured:false` を検出＝サーバー側 config に DSN が渡っていないバグ**と判明（`sentry.server.config.ts`/`sentry.edge.config.ts` が `SENTRY_DSN`（未設定）のみ参照、`NEXT_PUBLIC_SENTRY_DSN` へのフォールバックが無かった）。DSN は非秘匿値のため両ファイルを `SENTRY_DSN \|\| NEXT_PUBLIC_SENTRY_DSN` に修正・デプロイ→`dsnConfigured:true` に反転、Issues に「Sentry connectivity test...」が表示されることを依頼者が確認。`docs/deployment.md`・`.env.local.example` を「`NEXT_PUBLIC_SENTRY_DSN` 1つで両側フォールバック」に合わせて更新。`npm run test` 168件・lint・tsc 通過。**これで testplan の未クローズは 4-6（PayPay 実決済）と 14-5（CSP 本適用）のみ。** |
 | 2026-09-12 | **14-5 クローズ**（詳細は14-5参照）。依頼者による本番実カード決済2回（Report-Only 中）で `font-src`（`cash-f.squarecdn.com`）・`style-src-elem`（`web.squarecdn.com`）・`frame-src`/`form-action`（3-Dセキュア認証サーバー `acs-jcn.dnp-cdms.jp`、Square公式CSPガイド未記載でカードごとにドメインが変わるため事前列挙不可）の違反を発見、都度 `next.config.mjs` を修正・本番デプロイして潰した（コミット `7556ea2`・`ca37f37`）。3-Dセキュアは `frame-src`/`form-action` を `https:` 全許可にすることで解決（`frame-ancestors 'none'` によるクリックジャッキング対策は維持）。違反ゼロを確認後、依頼者が Vercel に `CSP_REPORT_ONLY=false` を設定・再デプロイしヘッダーが `Content-Security-Policy`（enforcing）に変わったことを確認。基本ページ（トップ・ログイン・イベント一覧）をコンソールエラーなしで表示できることを確認した上で、**本適用の状態で実カード決済を実行し正常完了・Sentryに新規CSP違反なし**を依頼者が確認。これで testplan の未クローズは **4-6（PayPay 実決済）のみ**。PayPay は依頼者側の固定IPプロキシ（QuotaGuard）契約済み・IP許可リスト登録と本番申請待ち（詳細は memory 参照）。 |
+| 2026-09-13 | 依頼者依頼によりジャーナル機能を一旦完全停止（次フェーズで再実装予定）。`src/app/home/JournalQuickEntry.tsx`・`src/app/api/journals/route.ts` を削除、`src/lib/points.ts` の `awardJournalPoints` を削除、`home/page.tsx` から入力導線・当日記録取得クエリ（`journalRes`/`todayJournal`）を撤去。`journals` テーブル・既存データ・`rate_limits` 設定は保持（法人向けToGデータとして将来活用する方針は継続、単に新規収集を止めただけ）。`docs/requirements.md`・`docs/funcdocument.md`（API一覧・ポイント設計・DB定義・実装順序）・`docs/architecture.md`（ディレクトリ構成・レート制限説明）・`docs/product-vision.md`・`docs/testplan.md`（セクション2・7）を機能停止に合わせて更新。`npm run test` 168件（変更なし、ジャーナル専用テストは元々未実装）・lint・tsc・build（27ルートに減少、`/api/journals` 消失を確認）すべて通過。 |

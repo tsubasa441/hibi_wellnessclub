@@ -30,7 +30,7 @@
 | エラー監視 | Sentry（`@sentry/nextjs`） | - |
 
 セキュリティ関連の実装方針：
-- **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・ジャーナル・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する
+- **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する
 - **セキュリティヘッダー / CSP**: `next.config.mjs` の `headers()` で全ルートに `X-Frame-Options`・`X-Content-Type-Options`・`Referrer-Policy`・`Permissions-Policy`・`Strict-Transport-Security` を付与。`Content-Security-Policy` はまず `Content-Security-Policy-Report-Only` として段階導入し、Square決済iframe等を壊さないことを確認してから本適用に切り替える運用（環境変数 `CSP_REPORT_ONLY=false` で本適用。`NEXT_PUBLIC_SENTRY_DSN` 設定時は CSP 違反レポートを Sentry に送信）。Sentry の疎通確認は `GET /api/debug/sentry?token=<CRON_SECRET>`（`docs/deployment.md` 参照）
 - **エラー監視**: `@sentry/nextjs` を導入（`sentry.server.config.ts`・`sentry.edge.config.ts`・`src/instrumentation.ts`・`src/instrumentation-client.ts`・`src/app/global-error.tsx`）。`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN` が未設定の場合はSDKが何もしない安全なno-op状態になる
 - **アカウント削除**: `/impact` の「アカウントを削除する」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
@@ -93,7 +93,6 @@ src/
 │       ├── convert-name/route.ts          # 名前ローマ字変換（未認証・IPアドレスでレート制限）
 │       ├── cron/badges/route.ts           # バッジ付与 Cron（Vercel）
 │       ├── debug/sentry/route.ts          # Sentry疎通確認（?token=<CRON_SECRET>で意図的にエラー。不一致は404）
-│       ├── journals/route.ts              # ジャーナル記録
 │       ├── payments/
 │       │   ├── square/route.ts
 │       │   └── paypay/
