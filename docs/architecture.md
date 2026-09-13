@@ -131,8 +131,8 @@ src/
 sentry.server.config.ts         # Sentry初期化設定（Node.jsランタイム）
 sentry.edge.config.ts           # Sentry初期化設定（Edgeランタイム）
 public/
-└── images/
-    └── top.png                 # トップ・ログイン背景画像
+└── videos/
+    └── hibi-top.mp4            # トップページ背景動画（ループ再生）
 docs/                           # ドキュメント一式
 ```
 

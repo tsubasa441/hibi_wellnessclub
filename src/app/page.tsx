@@ -2,12 +2,10 @@ import Link from "next/link";
 import Footer from "@/components/Footer";
 import HeroBackground, { type HeroSlide } from "./HeroBackground";
 
-// 動画・写真を用意でき次第、ここに追加すると自動でクロスフェード表示される
-// （例: { type: "video", src: "/videos/yoga.mp4" }）
-const HERO_SLIDES: HeroSlide[] = [
-  { type: "image", src: "/images/top.png" },
-  { type: "video", src: "/videos/hibi-top.mp4" },
-];
+// 動画・写真を追加すると自動でクロスフェード表示される
+// （例: { type: "video", src: "/videos/yoga.mp4" }）。1件のみの場合は
+// 切り替わらず、動画ならそのままループ再生され続ける
+const HERO_SLIDES: HeroSlide[] = [{ type: "video", src: "/videos/hibi-top.mp4" }];
 
 export default function HomePage({
   searchParams,
