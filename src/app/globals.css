@@ -42,6 +42,13 @@
   --color-sage-500: #6A7E70;
   --color-sage-600: #2F6A51;
 
+  /* ナビゲーション背景（Header・BottomNav 専用）。ニューモーフィズムの光/影は
+     この背景色自体から派生させた色調にする（他のnm-*要素が --nm-bg から
+     --nm-light/--nm-dark を派生させているのと同じ考え方） */
+  --color-nav-bg:    #FAFAEC;
+  --color-nav-light: #FFFFFA;
+  --color-nav-dark:  #C7C7B4;
+
   /* Font families */
   --font-outfit: 'Outfit', sans-serif;
   --font-cormorant: 'Cormorant Garamond', serif;
@@ -125,12 +132,12 @@
 
 /* ヘッダー・ナビ共通ベース */
 .nm-nav-top {
-  background: var(--nm-bg);
-  box-shadow: 0 4px 10px var(--nm-dark), 0 1px 3px var(--nm-light);
+  background: var(--color-nav-bg);
+  box-shadow: 0 4px 10px var(--color-nav-dark), 0 1px 3px var(--color-nav-light);
 }
 .nm-nav-bottom {
-  background: var(--nm-bg);
-  box-shadow: 0 -4px 10px var(--nm-dark), 0 -1px 3px var(--nm-light);
+  background: var(--color-nav-bg);
+  box-shadow: 0 -4px 10px var(--color-nav-dark), 0 -1px 3px var(--color-nav-light);
 }
 
 /* ナビアイテム アクティブ（凹み） */

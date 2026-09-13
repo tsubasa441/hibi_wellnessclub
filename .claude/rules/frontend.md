@@ -10,7 +10,7 @@
 
 - Tailwind CSS ユーティリティクラスのみ使用
 - インラインスタイル（`style={{}}`）禁止
-- 使用できるカラーは `base-*` / `ink-*` / `sage-*` のみ（`globals.css` の CSS 変数）
+- 使用できるカラーは `base-*` / `ink-*` / `sage-*`（`globals.css` の CSS 変数）。Header・BottomNav 専用の `nav-bg` を除く
 - 設計外のカラー（`brand-*` / `gray-*` / `green-*` / `brown-*` / `cream-*` / `sand-*` / `pink-*` 等）禁止
 - UI に絵文字禁止。アイコンは SVG アウトラインのみ（stroke-width: 1.5px、`currentColor`）
 

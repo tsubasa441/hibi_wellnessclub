@@ -31,18 +31,18 @@ export default function Header() {
   return (
     <header className="nm-nav-top">
       <div className="max-w-2xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
-        <Link href="/home" className="font-outfit text-xl font-medium text-ink-700 tracking-wide">
+        <Link href="/home" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
           Hibi
         </Link>
         <div className="flex items-center gap-4">
           {isAdmin && (
-            <Link href="/admin/events" className="font-outfit text-xs text-sage-500 hover:text-sage-600 transition">
+            <Link href="/admin/events" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
               管理画面
             </Link>
           )}
           <button
             onClick={handleLogout}
-            className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition"
+            className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition"
           >
             ログアウト
           </button>

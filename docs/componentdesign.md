@@ -141,12 +141,14 @@
 
 ## ヘッダー構成
 
+背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。
+
 ```tsx
 <header className="nm-nav-top px-5 py-4 sm:px-8 flex items-center justify-between">
-  <Link href="/home" className="font-outfit text-xl font-medium text-ink-700 tracking-wide">
+  <Link href="/home" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
     Hibi
   </Link>
-  <button onClick={handleLogout} className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition">
+  <button onClick={handleLogout} className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
     ログアウト
   </button>
 </header>

@@ -57,7 +57,7 @@ await supabase.from("bookings").insert({...});
 
 - Tailwind CSS のユーティリティクラスのみ使用
 - インラインスタイル（`style={{}}`）は使用禁止
-- カスタムカラーは `globals.css` の CSS 変数を経由する（`base-*` / `ink-*` / `sage-*`）
+- カスタムカラーは `globals.css` の CSS 変数を経由する（`base-*` / `ink-*` / `sage-*`、Header・BottomNav 専用の `nav-bg` を除く。新しい色を使いたい場合はハードコードせず `globals.css` にトークンを追加してから使う）
 - 絵文字はUI内で使用禁止（アイコンは SVG のみ）
 - `brand-*` / `gray-*` / `green-*` / `brown-*` / `cream-*` / `sand-*` / `pink-*` などプロジェクト外のカラーは使用禁止
 
