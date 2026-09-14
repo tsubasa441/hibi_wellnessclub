@@ -18,7 +18,7 @@
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
-| Footer | `src/components/Footer.tsx` | 特定商取引法に基づく表記・プライバシーポリシーへのリンクを表示する共通フッター。トップ・ログイン・登録完了ページに設置（固定 BottomNav のある認証後画面には未設置） |
+| Footer | `src/components/Footer.tsx` | 特定商取引法に基づく表記・プライバシーポリシーへのリンクを表示する共通フッター。トップ・ログイン・登録完了ページに設置（固定 BottomNav のある認証後画面には未設置）。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景） |
 
 ボタン・カードは共通コンポーネント化せず、下記バリエーションのユーティリティクラスをその都度使用する。
 
@@ -98,12 +98,13 @@
 
 | エリア | 内容 |
 |--------|------|
-| ヘッダー | 画面上部に半透明オーバーレイで「Hibi」ロゴのみ（`src/app/HeroBackground.tsx` とは別に `page.tsx` 内に直接実装。ナビ項目は現状なし） |
+| ヘッダー | `Header.tsx` と同じ `.nm-nav-top`（nav-bg背景）バー。中身は「Hibi」ロゴのみ（未ログインのためログアウト等のリンクはなし）。`page.tsx` 内に直接実装、ヒーローより前に通常フローで配置（オーバーレイではない） |
 | 背景 | `HeroBackground`（Client Component）が写真・動画のスライドを一定間隔（7秒）でクロスフェード切り替え。黒オーバーレイ bg-black/20 は固定。スライドは `page.tsx` の `HERO_SLIDES` 配列で管理し、現状は `public/videos/hibi-top.mp4`（ループ再生）1本のみ。複数件になると自動でクロスフェード切り替えが有効になる |
 | 中央上部 | 「Hibi」テキスト（font-outfit / text-5xl / white） |
 | Hibi直下 | 「Wellness Club」（font-cormorant / text-xs / white/90 / tracking-[0.3em]） |
 | 中央 | コンセプトコピー2行 |
 | 下部 | 「イベントご参加の方はこちら」ボタン → `/login` へ遷移 |
+| フッター | 共通 `Footer.tsx`。`.nm-nav-bottom`（nav-bg背景）バーに統一（2026-09、ヘッダーと合わせて変更。中身の法定表記リンクは変更なし） |
 
 ### 表示内容
 

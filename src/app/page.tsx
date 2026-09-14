@@ -16,15 +16,17 @@ export default function HomePage({
 
   return (
     <>
+    <header className="nm-nav-top relative z-20">
+      <div className="max-w-2xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
+        <Link href="/" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
+          Hibi
+        </Link>
+      </div>
+    </header>
+
     <main className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
       <HeroBackground slides={HERO_SLIDES} />
       <div className="absolute inset-0 bg-black/20" />
-
-      <header className="absolute top-0 inset-x-0 z-20 px-5 py-4 sm:px-8">
-        <Link href="/" className="font-outfit text-lg font-bold text-white tracking-wide drop-shadow">
-          Hibi
-        </Link>
-      </header>
 
       <div className="relative z-10 flex flex-col items-center mt-[25vh] gap-8 px-4">
         {accountDeleted && (
