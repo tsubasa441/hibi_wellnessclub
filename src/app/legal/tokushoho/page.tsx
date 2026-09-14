@@ -20,7 +20,7 @@ const ITEMS: { label: string; value: string }[] = [
 
 export default function TokushohoPage() {
   return (
-    <main className="relative min-h-screen app-bg flex flex-col items-center px-4 pt-10 sm:pt-16 pb-4">
+    <main className="relative min-h-screen app-bg flex flex-col items-center gap-6 px-4 pt-10 sm:pt-16 pb-4">
       <div className="relative z-10 w-full max-w-2xl nm-card p-6 sm:p-8 animate-fade-up">
         <div className="text-center mb-6">
           <span className="font-outfit text-2xl font-medium text-ink-700 tracking-wide">Hibi</span>
