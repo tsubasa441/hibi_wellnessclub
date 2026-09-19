@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/encrypt";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { withPayPayProxy } from "@/lib/paypayProxy";
+import * as Sentry from "@sentry/nextjs";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 
 PAYPAY.Configure({
@@ -176,18 +177,24 @@ export async function POST(req: NextRequest) {
   let paypayResponse: unknown;
   try {
     paypayResponse = await withPayPayProxy(() => PAYPAY.QRCodeCreate(payload));
-  } catch {
+  } catch (e) {
+    Sentry.captureException(e, { tags: { area: "paypay_qrcode_create" } });
     // PayPay API エラー時は pending 予約を削除
     await serviceSupabase.from("bookings").delete().eq("id", booking.id);
     if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
     return NextResponse.json({ error: "PayPay決済の開始に失敗しました" }, { status: 500 });
   }
 
-  const body = (paypayResponse as { BODY?: { data?: { url?: string }; resultInfo?: { code?: string } } })?.BODY;
+  const body = (paypayResponse as { BODY?: { data?: { url?: string }; resultInfo?: { code?: string; message?: string; codeId?: string } } })?.BODY;
   const resultCode = body?.resultInfo?.code;
   const paymentUrl = body?.data?.url;
 
   if (resultCode !== "SUCCESS" || !paymentUrl) {
+    Sentry.captureMessage("PayPay QRCodeCreate failed", {
+      level: "error",
+      tags: { area: "paypay_qrcode_create" },
+      extra: { resultInfo: body?.resultInfo, hasUrl: Boolean(paymentUrl) },
+    });
     await serviceSupabase.from("bookings").delete().eq("id", booking.id);
     if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
     return NextResponse.json({ error: "PayPay決済URLの取得に失敗しました" }, { status: 500 });
