@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@paypayopa/paypayopa-sdk-node", () => ({
-  default: { Configure: vi.fn(), GetPaymentDetails: mocks.getPaymentDetails },
+  default: { Configure: vi.fn(), GetCodePaymentDetails: mocks.getPaymentDetails },
 }));
 vi.mock("@/lib/email", () => ({ sendBookingConfirmation: mocks.sendBookingConfirmation }));
 vi.mock("@/lib/encrypt", () => ({ decrypt: (v: string) => v }));

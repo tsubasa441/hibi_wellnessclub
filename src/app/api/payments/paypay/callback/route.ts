@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   // PayPay決済状況を確認
   let paymentDetails: unknown;
   try {
-    paymentDetails = await withPayPayProxy(() => PAYPAY.GetPaymentDetails([merchantPaymentId]));
+    paymentDetails = await withPayPayProxy(() => PAYPAY.GetCodePaymentDetails([merchantPaymentId]));
   } catch {
     return NextResponse.redirect(new URL("/home?payment=error", req.url));
   }

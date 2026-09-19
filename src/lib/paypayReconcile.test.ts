@@ -7,18 +7,19 @@ const mocks = vi.hoisted(() => ({
   refundUsedPoints: vi.fn().mockResolvedValue(undefined),
   createServiceClient: vi.fn(),
   captureException: vi.fn(),
+  captureMessage: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@paypayopa/paypayopa-sdk-node", () => ({
-  default: { Configure: vi.fn(), GetPaymentDetails: mocks.getPaymentDetails },
+  default: { Configure: vi.fn(), GetCodePaymentDetails: mocks.getPaymentDetails },
 }));
-vi.mock("@sentry/nextjs", () => ({ captureException: mocks.captureException }));
+vi.mock("@sentry/nextjs", () => ({ captureException: mocks.captureException, captureMessage: mocks.captureMessage }));
 vi.mock("@/lib/email", () => ({ sendBookingConfirmation: mocks.sendBookingConfirmation }));
 vi.mock("@/lib/encrypt", () => ({ decrypt: (v: string) => v }));
 vi.mock("@/lib/points", () => ({ refundUsedPoints: mocks.refundUsedPoints }));
 
-const { reconcilePendingPayPayBookings, PENDING_PAYPAY_TTL_MS } = await import("./paypayReconcile");
+const { reconcilePendingPayPayBookings, PENDING_PAYPAY_TTL_MS, UNKNOWN_STATUS_TTL_MS } = await import("./paypayReconcile");
 
 const USER = { id: "user-1", email: "user@example.com" };
 
@@ -126,6 +127,33 @@ describe("reconcilePendingPayPayBookings", () => {
     mocks.getPaymentDetails.mockResolvedValue(paypayResult("DYNAMIC_QR_PAYMENT_NOT_FOUND"));
     await reconcilePendingPayPayBookings(supabase, USER);
     expect(deleteSpy).not.toHaveBeenCalled();
+  });
+
+  it("未知の状態（CREATED 等）やエラー応答は、TTL を過ぎても24時間以内なら削除しない（支払い済みの誤削除防止）", async () => {
+    const { supabase, deleteSpy } = setup({ bookings: [makeBooking({ ageMs: PENDING_PAYPAY_TTL_MS + 60_000 })] });
+    mocks.getPaymentDetails.mockResolvedValue(paypayResult("DYNAMIC_QR_PAYMENT_NOT_FOUND"));
+    await reconcilePendingPayPayBookings(supabase, USER);
+    expect(deleteSpy).not.toHaveBeenCalled();
+    mocks.getPaymentDetails.mockResolvedValue(paypayResult("SUCCESS", "CREATED"));
+    await reconcilePendingPayPayBookings(supabase, USER);
+    expect(deleteSpy).not.toHaveBeenCalled();
+  });
+
+  it("未知の状態でも24時間を過ぎていれば予約を削除する", async () => {
+    const { supabase, deleteSpy } = setup({ bookings: [makeBooking({ ageMs: UNKNOWN_STATUS_TTL_MS + 60_000 })] });
+    mocks.getPaymentDetails.mockResolvedValue(paypayResult("DYNAMIC_QR_PAYMENT_NOT_FOUND"));
+    await reconcilePendingPayPayBookings(supabase, USER);
+    expect(deleteSpy).toHaveBeenCalled();
+  });
+
+  it("未完了の照会結果を Sentry に記録する", async () => {
+    const { supabase } = setup({ bookings: [makeBooking({ ageMs: 60_000 })] });
+    mocks.getPaymentDetails.mockResolvedValue(paypayResult("SUCCESS", "CREATED"));
+    await reconcilePendingPayPayBookings(supabase, USER);
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      "PayPay reconcile: payment not completed",
+      expect.objectContaining({ extra: expect.objectContaining({ status: "CREATED" }) })
+    );
   });
 
   it("未完了で TTL を過ぎていれば予約を削除し、充当ポイントを払い戻す", async () => {

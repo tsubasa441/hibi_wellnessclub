@@ -5,7 +5,8 @@ import { chainable, createSupabaseMock } from "@/lib/testUtils/supabaseMock";
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   refundPayment: vi.fn().mockResolvedValue({}),
-  paypayRefund: vi.fn().mockResolvedValue({}),
+  paypayRefund: vi.fn().mockResolvedValue({ BODY: { resultInfo: { code: "SUCCESS" } } }),
+  paypayCodeDetails: vi.fn().mockResolvedValue({ BODY: { data: { paymentId: "paypay-pid-1" } } }),
   sendCancellationNotification: vi.fn().mockResolvedValue(undefined),
   revokeEventPoints: vi.fn().mockResolvedValue(undefined),
   refundUsedPoints: vi.fn().mockResolvedValue(undefined),
@@ -34,7 +35,7 @@ vi.mock("square", () => ({
 }));
 
 vi.mock("@paypayopa/paypayopa-sdk-node", () => ({
-  default: { Configure: vi.fn(), PaymentRefund: mocks.paypayRefund },
+  default: { Configure: vi.fn(), PaymentRefund: mocks.paypayRefund, GetCodePaymentDetails: mocks.paypayCodeDetails },
 }));
 
 vi.mock("@/lib/email", () => ({
@@ -197,8 +198,38 @@ describe("POST /api/bookings/[id]/cancel", () => {
     const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
 
     expect(res.status).toBe(200);
-    expect(mocks.paypayRefund).toHaveBeenCalledWith(["pp-1", expect.any(String), 1000]);
+    expect(mocks.paypayCodeDetails).toHaveBeenCalledWith(["pp-1"]);
+    expect(mocks.paypayRefund).toHaveBeenCalledWith({
+      merchantRefundId: expect.any(String),
+      paymentId: "paypay-pid-1",
+      amount: { amount: 1000, currency: "JPY" },
+      reason: expect.any(String),
+    });
     expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", "booking-1");
+  });
+
+  it("PayPay の返金が SUCCESS 以外で返ったら「返金済み」にせずエラーを返す", async () => {
+    const { paymentStatusUpdateSpy } = setupSupabase({
+      booking: makeBooking({ payment_method: "paypay", payment_id: "pp-1", amount_charged: 1000 }),
+    });
+    mocks.paypayRefund.mockResolvedValueOnce({ BODY: { resultInfo: { code: "INVALID_PARAMS" } } });
+
+    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+
+    expect(res.status).toBe(500);
+    expect(paymentStatusUpdateSpy).not.toHaveBeenCalledWith({ payment_status: "refunded" });
+  });
+
+  it("PayPay の決済情報（paymentId）が取得できなければ返金を呼ばずエラーを返す", async () => {
+    setupSupabase({
+      booking: makeBooking({ payment_method: "paypay", payment_id: "pp-1", amount_charged: 1000 }),
+    });
+    mocks.paypayCodeDetails.mockResolvedValueOnce({ BODY: { data: {} } });
+
+    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+
+    expect(res.status).toBe(500);
+    expect(mocks.paypayRefund).not.toHaveBeenCalled();
   });
 
   it("前日キャンセル（2日ルール対象外）: 返金もポイント払い戻しも行わないが、参加ポイントの取消は行う", async () => {

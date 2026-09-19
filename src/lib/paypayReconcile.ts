@@ -18,6 +18,11 @@ PAYPAY.Configure({
 // 未払いのまま席を占有し続けないよう、この時間を過ぎた未払い予約は解放する
 export const PENDING_PAYPAY_TTL_MS = 30 * 60 * 1000;
 
+// PayPay が失敗・取消・期限切れと明示した場合だけ TTL で解放する。照会結果が想定外（未知の状態・
+// エラー応答）のときは、支払い済みの予約を誤って消すおそれがあるため、より長い猶予を置く
+const UNPAID_STATUSES = new Set(["FAILED", "CANCELED", "EXPIRED"]);
+export const UNKNOWN_STATUS_TTL_MS = 24 * 60 * 60 * 1000;
+
 type PendingBooking = {
   id: string;
   event_id: string;
@@ -60,8 +65,8 @@ async function sendConfirmation(supabase: SupabaseClient, user: User, booking: P
 }
 
 async function reconcileOne(supabase: SupabaseClient, user: User, booking: PendingBooking) {
-  const details = await withPayPayProxy(() => PAYPAY.GetPaymentDetails([booking.id]));
-  const body = (details as { BODY?: { data?: { status?: string }; resultInfo?: { code?: string } } })?.BODY;
+  const details = await withPayPayProxy(() => PAYPAY.GetCodePaymentDetails([booking.id]));
+  const body = (details as { BODY?: { data?: { status?: string }; resultInfo?: { code?: string; codeId?: string; message?: string } } })?.BODY;
   const completed = body?.resultInfo?.code === "SUCCESS" && body?.data?.status === "COMPLETED";
 
   // 書き込みは service_role（bookings に本人向け UPDATE/DELETE の RLS は無い）。
@@ -79,8 +84,24 @@ async function reconcileOne(supabase: SupabaseClient, user: User, booking: Pendi
     return;
   }
 
-  // 未完了でも、支払い途中の可能性があるため TTL 内は触らない
-  if (Date.now() - new Date(booking.created_at).getTime() < PENDING_PAYPAY_TTL_MS) return;
+  const status = body?.data?.status;
+  const ageMs = Date.now() - new Date(booking.created_at).getTime();
+  // 個人情報を含まない照会結果のみ記録する（Sentry は "code"/"message" キーをマスクするため別名で送る）
+  Sentry.captureMessage("PayPay reconcile: payment not completed", {
+    level: "info",
+    tags: { area: "paypay_reconcile" },
+    extra: {
+      status,
+      paypayResultCode: body?.resultInfo?.code,
+      codeId: body?.resultInfo?.codeId,
+      paypayResultMessage: body?.resultInfo?.message,
+      ageMinutes: Math.round(ageMs / 60000),
+    },
+  });
+
+  // 未完了でも、支払い途中の可能性があるため猶予内は触らない
+  const ttlMs = status && UNPAID_STATUSES.has(status) ? PENDING_PAYPAY_TTL_MS : UNKNOWN_STATUS_TTL_MS;
+  if (ageMs < ttlMs) return;
 
   const { data: removed } = await service
     .from("bookings")

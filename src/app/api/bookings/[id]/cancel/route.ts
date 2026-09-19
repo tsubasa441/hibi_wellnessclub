@@ -119,9 +119,21 @@ export async function POST(
 
   if (willRefund && booking.payment_method === "paypay") {
     try {
-      await withPayPayProxy(() =>
-        PAYPAY.PaymentRefund([booking.payment_id!, crypto.randomUUID(), booking.amount_charged])
+      // 返金には PayPay 側の paymentId が必要（booking.payment_id は加盟店側の merchantPaymentId）
+      const details = await withPayPayProxy(() => PAYPAY.GetCodePaymentDetails([booking.payment_id!]));
+      const paypayPaymentId = (details as { BODY?: { data?: { paymentId?: string } } })?.BODY?.data?.paymentId;
+      if (!paypayPaymentId) throw new Error("PayPay の決済情報を取得できませんでした");
+
+      const refund = await withPayPayProxy(() =>
+        PAYPAY.PaymentRefund({
+          merchantRefundId: crypto.randomUUID(),
+          paymentId: paypayPaymentId,
+          amount: { amount: booking.amount_charged, currency: "JPY" },
+          reason: "お客様都合によるキャンセル",
+        })
       );
+      const refundCode = (refund as { BODY?: { resultInfo?: { code?: string } } })?.BODY?.resultInfo?.code;
+      if (refundCode !== "SUCCESS") throw new Error("PayPay 返金に失敗しました");
     } catch (err) {
       const message = err instanceof Error ? err.message : "PayPay 返金に失敗しました";
       return NextResponse.json({ error: `予約はキャンセルされましたが、${message}。サポートまでお問い合わせください。` }, { status: 500 });
