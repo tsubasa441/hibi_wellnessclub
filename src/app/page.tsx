@@ -26,11 +26,11 @@ export default function HomePage({
       </div>
     </header>
 
-    <main className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden">
+    <main className="relative min-h-[calc(100svh-8.6rem)] pb-10 flex flex-col items-center justify-start overflow-hidden">
       <HeroBackground slides={HERO_SLIDES} />
       <div className="absolute inset-0 bg-black/20" />
 
-      <div className="relative z-10 flex flex-col items-center mt-[25vh] gap-8 px-4">
+      <div className="relative z-10 flex flex-col items-center mt-[11vh] gap-8 px-4">
         {accountDeleted && (
           <p className="font-dm text-xs text-white bg-black/40 rounded-full px-4 py-2 backdrop-blur-sm">
             アカウントを削除しました。ご利用ありがとうございました。

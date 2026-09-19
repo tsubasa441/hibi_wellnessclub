@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="nm-nav-bottom w-full py-6 px-4">
+    <footer className="nm-nav-bottom w-full py-7 px-4">
       <div className="max-w-2xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
         <Link href="/legal/tokushoho" className="font-outfit text-[11px] text-ink-700 hover:text-ink-800 transition">
           特定商取引法に基づく表記
