@@ -120,9 +120,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "予約の作成に失敗しました" }, { status: 500 });
   }
 
+  // bookings には本人向けの UPDATE/DELETE の RLS ポリシーが無く、ユーザーのセッションでは
+  // update/delete がエラーなしで 0 行のまま無視される（payment_id が保存されず、決済成功後も
+  // paid にならず、失敗時の pending 予約も消えない）。作成後の書き込みは service_role で行う
+  const serviceSupabase = createServiceClient();
+
   // 参加費全額をポイントで充当した場合・無料イベントの場合はPayPay決済不要
   if (amountToCharge === 0) {
-    await supabase
+    await serviceSupabase
       .from("bookings")
       .update({ payment_status: "paid" })
       .eq("id", booking.id);
@@ -173,7 +178,7 @@ export async function POST(req: NextRequest) {
     paypayResponse = await withPayPayProxy(() => PAYPAY.QRCodeCreate(payload));
   } catch {
     // PayPay API エラー時は pending 予約を削除
-    await supabase.from("bookings").delete().eq("id", booking.id);
+    await serviceSupabase.from("bookings").delete().eq("id", booking.id);
     if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
     return NextResponse.json({ error: "PayPay決済の開始に失敗しました" }, { status: 500 });
   }
@@ -183,13 +188,13 @@ export async function POST(req: NextRequest) {
   const paymentUrl = body?.data?.url;
 
   if (resultCode !== "SUCCESS" || !paymentUrl) {
-    await supabase.from("bookings").delete().eq("id", booking.id);
+    await serviceSupabase.from("bookings").delete().eq("id", booking.id);
     if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
     return NextResponse.json({ error: "PayPay決済URLの取得に失敗しました" }, { status: 500 });
   }
 
   // payment_id にmerchantPaymentId を保存
-  await supabase
+  await serviceSupabase
     .from("bookings")
     .update({ payment_id: merchantPaymentId })
     .eq("id", booking.id);

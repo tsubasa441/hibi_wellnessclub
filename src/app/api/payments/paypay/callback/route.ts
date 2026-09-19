@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { sendBookingConfirmation } from "@/lib/email";
 import { refundUsedPoints } from "@/lib/points";
 import { withPayPayProxy } from "@/lib/paypayProxy";
@@ -24,6 +25,10 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createClient();
+  // bookings に本人向けの UPDATE/DELETE の RLS ポリシーは無く、ユーザーのセッションでは
+  // 更新・削除が黙って無視される。所有者の確認（SELECT は本人の行のみ）はユーザーの
+  // セッションで行い、その後の書き込みだけ service_role で行う
+  const serviceSupabase = createServiceClient();
 
   // 予約情報取得
   const { data: booking } = await supabase
@@ -57,7 +62,7 @@ export async function GET(req: NextRequest) {
 
   if (resultCode !== "SUCCESS" || paymentStatus !== "COMPLETED") {
     // 決済未完了 or キャンセル → pending予約を削除し、充当していたポイントも払い戻す
-    await supabase.from("bookings").delete().eq("id", booking.id);
+    await serviceSupabase.from("bookings").delete().eq("id", booking.id);
     if (booking.points_used > 0) {
       await refundUsedPoints(supabase, booking.user_id, booking.id);
     }
@@ -67,7 +72,7 @@ export async function GET(req: NextRequest) {
   }
 
   // 予約を確定
-  await supabase
+  await serviceSupabase
     .from("bookings")
     .update({ payment_status: "paid" })
     .eq("id", booking.id);

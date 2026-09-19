@@ -7,9 +7,11 @@ const mocks = vi.hoisted(() => ({
   sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
   refundUsedPoints: vi.fn().mockResolvedValue(undefined),
   createServerClient: vi.fn(),
+  createServiceClient: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
+vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@paypayopa/paypayopa-sdk-node", () => ({
   default: { Configure: vi.fn(), GetPaymentDetails: mocks.getPaymentDetails },
 }));
@@ -48,11 +50,21 @@ function setup({
   booking = makeBooking() as ReturnType<typeof makeBooking> | null,
   email = "user@example.com" as string | null,
 } = {}) {
+  // bookings には本人向けの UPDATE/DELETE の RLS ポリシーが無く、ユーザーのセッションでの
+  // 更新・削除は黙って無視される。書き込みは service_role で行われること（= ユーザー側の
+  // update/delete が呼ばれないこと）を検証する
   const updateSpy = vi.fn();
   const deleteSpy = vi.fn();
+  const userUpdateSpy = vi.fn();
+  const userDeleteSpy = vi.fn();
+  mocks.createServiceClient.mockReturnValue({
+    from: vi
+      .fn()
+      .mockReturnValue(chainable({ data: null, error: null }, { update: updateSpy, delete: deleteSpy })),
+  });
   const from = vi.fn((table: string) => {
     if (table === "bookings") {
-      return chainable({ data: booking, error: null }, { update: updateSpy, delete: deleteSpy });
+      return chainable({ data: booking, error: null }, { update: userUpdateSpy, delete: userDeleteSpy });
     }
     if (table === "events") {
       return chainable({
@@ -76,7 +88,7 @@ function setup({
       getUser: vi.fn().mockResolvedValue({ data: { user: email ? { email } : null } }),
     },
   });
-  return { updateSpy, deleteSpy };
+  return { updateSpy, deleteSpy, userUpdateSpy, userDeleteSpy };
 }
 
 beforeEach(() => {
@@ -116,11 +128,12 @@ describe("GET /api/payments/paypay/callback", () => {
   });
 
   it("決済が COMPLETED でなければ pending 予約を削除して cancelled へ", async () => {
-    const { deleteSpy, updateSpy } = setup();
+    const { deleteSpy, updateSpy, userDeleteSpy } = setup();
     mocks.getPaymentDetails.mockResolvedValue(paypayResult("SUCCESS", "CREATED"));
     const res = await GET(makeRequest("booking-1"));
     expect(locationOf(res)).toBe("/events/event-1?payment=cancelled");
     expect(deleteSpy).toHaveBeenCalled();
+    expect(userDeleteSpy).not.toHaveBeenCalled();
     expect(updateSpy).not.toHaveBeenCalled();
     expect(mocks.sendBookingConfirmation).not.toHaveBeenCalled();
   });
@@ -149,11 +162,12 @@ describe("GET /api/payments/paypay/callback", () => {
   });
 
   it("決済完了なら paid に更新し、確認メールを送って完了画面へ", async () => {
-    const { updateSpy, deleteSpy } = setup({ booking: makeBooking({ points_used: 200 }) });
+    const { updateSpy, deleteSpy, userUpdateSpy } = setup({ booking: makeBooking({ points_used: 200 }) });
     mocks.getPaymentDetails.mockResolvedValue(paypayResult("SUCCESS", "COMPLETED"));
     const res = await GET(makeRequest("booking-1"));
     expect(locationOf(res)).toBe("/events/event-1?booked=1");
     expect(updateSpy).toHaveBeenCalledWith({ payment_status: "paid" });
+    expect(userUpdateSpy).not.toHaveBeenCalled();
     expect(deleteSpy).not.toHaveBeenCalled();
     expect(mocks.refundUsedPoints).not.toHaveBeenCalled();
     expect(mocks.sendBookingConfirmation).toHaveBeenCalledWith(

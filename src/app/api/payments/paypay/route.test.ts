@@ -99,20 +99,27 @@ function setupSupabase({
   const { from } = createSupabaseMock();
   from.mockReturnValueOnce(chainable({ data: existing })); // 重複予約チェック
   from.mockReturnValueOnce(chainable({ data: event })); // イベント取得
+  // bookings には本人向けの UPDATE/DELETE の RLS ポリシーが無く、ユーザーのセッションでの
+  // update/delete は黙って無視される。ユーザー側クライアントで呼ばれていないことを検証する
   const insertSpy = vi.fn();
-  from.mockReturnValueOnce(chainable(bookingInsertResult, { insert: insertSpy })); // bookings insert
-
-  const updateSpy = vi.fn();
-  from.mockReturnValueOnce(chainable({}, { update: updateSpy })); // payment_status/payment_id 更新 or delete
+  const userUpdateSpy = vi.fn();
+  const userDeleteSpy = vi.fn();
+  from.mockReturnValueOnce(
+    chainable(bookingInsertResult, { insert: insertSpy, update: userUpdateSpy, delete: userDeleteSpy })
+  ); // bookings insert
   from.mockReturnValueOnce(chainable({ data: { name: null } })); // profiles select
 
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
 
-  // 残席カウントは service_role クライアント経由
-  const serviceFrom = vi.fn().mockReturnValue(chainable({ count }));
+  // 残席カウントと、作成後の bookings の更新・削除は service_role クライアント経由
+  const updateSpy = vi.fn();
+  const deleteSpy = vi.fn();
+  const serviceFrom = vi
+    .fn()
+    .mockReturnValue(chainable({ count }, { update: updateSpy, delete: deleteSpy }));
   mocks.createServiceClient.mockReturnValue({ from: serviceFrom });
 
-  return { from, insertSpy, updateSpy, serviceFrom };
+  return { from, insertSpy, updateSpy, deleteSpy, userUpdateSpy, userDeleteSpy, serviceFrom };
 }
 
 beforeEach(() => {
@@ -199,7 +206,7 @@ describe("POST /api/payments/paypay", () => {
 
   it("ポイントで参加費全額を充当した場合はPayPay決済を呼ばず即座に確定する", async () => {
     mocks.spendPointsForBooking.mockResolvedValueOnce(true);
-    const { updateSpy } = setupSupabase({ event: makeEvent({ price: 3000 }) });
+    const { updateSpy, userUpdateSpy } = setupSupabase({ event: makeEvent({ price: 3000 }) });
 
     const res = await POST(makeRequest({ eventId: "event-1", pointsToUse: 3000 }));
     const body = await res.json();
@@ -208,6 +215,7 @@ describe("POST /api/payments/paypay", () => {
     expect(body.success).toBe(true);
     expect(mocks.qrCodeCreate).not.toHaveBeenCalled();
     expect(updateSpy).toHaveBeenCalledWith({ payment_status: "paid" });
+    expect(userUpdateSpy).not.toHaveBeenCalled();
     // ランク・バッジは予約時ではなくチェックイン時に判定する
     expect(mocks.checkRankUp).not.toHaveBeenCalled();
     expect(mocks.checkEventBadges).not.toHaveBeenCalled();
@@ -217,7 +225,7 @@ describe("POST /api/payments/paypay", () => {
     mocks.qrCodeCreate.mockResolvedValueOnce({
       BODY: { resultInfo: { code: "SUCCESS" }, data: { url: "https://paypay.example/pay/1" } },
     });
-    const { updateSpy } = setupSupabase({ event: makeEvent({ price: 3000 }) });
+    const { updateSpy, userUpdateSpy } = setupSupabase({ event: makeEvent({ price: 3000 }) });
 
     const res = await POST(makeRequest({ eventId: "event-1" }));
     const body = await res.json();
@@ -227,32 +235,39 @@ describe("POST /api/payments/paypay", () => {
     expect(mocks.qrCodeCreate).toHaveBeenCalledWith(
       expect.objectContaining({ amount: { amount: 3000, currency: "JPY" } })
     );
+    // 返金は payment_id（= merchantPaymentId）を使うため、保存されていること。
+    // ユーザーのセッションでは RLS により保存されない（実機検証で発覚）ので service_role で行う
     expect(updateSpy).toHaveBeenCalledWith({ payment_id: "booking-1" });
+    expect(userUpdateSpy).not.toHaveBeenCalled();
   });
 
   it("QRコード作成が例外を投げた場合は予約を削除しポイントを払い戻す", async () => {
     mocks.qrCodeCreate.mockRejectedValueOnce(new Error("paypay down"));
     mocks.spendPointsForBooking.mockResolvedValueOnce(true);
-    setupSupabase({ event: makeEvent({ price: 3000 }) });
+    const { deleteSpy, userDeleteSpy } = setupSupabase({ event: makeEvent({ price: 3000 }) });
 
     const res = await POST(makeRequest({ eventId: "event-1", pointsToUse: 1000 }));
     const body = await res.json();
 
     expect(res.status).toBe(500);
     expect(body.error).toContain("PayPay決済の開始に失敗しました");
+    expect(deleteSpy).toHaveBeenCalled();
+    expect(userDeleteSpy).not.toHaveBeenCalled();
     expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String));
   });
 
   it("PayPayの応答が失敗コードの場合は予約を削除しポイントを払い戻す", async () => {
     mocks.qrCodeCreate.mockResolvedValueOnce({ BODY: { resultInfo: { code: "FAILURE" } } });
     mocks.spendPointsForBooking.mockResolvedValueOnce(true);
-    setupSupabase({ event: makeEvent({ price: 3000 }) });
+    const { deleteSpy, userDeleteSpy } = setupSupabase({ event: makeEvent({ price: 3000 }) });
 
     const res = await POST(makeRequest({ eventId: "event-1", pointsToUse: 1000 }));
     const body = await res.json();
 
     expect(res.status).toBe(500);
     expect(body.error).toContain("PayPay決済URLの取得に失敗しました");
+    expect(deleteSpy).toHaveBeenCalled();
+    expect(userDeleteSpy).not.toHaveBeenCalled();
     expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String));
   });
 });
