@@ -43,11 +43,12 @@ export default function HomePage({
           Wellness Club
         </p>
         <div className="flex flex-col items-center gap-3 text-center animate-fade-up animate-delay-300">
-          <p className="font-dm text-sm text-white font-medium drop-shadow">
+          <p className="font-dm text-base text-white font-medium drop-shadow">
             なんでもない日々が、輝きだす。
           </p>
-          <p className="font-cormorant text-[9.5px] text-white/80 leading-loose tracking-normal drop-shadow whitespace-nowrap">
-            からだを動かし、気の合う仲間と出会い、毎日に新しい彩りが生まれる。<br />
+          <p className="font-cormorant text-[13px] text-white/80 leading-relaxed tracking-normal drop-shadow whitespace-nowrap">
+            からだを動かし、気の合う仲間と出会い、<br />
+            毎日に新しい彩りが生まれる。<br />
             運動からはじまる、大人のウェルネスコミュニティ。
           </p>
         </div>
