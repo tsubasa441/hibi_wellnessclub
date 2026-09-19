@@ -32,6 +32,7 @@
 | BUG-10（重大） | 1-8 の本番再検証中に発見。BUG-9 修正後も、実際のメール経由（`LoginForm.tsx` から `supabase.auth.resetPasswordForEmail()` を直接呼ぶ現行実装）のリセットリンクを開くと、別端末どころか初回のクリックでも「リンクが無効です」になる。BUG-9 修正時の検証は `admin.generateLink({ type: "recovery" })`（管理者APIで生成、PKCEを経由しない）で行っており、実際のクライアントフローを再現できていなかった。原因は、`resetPasswordForEmail()` を呼ぶ `LoginForm.tsx` の supabase-js クライアントが `@supabase/ssr` の `createBrowserClient`（flowType既定 "pkce"）であるため、発行される `token_hash` が PKCE の `code_challenge` に紐づいた値（`pkce_` プレフィックス、実際に本番メールのリンクで確認）になり、`/auth/confirm` の `verifyOtp` では検証できない値だったこと（node_modules の `@supabase/auth-js` `resetPasswordForEmail`/`verifyOtp` 実装で確認。なお `@supabase/ssr` の `createServerClient` も flowType 既定が pkce のため、`src/lib/supabase/server.ts` 経由でも同じ問題が起きる） | 本番のパスワード再設定メールが実質的に機能しない状態だった（同一端末でも失敗） | ✅ 2026-09-05 修正。新規 `POST /api/auth/forgot-password`（`src/app/api/auth/forgot-password/route.ts`）を追加し、`resetPasswordForEmail()` の呼び出しを `src/lib/supabase/service.ts`（`@supabase/supabase-js` の `createClient`、flowType既定 "implicit"＝PKCEを使わない）経由のサーバー側に移動。`LoginForm.tsx` の `handleForgotPassword` はこのAPIを呼ぶだけに変更。IPアドレス単位のレート制限（5回/300秒）を追加。新規 `forgot-password/route.test.ts`（5ケース）。`npm run test` 163件・lint・build 通過。**本番での実メール再検証（別デバイスでリンクを開き `/auth/reset-password` に正常遷移するか）は未実施** ← 1-8 参照 |
 | BUG-8（重大） | 日付・時刻を扱う多数の箇所が`getHours()`・`getMonth()`・`toLocaleDateString()`（timeZone未指定）等、サーバーの実行タイムゾーンに依存する方法で実装されていた。ローカル開発機（JST）では正しく見えるが、Vercelのサーバーレス関数はUTCで動作するため、同じイベントの開始時刻がローカルで「19:00」、本番で「10:00」と9時間ズレて表示されることが判明。`api/cron/badges/route.ts`だけは過去に手動でJSTオフセットを適用済みだったが（開発者が問題を認識していた形跡）、他の箇所には展開されていなかった。表示（イベント日時・予約確認メール・Member since等）だけでなく、月間バッジ・月間ボーナスの集計期間（`badges.ts`の`monthBounds`等）やジャーナルの「今日」判定（`toISOString().split("T")[0]`はUTC基準になるため、JST 0:00〜9:00は前日として扱われてしまう）にも影響する業務ロジック上のバグだった | 表示の見た目のズレに加え、月境界付近でのバッジ・ボーナス誤集計、深夜早朝のジャーナル記録の日付ズレなど、実データに影響しうる重大な不具合 | ✅ 2026-08-27 修正済み。`src/lib/date.ts`にJST基準の共通ヘルパー（`getJstParts`・`getTodayJst`・`getYearMonthJst`・`getJstMonthBounds`・`toJstDateTimeLocal`・`fromJstDateTimeLocal`）を新設し、`badges.ts`・`points.ts`・`impact/page.tsx`・`home/page.tsx`・`api/journals/route.ts`・`api/signup/profile/route.ts`（集計・判定ロジック）と、`email.ts`・`events/page.tsx`・`events/[id]/page.tsx`・`bookings/page.tsx`・`events/[id]/checkout/page.tsx`・`admin/events/page.tsx`・`admin/events/[id]/participants/page.tsx`・`admin/events/EventForm.tsx`（表示・管理画面の日時入力フォーム）を置き換え。`date.test.ts`で13件のユニットテスト（うるう年・年またぎ・往復変換含む）を追加。`TZ=UTC`／`TZ=Asia/Tokyo`双方で同じイベントの計算結果が一致すること（修正前は10時/19時とズレ、修正後は両方19時）を確認し、`npm run build`の型チェック・実機（ローカルサーバー）での表示・管理画面での編集保存の往復もズレないことを確認。`npm run test`106件（93件+新規13件）・lintとも通過 |
 | BUG-11（重大） | 14-7 の本番E2E中に発見。**アカウント削除機能が本番で一度も動いていなかった**。`src/app/api/account/delete/route.ts` が匿名化時に `profiles.name` と `profiles.name_roman` を `null` に更新していたが、両カラムは `not null` 制約付き（`001_initial_schema.sql` の `name text not null`、`003_name_roman.sql` の `name_roman text not null default ''`）。実行すると `null value in column "name" of relation "profiles" violates not-null constraint` で更新全体が失敗し、ルートは 500「アカウントの削除に失敗しました」を返す（`auth.users` の無効化処理まで到達しない）。`route.test.ts` は Supabase クライアントをモックしており、`.update()` が常に成功扱いだったため DB 制約違反を検知できず、テストがむしろ `name: null` を期待値としてバグを固定していた（14-8 の管理者拒否は `is_admin` チェックが更新前に return するため影響なし＝正常動作していた） | 全ユーザーがアカウント削除機能を利用できない状態だった（個人情報保護の要件G・退会導線が機能不全） | ✅ 2026-09-08 修正。`name`・`name_roman` を `null` ではなく `encrypt("退会済みユーザー")`（個人情報を含まない暗号化プレースホルダ。他カラム同様「暗号文が入っている」前提の管理者一覧・CSV の decrypt を壊さない）に変更。`route.test.ts` の期待値を修正し「`name`/`name_roman` を null や空文字や平文にしない」回帰ガードを追加、`@/lib/encrypt` をモック（既存の participants/export テストと同じ方式）。本番 Supabase に対しローカル dev から実削除 E2E を実施し、`name`/`name_roman` が decrypt で「退会済みユーザー」・`nickname`「退会済みユーザー」・`gender`/`birth_date`/`referral_code_used`/`avatar_url` が null・`referral_code`/`points`/`points_log` 行が `user_id` 保持で残存・`auth.users.email` が `deleted-<uuid>@deleted.invalid`・`banned_until` が約100年後・元メールでのログインが `Invalid login credentials`・`deleted-*` メールでのログインが `User is banned` になることを確認。`npm run test` 163件・lint 通過 |
+| BUG-12 | 新規テスト `src/app/auth/confirm/route.test.ts` の作成中に検出。`/auth/confirm` の `next` パラメータのガードが `startsWith("/")` のみで、`//evil.example.com`（プロトコル相対URL）や `/\evil.example.com` が通過し、`verifyOtp` 成功後に外部サイトへリダイレクトできた（オープンリダイレクト）。悪用には有効な `token_hash` が必要だが、攻撃者は自分のアカウントで再設定メールを発行して入手できる | 再設定リンクを使った外部サイトへの誘導（フィッシング等）。本番での悪用有無は確認手段がなく不明 | ✅ 2026-09-19 修正。`//` および `/\` 始まりを拒否し既定の `/auth/reset-password` にフォールバックするよう `route.ts` を修正。回帰テスト（絶対URL・プロトコル相対URL・バックスラッシュの3ケース）を追加 |
 
 ---
 
@@ -39,14 +40,14 @@
 
 | # | 確認項目 | 期待結果 | 自動テスト | 状態 |
 |---|---------|---------|-----------|------|
-| 1-1 | `/login` にサインアップフォームで NAME・EMAIL・PASSWORD・GENDER・DATE OF BIRTH を入力し登録 | 登録成功、自動ログイン、`/register-complete` へ遷移 | - | ✅ 2026-08-18 |
-| 1-2 | サインアップ時に REFERRAL CODE を入力（紹介経由） | `referrals` レコード作成、紹介者・被紹介者双方に200pt付与 | - | ✅ 2026-08-18（BUG-1修正後に再テスト。長音入り氏名でも紹介者+200pt・被紹介者+200pt・`referrals`が`rewarded`になることを確認） |
+| 1-1 | `/login` にサインアップフォームで NAME・EMAIL・PASSWORD・GENDER・DATE OF BIRTH を入力し登録 | 登録成功、自動ログイン、`/register-complete` へ遷移 | `signup/profile/route.test.ts` | ✅ 2026-08-18 |
+| 1-2 | サインアップ時に REFERRAL CODE を入力（紹介経由） | `referrals` レコードが `pending` で作成される。**この時点で200pt付与はしない**（付与は被紹介者の初回イベント参加後。セクション13参照） | `signup/profile/route.test.ts` | ✅ 2026-08-18（BUG-1修正後に再テスト。長音入り氏名でも紹介関係が作成されることを確認）。2026-09-19 期待結果を2026-09-01の仕様変更（即時付与→遅延付与）に合わせて修正し、pending作成・重複防止・紹介者不在時の挙動を自動テスト化 |
 | 1-3 | パスワードが「8文字以上・英大文字/英小文字/数字/記号すべて含む」を満たさない場合 | バリデーションエラーが表示され登録できない | - | ✅ 2026-08-18 |
 | 1-4 | `/login` の SIGN IN タブでメール・パスワードを入力しログイン | `/home` へ遷移 | - | ✅ 2026-08-18 |
 | 1-5 | 認証済み状態で `/login` に直接アクセス | 自動で `/home` にリダイレクト | - | ✅ 2026-08-18 |
 | 1-6 | ヘッダーの「ログアウト」を押す | セッションが切れ `/` へ遷移 | - | ✅ 2026-08-18 |
 | 1-7 | `/login` の「パスワードをお忘れの方」からメールアドレスを送信 | 「メールを送信しました」画面が表示される | - | ✅ 2026-08-18 |
-| 1-8 | 送信されたリセットメールのリンクから `/auth/reset-password` を開き新パスワードを設定 | 再設定完了画面→「ログイン画面へ」で `/login` に遷移しログイン可能 | - | ✅ 2026-09-07 本番（BUG-10 修正 `3e88eb2` デプロイ済み）で実メール再検証。(1) 管理APIで生成した新しい token_hash を `/auth/confirm?token_hash=...&type=recovery` に直接GET → 307 `/auth/reset-password`（error なし）を確認＝`verifyOtp` は本番で正常動作、token_hash も `pkce_` プレフィックスなしの通常値（BUG-10 解消を確認）。(2) 実メールのリンクを **PC ブラウザ**で開くと「リンクが無効です」になった——`/auth/confirm` は GET で即 `verifyOtp` するため、Gmail 等のリンクプリフェッチが本命クリック前に1回限りトークンを消費するレースが原因（BUG-9 履歴の「Gmailプリフェッチでトークン消費」と同じ）。(3) **スマホの Gmail アプリ**（プリフェッチしない）でメールのボタンを直接タップ → 再設定フォーム表示 → 新パスワード設定 → 完了画面 → 「ログイン画面へ」→ **新パスワードでログイン成功**、を実機で確認。実運用の主経路（モバイル）で成立するため ✅ とする。**既知の弱点**：PC のメールクライアント／セキュリティスキャナがリンクをプリフェッチする環境では初回クリックが無効化されうる（再送すれば回復可能）。恒久対策するなら `/auth/confirm` を GET 即時検証ではなくワンクッション（「続行」ボタンで POST 検証）に変える必要がある |
+| 1-8 | 送信されたリセットメールのリンクから `/auth/reset-password` を開き新パスワードを設定 | 再設定完了画面→「ログイン画面へ」で `/login` に遷移しログイン可能 | `auth/confirm/route.test.ts` | ✅ 2026-09-07 本番（BUG-10 修正 `3e88eb2` デプロイ済み）で実メール再検証。(1) 管理APIで生成した新しい token_hash を `/auth/confirm?token_hash=...&type=recovery` に直接GET → 307 `/auth/reset-password`（error なし）を確認＝`verifyOtp` は本番で正常動作、token_hash も `pkce_` プレフィックスなしの通常値（BUG-10 解消を確認）。(2) 実メールのリンクを **PC ブラウザ**で開くと「リンクが無効です」になった——`/auth/confirm` は GET で即 `verifyOtp` するため、Gmail 等のリンクプリフェッチが本命クリック前に1回限りトークンを消費するレースが原因（BUG-9 履歴の「Gmailプリフェッチでトークン消費」と同じ）。(3) **スマホの Gmail アプリ**（プリフェッチしない）でメールのボタンを直接タップ → 再設定フォーム表示 → 新パスワード設定 → 完了画面 → 「ログイン画面へ」→ **新パスワードでログイン成功**、を実機で確認。実運用の主経路（モバイル）で成立するため ✅ とする。**既知の弱点**：PC のメールクライアント／セキュリティスキャナがリンクをプリフェッチする環境では初回クリックが無効化されうる（再送すれば回復可能）。恒久対策するなら `/auth/confirm` を GET 即時検証ではなくワンクッション（「続行」ボタンで POST 検証）に変える必要がある |
 | 1-9 | 未認証で `/home`・`/impact`・`/bookings`・`/events/[id]/checkout` にアクセス | すべて `/login` にリダイレクト | - | ✅ 2026-08-18 |
 
 ## 2. ホーム（`/home`）
@@ -79,7 +80,7 @@
 | 4-3 | ポイント利用欄に保有pt超の数値を入力 | 保有pt以内に制限される、またはエラー | - | ✅ 2026-08-26（UIは`maxPoints=min(pointsBalance, event.price)`でクランプ済み。念のためAPIを直接叩き、保有10ptに対し15pt充当を指定→サーバー側`spendPointsForBooking`（`spend_points`RPC）が原子的に拒否し400「ポイント残高が不足しています」を返すことを確認） |
 | 4-4 | 参加費全額をポイントで充当（0円決済） | Square/PayPay決済がスキップされ即時 `payment_status=paid` で予約確定 | `square/route.test.ts` 等のロジック側で該当ケースを確認 | ✅ 2026-08-26（価格10円・保有10ptのテストイベントを全額ポイント充当で予約。CSVで決済方法=Square・決済ステータス=支払済み・使用ポイント=10・請求金額=0を確認。ポイント残高も10→0に減算） |
 | 4-5 | Square でカード情報を入力し決済を実行 | 決済成功→`bookings` に insert→`/events/[id]?booked=1` へリダイレクト | `square/route.test.ts` | ✅ 2026-09-03（Square 本番切り替え後、本番環境で実カード決済を実施。¥100・定員1の検証用イベントを作成し実カードで予約→`payment_status=paid`・`amount_charged=100`・`?booked=1` 遷移・参加者一覧/CSV 反映を確認。Square Dashboard（本番）に ¥100 の完了取引が計上、`payment_id=V0nznJkQ2ZIFH1L9ha96GqrYWlMZY`。続けて `/bookings` からキャンセル→本番 Square の `refunds.refundPayment` が実行され `payment_status=refunded`、Square Dashboard に -¥100 の払戻し計上（当日差引 ¥0）。検証用イベントは論理削除で後片付け。フロント側も本番 SDK（`web.squarecdn.com/v1/square.js`、`sandbox.` なし）読み込み・「テスト環境です」ヒント非表示を確認） |
-| 4-6 | PayPay を選択し決済を実行 | PayPayアプリへの遷移→コールバック後に予約確定 | `paypay/route.test.ts` | 未実施（実決済のため）。2026-09-05、PayPay本番申請（IP許可リスト）に備え `src/lib/paypayProxy.ts` を追加し、PayPay SDK呼び出し3箇所（QRCodeCreate・GetPaymentDetails・PaymentRefund）を固定IPプロキシ経由にできるよう対応（`PAYPAY_PROXY_URL`未設定時は従来通り直接通信、既存動作に影響なし）。依頼者が固定IPプロキシサービスを契約し環境変数を設定した後、本番申請・実決済確認が必要 |
+| 4-6 | PayPay を選択し決済を実行 | PayPayアプリへの遷移→コールバック後に予約確定 | `paypay/route.test.ts`, `paypay/callback/route.test.ts` | 未実施（実決済のため。コールバックの分岐＝決済完了で確定・未完了で削除とポイント払い戻し・冪等は2026-09-19に自動テスト化済み）。2026-09-05、PayPay本番申請（IP許可リスト）に備え `src/lib/paypayProxy.ts` を追加し、PayPay SDK呼び出し3箇所（QRCodeCreate・GetPaymentDetails・PaymentRefund）を固定IPプロキシ経由にできるよう対応（`PAYPAY_PROXY_URL`未設定時は従来通り直接通信、既存動作に影響なし）。依頼者が固定IPプロキシサービスを契約し環境変数を設定した後、本番申請・実決済確認が必要 |
 | 4-7 | 決済成功後、予約作成（insert）が失敗するケース | 決済とポイント充当の両方が取り消される（`refundUsedPoints`） | - | ✅ 2026-08-26（`square/route.test.ts`に決済成功→insert失敗→Square自動返金＋`refundUsedPoints`呼び出し、および返金自体が失敗した場合のケースまで自動テストで網羅されており全通過を確認。実決済を伴うため live 実行はせず自動テストの内容確認に留めた） |
 | 4-8 | 満席になった直後に2人が同時予約 | 定員超過の予約が作られない（競合制御） | - | ✅ 2026-08-26（BUG-7として発見・修正。定員1のテストイベントに2ユーザーから完全同時にINSERTを行うNode検証スクリプトで実際にオーバーブッキング（確定予約2件）を再現→`023_booking_capacity_trigger.sql`でevents行をロックしてから残席を数えるDBトリガーを追加しSupabase Studioで本番適用→再検証で3回連続、定員超過が防がれ確定予約が1件のみになることを確認。満席でない通常予約が誤ってブロックされないことも確認。`npm run test`93件全通過） |
 
@@ -98,7 +99,7 @@
 
 | # | 確認項目 | 期待結果 | 自動テスト | 状態 |
 |---|---------|---------|-----------|------|
-| 6-1 | Impact画面表示 | 現在のランク・累計参加回数・ポイント残高・ランク一覧が表示される | - | ✅ 2026-08-18 |
+| 6-1 | Impact画面表示 | 共通 `ProfileCard`（現在のランク・累計参加数・Points・次のランクまでの回数・「ランクについて」リンク）が表示される。ランク一覧カードは2026-09-14に削除済み（一覧は「ランクについて」モーダルで確認） | - | ✅ 2026-08-18（期待結果は2026-09-19に現行UIへ修正） |
 | 6-2 | ランクアップ条件（累計参加回数・紹介人数）を満たした場合 | `checkRankUp()` によりランクが上がる。降格しない | `ranks.test.ts` | ✅ 2026-08-26（テストイベントを3件予約し累計参加回数を2→5にしたところ、Seed→Sproutにランクアップし`/home`にRANK UPモーダルが表示されることを確認。降格処理自体が実装されていない＝`Math.max(earnedLevel, currentLevel)`で常に非減少であることをコードで確認。なお本テストでこのアカウントのランクは実データ上Sproutのまま戻せない状態になっており、ユーザー承知の上で対応） |
 | 6-3 | 月間バッジの進捗表示 | 今月のクラス初参加／参加回数／紹介人数の進捗が表示される | `badges.test.ts` | ✅ 2026-08-18（0件表示のみ確認） |
 | 6-4 | 月間バッジ獲得条件を満たす（紹介1人でBridge Builder） | `user_badges` に `(user_id, badge_id, period)` でレコードが作られる | `badges.test.ts` | ✅ 2026-08-18（BUG-1修正後に再テスト。紹介1人達成でBridge Builderバッジが獲得バッジ欄に表示。イベント参加系バッジは実予約が必要なため別途未確認） |
@@ -144,7 +145,7 @@
 
 | # | 確認項目 | 期待結果 | 状態 |
 |---|---------|---------|------|
-| 10-1 | 氏名・性別・生年月日・メールアドレスが暗号化されて保存されている（Supabase Studioで`profiles`テーブルを直接確認） | 平文で保存されていない | ✅ 2026-08-18（service_roleでの読み取り専用クエリで`name`/`name_roman`/`gender`/`birth_date`が`iv:tag:ciphertext`形式で暗号化されていることを確認。メールアドレスは`auth.users`管理でSupabase側の暗号化に依存） |
+| 10-1 | 氏名・性別・生年月日・メールアドレスが暗号化されて保存されている（Supabase Studioで`profiles`テーブルを直接確認） | 平文で保存されていない | ✅ 2026-08-18（service_roleでの読み取り専用クエリで`name`/`name_roman`/`gender`/`birth_date`が`iv:tag:ciphertext`形式で暗号化されていることを確認。メールアドレスは`auth.users`管理でSupabase側の暗号化に依存）。2026-09-19 `encrypt.test.ts` で往復変換・IVランダム性・改ざん検知（GCM）・別鍵で復号不可・鍵未設定時の例外を自動テスト化 |
 | 10-2 | ブラウザの開発者ツール・サーバーログに個人情報が出力されていない | `console.log`等に個人情報が出力されない | ✅ 2026-08-18（本セッションのコンソールログ確認範囲では未検出） |
 | 10-3 | 参加者CSVエクスポートに含まれる項目 | 必要最小限（氏名・連絡先程度）で、他人の個人情報が混入していない | ✅ 2026-08-26（4-4/9-9の確認時にCSVを取得し、予約ID・氏名・メールアドレス・予約日時・決済方法・決済ステータス・使用ポイント・請求金額のみで、性別・生年月日など他の個人情報や他人の行が含まれていないことを確認） |
 | 10-4 | URLパラメータ・クエリストリングに個人情報が含まれていない | ネットワークタブで確認 | ✅ 2026-08-26（本セッションで操作したログイン・サインアップ・home・events・bookings・impact・admin各画面・CSVエクスポートのネットワークログを確認し、氏名・メール・生年月日等を含むクエリストリングは見られなかった。紹介リンクは`?ref=紹介コード`のみで個人情報ではない） |
@@ -205,6 +206,36 @@
 - ~~Sentry（14-6）：sentry.io で Next.js プロジェクトを作成し DSN を Vercel に設定 → 疎通確認~~ ✅ 2026-09-11 完了（14-6参照）
 - ~~CSP 本適用（14-5）：Report-Only 期間に違反ゼロを確認 → `CSP_REPORT_ONLY=false` → 再デプロイ → 決済フロー再確認~~ ✅ 2026-09-12 完了（14-5参照）
 
+## 15. トップ・法定ページ・共通UI（UI刷新）— 2026-09-19 追加
+
+2026-09-13〜19 のUI刷新（ナビ配色 `nav-bg`・トップの動画背景・共通 `ProfileCard`・法定ページのフッター）に対応する確認項目。`✅` は確認済み、`未確認` はこの計画に載せただけで実施していない項目。
+
+| # | 確認項目 | 期待結果 | 自動テスト | 状態 |
+|---|---------|---------|-----------|------|
+| 15-1 | トップ `/` の構成 | 上部に `nav-bg` のヘッダー（Hibiロゴのみ・ログアウトなし）、背景に動画、下部に `nav-bg` のフッター（黒テキストの法定リンク） | - | ✅ 2026-09-15（ローカル・本番でブラウザ確認） |
+| 15-2 | 背景動画に黒帯が出ない（スマホ実機） | 動画が画面いっぱいに表示される | - | ✅ 2026-09-19 iPhone実機で確認。原因は元動画に横長映像が縦フレームへ黒帯ごと焼き込まれていたこと（`4a233f9` で黒帯をcropし1920x1080で再エンコード）。CSS/コーデックの問題ではなかった |
+| 15-3 | 背景動画がスムーズに再生される（モバイル回線含む） | カクつかず再生・ループする | - | ✅ 2026-09-19 実機確認（H.264 1920x1080・約15.3MB・音声なし） |
+| 15-4 | 動画が再生できない環境での表示 | `poster` 画像が表示され、黒画面にならない | - | 未確認（`poster` 属性の設定のみ確認。自動再生ブロック・低速回線での挙動は未検証） |
+| 15-5 | 「イベントご参加の方はこちら」→ `/login` 遷移、アカウント削除直後の `/?accountDeleted=1` バナー表示 | 遷移する／バナーが表示される | - | 未確認 |
+| 15-6 | `/legal/tokushoho`・`/legal/privacy` の本文カードとフッターの間隔 | カード下端とフッターの間に24px（`gap-6`）の余白があり重ならない | - | ✅ 2026-09-15（DOM計測で24pxを確認） |
+| 15-7 | フッターの法定リンク遷移 | 各ページへ遷移し、トップ・ログイン・登録完了・法定ページで同じ見た目 | - | 未確認 |
+| 15-8 | `ProfileCard`（Home / Impact） | Home は「Member since＋氏名」、Impact は「現在のランク」を見出しに、以降（累計参加数・Points・次のランク・ランクについて）は共通。色指定（数値・回数がグリーン、ラベルは `ink-300`）どおり | - | ✅ 2026-09-14（依頼者が確認） |
+| 15-9 | 「ランクについて」リンク → `RankGuideModal` | モーダルが開き現在ランクが強調される（`src/components/` へ移設後） | - | 未確認（移設後の明示的な動作確認は未実施） |
+| 15-10 | Impact にランク一覧カードが無い | 静的なランク一覧カードが表示されない | - | ✅ 2026-09-14 |
+| 15-11 | 375px幅でトップの文言・ボタンがはみ出さない（コピー文 9.5px） | 折り返し・横スクロールが起きない | - | ✅ 2026-09-19（ブラウザの375px幅で確認） |
+| 15-12 | iOS実機で入力欄フォーカス時に画面がズームしない（16px化） | ズームしない | - | 未確認（2026-09-10 から依頼者側で実機確認待ち） |
+
+### 自動テストの追加（2026-09-19）
+
+| 対象 | ファイル | 主な確認内容 |
+|------|---------|-------------|
+| PayPay コールバック | `src/app/api/payments/paypay/callback/route.test.ts` | 決済完了で `paid` 更新・確認メール／未完了で予約削除とポイント払い戻し／既に paid なら照会せず冪等／照会エラー時は削除しない |
+| サインアップのプロフィール保存 | `src/app/api/signup/profile/route.test.ts` | 入力検証（BUG-1 の長音回帰を含む）・暗号化対象／ニックネームのみ平文・紹介は `pending` 作成でポイント未付与・重複防止 |
+| 暗号化 | `src/lib/encrypt.test.ts` | 往復変換・IVランダム性・改ざん検知・別鍵で復号不可・鍵不備で例外 |
+| パスワード再設定リンク | `src/app/auth/confirm/route.test.ts` | 検証成功／失敗／パラメータ欠落の分岐、`next` の外部URL拒否（BUG-12） |
+
+---
+
 ---
 
 ## 更新履歴
@@ -245,3 +276,5 @@
 | 2026-09-11 | **14-6 クローズ**（詳細は14-6参照）。依頼者が Sentry プロジェクト「hibi」（US）を作成・DSN を Vercel `NEXT_PUBLIC_SENTRY_DSN` に設定・再デプロイ。クライアント側は本番ブラウザで捕捉・送信を確認したが、サーバー側は `/api/debug/sentry` のテストエラーが Issues に出ず調査。Sentry ingest への直接 curl POST（200・受理確認）で「受信自体は正常、反映遅延」を切り分けた後、疎通確認エンドポイントを `Sentry.captureException`+`flush` を明示する診断API（`{dsnConfigured,eventId,flushed}` を返す）に強化したところ **`dsnConfigured:false` を検出＝サーバー側 config に DSN が渡っていないバグ**と判明（`sentry.server.config.ts`/`sentry.edge.config.ts` が `SENTRY_DSN`（未設定）のみ参照、`NEXT_PUBLIC_SENTRY_DSN` へのフォールバックが無かった）。DSN は非秘匿値のため両ファイルを `SENTRY_DSN \|\| NEXT_PUBLIC_SENTRY_DSN` に修正・デプロイ→`dsnConfigured:true` に反転、Issues に「Sentry connectivity test...」が表示されることを依頼者が確認。`docs/deployment.md`・`.env.local.example` を「`NEXT_PUBLIC_SENTRY_DSN` 1つで両側フォールバック」に合わせて更新。`npm run test` 168件・lint・tsc 通過。**これで testplan の未クローズは 4-6（PayPay 実決済）と 14-5（CSP 本適用）のみ。** |
 | 2026-09-12 | **14-5 クローズ**（詳細は14-5参照）。依頼者による本番実カード決済2回（Report-Only 中）で `font-src`（`cash-f.squarecdn.com`）・`style-src-elem`（`web.squarecdn.com`）・`frame-src`/`form-action`（3-Dセキュア認証サーバー `acs-jcn.dnp-cdms.jp`、Square公式CSPガイド未記載でカードごとにドメインが変わるため事前列挙不可）の違反を発見、都度 `next.config.mjs` を修正・本番デプロイして潰した（コミット `7556ea2`・`ca37f37`）。3-Dセキュアは `frame-src`/`form-action` を `https:` 全許可にすることで解決（`frame-ancestors 'none'` によるクリックジャッキング対策は維持）。違反ゼロを確認後、依頼者が Vercel に `CSP_REPORT_ONLY=false` を設定・再デプロイしヘッダーが `Content-Security-Policy`（enforcing）に変わったことを確認。基本ページ（トップ・ログイン・イベント一覧）をコンソールエラーなしで表示できることを確認した上で、**本適用の状態で実カード決済を実行し正常完了・Sentryに新規CSP違反なし**を依頼者が確認。これで testplan の未クローズは **4-6（PayPay 実決済）のみ**。PayPay は依頼者側の固定IPプロキシ（QuotaGuard）契約済み・IP許可リスト登録と本番申請待ち（詳細は memory 参照）。 |
 | 2026-09-13 | 依頼者依頼によりジャーナル機能を一旦完全停止（次フェーズで再実装予定）。`src/app/home/JournalQuickEntry.tsx`・`src/app/api/journals/route.ts` を削除、`src/lib/points.ts` の `awardJournalPoints` を削除、`home/page.tsx` から入力導線・当日記録取得クエリ（`journalRes`/`todayJournal`）を撤去。`journals` テーブル・既存データ・`rate_limits` 設定は保持（法人向けToGデータとして将来活用する方針は継続、単に新規収集を止めただけ）。`docs/requirements.md`・`docs/funcdocument.md`（API一覧・ポイント設計・DB定義・実装順序）・`docs/architecture.md`（ディレクトリ構成・レート制限説明）・`docs/product-vision.md`・`docs/testplan.md`（セクション2・7）を機能停止に合わせて更新。`npm run test` 168件（変更なし、ジャーナル専用テストは元々未実装）・lint・tsc・build（27ルートに減少、`/api/journals` 消失を確認）すべて通過。 |
+
+| 2026-09-19 | 「テスト実装が残っている項目」の洗い出しを行い、対応を実施。**自動テストを4件追加**（`paypay/callback`・`signup/profile`・`encrypt`・`auth/confirm`、計59ケース）し、`npm run test` は168件→227件。**新規テストが BUG-12（`/auth/confirm` の `next` パラメータによるオープンリダイレクト）を検出**し、`route.ts` を修正して回帰テストを追加。testplan を実態に同期：1-2（紹介報酬の期待結果を遅延付与仕様へ）・6-1（ランク一覧削除）の期待結果を修正、UI刷新分をセクション15として新設。依頼者がiPhone実機でトップ動画の黒帯解消（15-2）とモバイル回線での滑らかな再生（15-3）を確認。黒帯の原因は元動画に焼き込まれた黒帯だった（`4a233f9`）。あわせて、`4a233f9` の `main` への push が Vercel の Webhook に届かず Production に反映されなかったため空コミット `9a174f2` で再トリガーした。未クローズは 4-6（PayPay 実決済）と、未確認の 15-4・15-5・15-7・15-9・15-12。 |

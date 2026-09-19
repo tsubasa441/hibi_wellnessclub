@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") ?? "/auth/reset-password";
-  const safeNext = next.startsWith("/") ? next : "/auth/reset-password";
+  // "//host" や "/\host" はブラウザが外部サイトとして解釈するため、単独の "/" 始まりのみ許可する
+  const isSameSitePath = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\");
+  const safeNext = isSameSitePath ? next : "/auth/reset-password";
 
   if (tokenHash && type) {
     const supabase = createClient();
