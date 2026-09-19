@@ -152,7 +152,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | メソッド | エンドポイント | 説明 | 認証 |
 |---------|--------------|------|------|
 | POST | `/api/payments/square` | Square 決済処理（予約作成込み） | 必要 |
-| POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み） | 必要 |
+| POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み。確定はコールバックまたは `/bookings`・`/events/[id]` ロード時の照会で行う。`docs/architecture.md` の決済フロー参照） | 必要 |
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |

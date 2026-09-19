@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { reconcilePendingPayPayBookings } from "@/lib/paypayReconcile";
 import BookingButton from "./BookingButton";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
@@ -45,6 +46,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  await reconcilePendingPayPayBookings(supabase, user, { eventId: params.id });
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
   const [{ data: event }, { count: bookedCount }, { data: eventOptions }] = await Promise.all([

@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import CancelButton from "@/app/home/CancelButton";
 import CheckInButton from "./CheckInButton";
 import { getJstParts } from "@/lib/date";
+import { reconcilePendingPayPayBookings } from "@/lib/paypayReconcile";
 
 function formatDateTime(iso: string) {
   const DAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -20,6 +21,8 @@ export default async function BookingsPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  await reconcilePendingPayPayBookings(supabase, user);
 
   type EventInfo = { title: string; start_at: string; end_at: string | null; location: string };
   type BookingRaw = {

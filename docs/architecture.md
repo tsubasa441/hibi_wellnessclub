@@ -121,6 +121,7 @@ src/
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号
 │   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）・選択項目の検証とスナップショット組み立て
+│   ├── paypayReconcile.ts      # pending な PayPay 予約の照会・確定／期限切れの解放（/bookings・/events/[id] のロード時に実行）
 │   ├── paypayProxy.ts          # PayPay SDK呼び出しを固定IPプロキシ経由にする一時ラッパー（PAYPAY_PROXY_URL未設定時は素通し）
 │   ├── points.ts               # ポイント付与・取り消しロジック
 │   ├── ranks.ts                # ランク定義・ランクアップ判定
@@ -187,6 +188,8 @@ docs/                           # ドキュメント一式
 ユーザー → CheckoutForm → POST /api/payments/square or paypay
   → 外部決済 API → 成功時 bookings テーブルに insert → /events/[id]?booked=1 へリダイレクト
 ```
+
+PayPay は支払い後にサイトへ戻らないことがある（PayPay アプリで支払った場合など）ため、コールバック（`/api/payments/paypay/callback`）に加えて、`/bookings` と `/events/[id]` のロード時に `reconcilePendingPayPayBookings`（`src/lib/paypayReconcile.ts`）が本人の `pending` な PayPay 予約を PayPay に照会する。支払い完了なら `paid` に確定して確認メールを送り、未完了のまま 30 分（`PENDING_PAYPAY_TTL_MS`）を過ぎた予約は削除して充当ポイントを払い戻す（席の占有防止）。更新・削除は `payment_status = pending` を条件にするため、確定済みの予約は消えず、メールも二重送信されない。
 
 ---
 
