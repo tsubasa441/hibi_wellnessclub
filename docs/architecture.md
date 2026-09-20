@@ -189,7 +189,7 @@ docs/                           # ドキュメント一式
   → 外部決済 API → 成功時 bookings テーブルに insert → /events/[id]?booked=1 へリダイレクト
 ```
 
-PayPay は支払い後にサイトへ戻らないことがある（PayPay アプリで支払った場合など）ため、コールバック（`/api/payments/paypay/callback`）に加えて、`/bookings` と `/events/[id]` のロード時に `reconcilePendingPayPayBookings`（`src/lib/paypayReconcile.ts`）が本人の `pending` な PayPay 予約を PayPay に照会する。支払い完了なら `paid` に確定して確認メールを送り、未完了のまま 30 分（`PENDING_PAYPAY_TTL_MS`）を過ぎた予約は削除して充当ポイントを払い戻す（席の占有防止）。更新・削除は `payment_status = pending` を条件にするため、確定済みの予約は消えず、メールも二重送信されない。
+PayPay は支払い後にサイトへ戻らないことがある（PayPay アプリで支払った場合など）ため、コールバック（`/api/payments/paypay/callback`）に加えて、`/bookings` と `/events/[id]` のロード時に `reconcilePendingPayPayBookings`（`src/lib/paypayReconcile.ts`）が本人の `pending` な PayPay 予約を PayPay に照会する。支払い完了なら `paid` に確定して確認メールを送り、PayPay が失敗・取消・期限切れ（`FAILED`/`CANCELED`/`EXPIRED`）と明示したまま 30 分（`PENDING_PAYPAY_TTL_MS`）を過ぎた予約は、削除して充当ポイントを払い戻す（席の占有防止）。照会結果が想定外（未知の状態・エラー応答）の場合は、支払い済みの予約を誤って消さないよう 24 時間（`UNKNOWN_STATUS_TTL_MS`）まで削除しない。照会には QR コード決済用の `GetCodePaymentDetails` を使う（`GetPaymentDetails` は別方式用で、QR 決済では完了と判定できない）。更新・削除は `payment_status = pending` を条件にするため、確定済みの予約は消えず、メールも二重送信されない。
 
 ---
 

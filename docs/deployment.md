@@ -101,6 +101,44 @@ Square 実カード決済（3-D セキュア含む）を含めて違反ゼロを
 
 ---
 
+## PayPay 本番化の手順・注意点
+
+### 事前に必要なもの
+- PayPay の**本番用**の API Key・API Secret・Merchant ID（サンドボックス用とは別物）。
+- PayPay 側の IP 許可リストに、固定 IP プロキシ（QuotaGuard Static）の静的 IP を**すべて**登録し、承認済みであること。
+- 固定 IP プロキシの接続 URL（`http://<ユーザー名>:<パスワード>@<ホスト>:<ポート>`）。QuotaGuard ダッシュボードの Connection Information からコピーする。
+
+### Vercel の環境変数
+| 変数 | 値 | 区分 |
+|------|----|------|
+| `PAYPAY_PRODUCTION` | `true` | 通常 |
+| `PAYPAY_CLIENT_ID` | 本番の API Key | Sensitive 推奨 |
+| `PAYPAY_CLIENT_SECRET` | 本番の API Secret | Sensitive |
+| `PAYPAY_MERCHANT_ID` | 本番の Merchant ID | どちらでも可 |
+| `PAYPAY_PROXY_URL` | プロキシの接続 URL（パスワードを含む） | Sensitive |
+
+- **必ず Production 環境に設定する**。Development / Preview のみに入っていると、本番では未設定・古い値のまま動く（実際に発生し、`QRCodeCreate` が `codeId 08100016` で失敗した）。
+- 変更後は再デプロイが必要。Deployments で最新のデプロイが Ready になり、Production のバッジが付いたことを確認してから試す。
+- `NEXT_PUBLIC_SITE_URL` は末尾スラッシュなしの本番 URL（決済後のコールバック URL に使われる）。
+
+### 障害の調べ方
+- Sentry の「PayPay QRCodeCreate failed」に、PayPay の応答（`resultInfo`）が記録される。Sentry は `code`・`message` というキー名をマスクするため、`codeId` を見る。
+- 「PayPay reconcile: payment not completed」に、未完了だった予約の照会結果（`status`・`codeId`・経過時間）が記録される。
+
+### 実装上の注意（PayPay SDK）
+- QR コード決済の状況照会は `GetCodePaymentDetails`（`/v2/codes/payments/…`）。`GetPaymentDetails` は別方式用で、QR 決済では支払い済みでも完了と判定できない。
+- 返金は `PaymentRefund` にオブジェクト（`merchantRefundId`・`paymentId`・`amount`・`reason`）を渡す。`paymentId` は PayPay 側の ID で、Hibi が `bookings.payment_id` に保存している加盟店側の ID（＝予約 ID）とは別。返金前に照会して取得する。結果コードが `SUCCESS` でなければ失敗として扱う。
+- 支払い後にユーザーがサイトへ戻らないことがあるため、予約の確定はコールバックと、`/bookings`・`/events/[id]` ロード時の照会（`src/lib/paypayReconcile.ts`）の両方で行う（`docs/architecture.md` の決済フロー参照）。
+
+### 本番 E2E の手順（実課金あり）
+1. 管理画面で、¥100・開催日が 3 日以上先のテストイベントを作成する（キャンセル時の返金は 2 日前までが対象）。
+2. PayPay で予約して支払いを完了する。
+3. 予約が確定すること（サイトへ戻った場合と、戻らず `/bookings` を開いた場合の両方）、確認メールが届くこと、参加者一覧が「支払済み」になることを確認する。
+4. `/bookings` からキャンセルし、PayPay 側に返金されること、参加者一覧が「返金済み」になることを確認する。
+5. テストイベントを論理削除する。
+
+---
+
 ## デプロイフロー
 
 ### 開発 → 本番
@@ -135,6 +173,7 @@ vercel --prod
 - [ ] 環境変数がすべて Vercel に設定済み
 - [ ] Supabase 本番 DB にマイグレーション適用済み
 - [ ] Square / PayPay を本番キーに切り替え済み
+- [ ] PayPay の本番 E2E（予約確定・確認メール・キャンセル返金）確認済み（`docs/testplan.md` 4-6）
 - [ ] `NEXT_PUBLIC_SITE_URL` が本番 URL に設定済み
 - [ ] E2E テスト・手動テスト完了
 - [ ] カスタムドメイン設定（任意）
