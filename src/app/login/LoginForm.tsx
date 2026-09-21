@@ -52,6 +52,7 @@ function LoginFormInner() {
   // 年・月を変更した結果、選択済みの日がその月に存在しなくなった場合はリセットする（例: 31日→2月）
   useEffect(() => {
     if (birthYear && birthMonth && birthDay && Number(birthDay) > daysInMonth(Number(birthYear), Number(birthMonth))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 年・月の変更に追従して無効になった日をリセットする
       setBirthDay("");
     }
   }, [birthYear, birthMonth, birthDay]);

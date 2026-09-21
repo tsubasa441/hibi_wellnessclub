@@ -88,25 +88,25 @@ describe("POST /api/bookings/[id]/checkin", () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
     mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from: vi.fn() });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     expect(res.status).toBe(401);
   });
 
   it("予約が存在しない場合は404", async () => {
     setup({ booking: null });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     expect(res.status).toBe(404);
   });
 
   it("他人の予約の場合は403", async () => {
     setup({ booking: makeBooking({ user_id: "other" }) });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     expect(res.status).toBe(403);
   });
 
   it("キャンセル済みの予約は400", async () => {
     setup({ booking: makeBooking({ status: "cancelled" }) });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     expect(res.status).toBe(400);
   });
 
@@ -114,7 +114,7 @@ describe("POST /api/bookings/[id]/checkin", () => {
     setup({
       booking: makeBooking({ events: { start_at: "2026-07-20T09:00:00Z", end_at: "2026-07-20T11:00:00Z" } }),
     });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
     expect(res.status).toBe(400);
     expect(body.error).toContain("開始前");
@@ -124,7 +124,7 @@ describe("POST /api/bookings/[id]/checkin", () => {
     setup({
       booking: makeBooking({ events: { start_at: "2026-07-20T01:00:00Z", end_at: "2026-07-20T03:00:00Z" } }),
     });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
     expect(res.status).toBe(400);
     expect(body.error).toContain("終了");
@@ -135,14 +135,14 @@ describe("POST /api/bookings/[id]/checkin", () => {
     const { updateSpy } = setup({
       booking: makeBooking({ events: { start_at: "2026-07-20T04:00:00Z", end_at: null } }),
     });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     expect(res.status).toBe(200);
     expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ checked_in_at: expect.any(String) }));
   });
 
   it("既にチェックイン済みなら冪等に200を返す", async () => {
     setup({ booking: makeBooking({ checked_in_at: "2026-07-20T04:30:00Z" }) });
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.already).toBe(true);
@@ -151,7 +151,7 @@ describe("POST /api/bookings/[id]/checkin", () => {
   it("時間内の未チェックイン予約は checked_in_at を更新し、バッジ・ランクを再判定する", async () => {
     const { updateSpy, isSpy } = setup({ booking: makeBooking() });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);

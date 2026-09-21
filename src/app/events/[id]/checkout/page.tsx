@@ -23,9 +23,11 @@ export default async function CheckoutPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { opts?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ opts?: string }>;
 }) {
+  const { id } = await params;
+  const { opts } = await searchParams;
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -33,39 +35,39 @@ export default async function CheckoutPage({
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
   const [{ data: event }, { count: bookedCount }, { data: profile }, { data: eventOptions }] = await Promise.all([
-    supabase.from("events").select("*").eq("id", params.id).single(),
-    createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", params.id).eq("status", "confirmed"),
+    supabase.from("events").select("*").eq("id", id).single(),
+    createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed"),
     supabase.from("profiles").select("points").eq("id", user.id).single(),
     supabase
       .from("event_options")
       .select("id, label, choices, multi_select, required, sort_order")
-      .eq("event_id", params.id)
+      .eq("event_id", id)
       .order("sort_order", { ascending: true }),
   ]);
 
   if (!event) notFound();
 
-  const submittedOptions = parseOpts(searchParams.opts);
+  const submittedOptions = parseOpts(opts);
   const { error: optionError, selections: optionSelections } = buildOptionSelections(
     (eventOptions ?? []) as EventOptionRow[],
     submittedOptions
   );
   // 必須の選択項目が未回答のままここに来た場合は詳細画面に戻す
-  if (optionError) redirect(`/events/${params.id}`);
+  if (optionError) redirect(`/events/${id}`);
   const checkoutOptionPayload = optionSelections.map((s) => ({ optionId: s.option_id, values: s.values }));
 
   const { data: existingBooking } = await supabase
     .from("bookings")
     .select("id")
-    .eq("event_id", params.id)
+    .eq("event_id", id)
     .eq("user_id", user.id)
     .eq("status", "confirmed")
     .single();
 
-  if (existingBooking) redirect(`/events/${params.id}`);
+  if (existingBooking) redirect(`/events/${id}`);
 
   const remaining = event.capacity - (bookedCount ?? 0);
-  if (remaining <= 0) redirect(`/events/${params.id}`);
+  if (remaining <= 0) redirect(`/events/${id}`);
 
   return (
     <main className="relative min-h-screen app-bg pb-24">

@@ -26,8 +26,9 @@ PAYPAY.Configure({
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -39,7 +40,7 @@ export async function POST(
     return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
-  const bookingId = params.id;
+  const bookingId = id;
 
   const { data: booking } = await supabase
     .from("bookings")

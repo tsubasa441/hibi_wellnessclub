@@ -10,7 +10,7 @@
 
 | レイヤー | 技術 |
 |---------|------|
-| フロントエンド | Next.js 14（App Router） |
+| フロントエンド | Next.js 16（App Router） |
 | バックエンド | Next.js API Routes / Supabase Functions |
 | データベース | Supabase（PostgreSQL） |
 | 認証 | Supabase Auth（メール + パスワード） |

@@ -3,7 +3,7 @@
 ## プロジェクト概要
 フィットネスコミュニティの Web アプリ。イベント予約・決済・ゲーミフィケーション（ランク・ポイント・バッジ）・紹介システムを提供する。
 
-- スタック: Next.js 14（App Router）/ TypeScript / Tailwind CSS v4 / Supabase / Vercel
+- スタック: Next.js 16（App Router）/ TypeScript / Tailwind CSS v4 / Supabase / Vercel
 - 決済: Square API / PayPay API
 
 ## ドキュメント

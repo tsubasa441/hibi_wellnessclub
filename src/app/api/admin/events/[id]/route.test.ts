@@ -39,7 +39,7 @@ describe("PATCH /api/admin/events/[id]", () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
 
-    const res = await PATCH(makeRequest(VALID_BODY), { params: { id: "event-1" } });
+    const res = await PATCH(makeRequest(VALID_BODY), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(401);
   });
@@ -49,7 +49,7 @@ describe("PATCH /api/admin/events/[id]", () => {
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
     mocks.isAdmin.mockResolvedValueOnce(false);
 
-    const res = await PATCH(makeRequest(VALID_BODY), { params: { id: "event-1" } });
+    const res = await PATCH(makeRequest(VALID_BODY), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(403);
   });
@@ -59,7 +59,7 @@ describe("PATCH /api/admin/events/[id]", () => {
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
     mocks.isAdmin.mockResolvedValueOnce(true);
 
-    const res = await PATCH(makeRequest({ ...VALID_BODY, capacity: 0 }), { params: { id: "event-1" } });
+    const res = await PATCH(makeRequest({ ...VALID_BODY, capacity: 0 }), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(400);
   });
@@ -71,7 +71,7 @@ describe("PATCH /api/admin/events/[id]", () => {
     mocks.isAdmin.mockResolvedValueOnce(true);
     from.mockReturnValueOnce(chainable({ data: null, error: { message: "not found" } }));
 
-    const res = await PATCH(makeRequest(VALID_BODY), { params: { id: "missing" } });
+    const res = await PATCH(makeRequest(VALID_BODY), { params: Promise.resolve({ id: "missing" }) });
 
     expect(res.status).toBe(404);
   });
@@ -89,7 +89,7 @@ describe("PATCH /api/admin/events/[id]", () => {
     // event_options の置き換え（delete → 再 insert）
     from.mockReturnValueOnce(chainable({ error: null }));
 
-    const res = await PATCH(makeRequest(VALID_BODY), { params: { id: "event-1" } });
+    const res = await PATCH(makeRequest(VALID_BODY), { params: Promise.resolve({ id: "event-1" }) });
     const json = await res.json();
 
     expect(res.status).toBe(200);
@@ -103,7 +103,7 @@ describe("DELETE /api/admin/events/[id]", () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
 
-    const res = await DELETE(makeRequest(), { params: { id: "event-1" } });
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(401);
   });
@@ -113,7 +113,7 @@ describe("DELETE /api/admin/events/[id]", () => {
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
     mocks.isAdmin.mockResolvedValueOnce(false);
 
-    const res = await DELETE(makeRequest(), { params: { id: "event-1" } });
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(403);
   });
@@ -125,7 +125,7 @@ describe("DELETE /api/admin/events/[id]", () => {
     mocks.isAdmin.mockResolvedValueOnce(true);
     from.mockReturnValueOnce(chainable({ data: null, error: null }));
 
-    const res = await DELETE(makeRequest(), { params: { id: "missing" } });
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "missing" }) });
 
     expect(res.status).toBe(404);
   });
@@ -137,7 +137,7 @@ describe("DELETE /api/admin/events/[id]", () => {
     mocks.isAdmin.mockResolvedValueOnce(true);
     from.mockReturnValueOnce(chainable({ data: { id: "event-1", status: "cancelled" }, error: null }));
 
-    const res = await DELETE(makeRequest(), { params: { id: "event-1" } });
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(400);
   });
@@ -152,7 +152,7 @@ describe("DELETE /api/admin/events/[id]", () => {
     const updateSpy = vi.fn();
     from.mockReturnValueOnce(chainable({ error: null }, { update: updateSpy }));
 
-    const res = await DELETE(makeRequest(), { params: { id: "event-1" } });
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
     const json = await res.json();
 
     expect(res.status).toBe(200);

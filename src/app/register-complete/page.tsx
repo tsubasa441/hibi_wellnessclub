@@ -1,12 +1,12 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
 
-export default function RegisterCompletePage({
+export default async function RegisterCompletePage({
   searchParams,
 }: {
-  searchParams: { profileError?: string };
+  searchParams: Promise<{ profileError?: string }>;
 }) {
-  const profileError = searchParams.profileError === "1";
+  const profileError = (await searchParams).profileError === "1";
 
   return (
     <>

@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -25,7 +25,7 @@
     "https-proxy-agent": "^9.1.0",
     "kuroshiro": "^1.2.0",
     "kuroshiro-analyzer-kuromoji": "^1.1.0",
-    "next": "^14.2.35",
+    "next": "^16.3.5",
     "postcss": "^8.5.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -35,8 +35,14 @@
     "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.5",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "@paypayopa/paypayopa-sdk-node": {
+      "jsonwebtoken": "^9.0.2",
+      "uuid": "^11.1.1"
+    }
   }
 }

@@ -4,14 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import EventForm from "../EventForm";
 import DeleteEventButton from "./DeleteEventButton";
 
-export default async function EditEventPage({ params }: { params: { id: string } }) {
+export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
   const [{ data: event }, { data: options }] = await Promise.all([
-    supabase.from("events").select("*").eq("id", params.id).single(),
+    supabase.from("events").select("*").eq("id", id).single(),
     supabase
       .from("event_options")
       .select("id, label, choices, multi_select, required, sort_order")
-      .eq("event_id", params.id)
+      .eq("event_id", id)
       .order("sort_order", { ascending: true }),
   ]);
 

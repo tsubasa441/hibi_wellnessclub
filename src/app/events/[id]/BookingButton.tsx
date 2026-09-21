@@ -41,6 +41,7 @@ export default function BookingButton({
   // router.refresh() の反映が届く前に一瞬ボタンが再度押せる状態になり、
   // 二重予約・二重キャンセルにつながるため（BUG-5と同種の懸念）。
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 上記の理由で、prop の切り替わりを契機にリセットする
     setLoading(false);
     setCancelLoading(false);
   }, [userBooking]);

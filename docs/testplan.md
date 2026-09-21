@@ -237,6 +237,17 @@
 
 ---
 
+## 16. 依存パッケージの更新（Next.js 14 → 16）— 2026-09-21 追加
+
+`npm audit --omit=dev` で報告されていた脆弱性（`next` 重大、`postcss` 高、PayPay SDK 経由の `jsonwebtoken` 高・`uuid` 中）への対応。Next.js 14 系・15 系には修正版が無く、修正は 16 系のみのため、メジャー更新（14.2.35 → 16.3.5）を行った。`package.json` の `overrides` で PayPay SDK の内部依存も固定し、`npm audit --omit=dev` は 0 件になった。
+
+| # | 確認項目 | 期待結果 | 自動テスト | 状態 |
+|---|---------|---------|-----------|------|
+| 16-1 | `npm run test`・`tsc --noEmit`・`npm run lint`・`npm run build`（webpack） | すべて通過 | 全テスト | ✅ 2026-09-21（244件・エラーなし・全34ルートのビルド成功） |
+| 16-2 | `params`・`searchParams`・`cookies()` の非同期化 | 全ページ・APIが従来どおり動く | 各 `route.test.ts`（`params` を Promise で渡す形に更新） | ✅ 2026-09-21（ローカルで本番 Supabase に接続し、管理者の recovery トークンを `/auth/confirm` に通して Cookie セッションを確立→ `/home`・`/bookings`・`/impact`・`/events`・`/events/[id]`・`/events/[id]/checkout`・`/admin/events`・`/admin/events/new`・`/admin/events/[id]`・`/admin/events/[id]/participants` が 200／想定どおりのリダイレクト、`participants/export` が CSV を返し、存在しない予約のキャンセルが 404。未認証ページの `/login` へのリダイレクトと `?accountDeleted=1`・`?profileError=1` の反映、CSP・`X-Frame-Options` ヘッダーの配信も確認。開発サーバーのログにエラー・警告なし） |
+| 16-3 | PayPay SDK（`overrides` で `jsonwebtoken`・`uuid` を更新）が動く | リクエスト先・HMAC 認証ヘッダー・応答の解析が従来どおり | - | ✅ 2026-09-21（HTTP 層を差し替えて、`GetCodePaymentDetails` が `/v2/codes/payments/…` に HMAC の `Authorization` を付けて発行し、応答を解析できることを確認。実通信は行っていない） |
+| 16-4 | 本番デプロイ後の動作（Vercel の Node.js バージョン、Square 決済・Sentry・Cron を含む） | 更新前と同じに動く | - | 未確認（デプロイ後に依頼者が確認。Square の決済フローは3-Dセキュア画面を含め実カード決済でしか確認できない） |
+
 ---
 
 ## 更新履歴
@@ -281,3 +292,4 @@
 | 2026-09-19 | 「テスト実装が残っている項目」の洗い出しを行い、対応を実施。**自動テストを4件追加**（`paypay/callback`・`signup/profile`・`encrypt`・`auth/confirm`、計59ケース）し、`npm run test` は168件→227件。**新規テストが BUG-12（`/auth/confirm` の `next` パラメータによるオープンリダイレクト）を検出**し、`route.ts` を修正して回帰テストを追加。testplan を実態に同期：1-2（紹介報酬の期待結果を遅延付与仕様へ）・6-1（ランク一覧削除）の期待結果を修正、UI刷新分をセクション15として新設。依頼者がiPhone実機でトップ動画の黒帯解消（15-2）とモバイル回線での滑らかな再生（15-3）を確認。黒帯の原因は元動画に焼き込まれた黒帯だった（`4a233f9`）。あわせて、`4a233f9` の `main` への push が Vercel の Webhook に届かず Production に反映されなかったため空コミット `9a174f2` で再トリガーした。続けて 15-4・15-5・15-7・15-9 もローカルで確認しクローズ（15-9 は `admin.generateLink` の recovery トークンを `/auth/confirm` に通してセッションを確立）。未クローズは 4-6（PayPay 実決済）と、実機確認待ちの 15-12（iOS入力欄ズーム）のみ。 |
 | 2026-09-19 | PayPay 本番化の作業。初回の実決済で BUG-13 を発見（service_role 書き込み・環境変数の Development 設定・支払い後にサイトへ戻らない場合の pending 残り）。`paypayReconcile.ts` を追加し、`/bookings`・`/events/[id]` のロード時に確定／期限切れ解放を行う。`npm run test` 239件・lint・tsc 通過。4-6 は本番での確定・返金の再確認待ち。 |
 | 2026-09-20 | PayPay 本番化（保留中）の状況をドキュメントに反映。初回の実決済で判明した不具合（BUG-13 の (4) 照会 API の取り違え・(5) 返金呼び出しの誤り）と修正内容を追記し、4-6 を「一部確認・保留中」に更新。`docs/deployment.md` に「PayPay 本番化の手順・注意点」（環境変数は Production に設定・障害の調べ方・SDK 使用上の注意・本番E2E手順）、`docs/architecture.md` に未払い解放の条件と照会 API、`docs/funcdocument.md` の実装順序表に現状を反映。 |
+| 2026-09-21 | 依存パッケージの脆弱性（`npm audit --omit=dev` の5件：`next` 重大・`postcss` 高・PayPay SDK 経由の `jsonwebtoken` 高／`uuid` 中）に対応。`next` は 14 系・15 系に修正版が無いため 16.3.5 へメジャー更新（React 18 のまま）。`params`・`searchParams`・`cookies()` の非同期化、ESLint 9 のフラットコンフィグ移行（`next lint` 廃止のため `eslint .`）、ビルド・開発サーバーは webpack を明示（`--webpack`）。PayPay SDK の内部依存は `overrides` で固定し、`npm audit` は 0 件。詳細はセクション16。作業は `chore/upgrade-next-16` ブランチ。`npm run test` 244件・tsc・lint・build 通過、本番 Supabase に接続したローカルの疎通確認で認証・動的ルートが動くことを確認。**本番デプロイ後の確認（16-4）は未実施**。 |

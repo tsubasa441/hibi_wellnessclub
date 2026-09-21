@@ -9,12 +9,12 @@ const HERO_SLIDES: HeroSlide[] = [
   { type: "video", src: "/videos/hibi-top.mp4", poster: "/images/hibi-top-poster.jpg" },
 ];
 
-export default function HomePage({
+export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { accountDeleted?: string };
+  searchParams: Promise<{ accountDeleted?: string }>;
 }) {
-  const accountDeleted = searchParams.accountDeleted === "1";
+  const accountDeleted = (await searchParams).accountDeleted === "1";
 
   return (
     <>

@@ -69,6 +69,12 @@ CSP_REPORT_ONLY=
 
 ---
 
+## Node.js のバージョン
+
+Next.js 16 は Node.js 20.9 以上が必要。Vercel の Project Settings > General > Node.js Version が 20.x 以上（22.x・24.x 可）になっていることを確認する（未設定時の既定は新しい LTS）。
+
+---
+
 ## Sentry（エラー監視）の有効化手順
 
 1. [sentry.io](https://sentry.io) でプロジェクトを作成（Platform: **Next.js**）。作成後に表示される DSN

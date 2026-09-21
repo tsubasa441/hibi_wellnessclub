@@ -41,22 +41,23 @@ function formatDate(startStr: string, endStr?: string | null): { date: string; t
   };
 }
 
-export default async function EventDetailPage({ params }: { params: { id: string } }) {
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  await reconcilePendingPayPayBookings(supabase, user, { eventId: params.id });
+  await reconcilePendingPayPayBookings(supabase, user, { eventId: id });
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
   const [{ data: event }, { count: bookedCount }, { data: eventOptions }] = await Promise.all([
-    supabase.from("events").select("*").eq("id", params.id).single(),
-    createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", params.id).eq("status", "confirmed"),
+    supabase.from("events").select("*").eq("id", id).single(),
+    createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed"),
     supabase
       .from("event_options")
       .select("id, label, choices, multi_select, required, sort_order")
-      .eq("event_id", params.id)
+      .eq("event_id", id)
       .order("sort_order", { ascending: true }),
   ]);
 
@@ -71,7 +72,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
     const { data } = await supabase
       .from("bookings")
       .select("*")
-      .eq("event_id", params.id)
+      .eq("event_id", id)
       .eq("user_id", user.id)
       .eq("status", "confirmed")
       .single();

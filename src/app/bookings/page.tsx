@@ -86,6 +86,7 @@ export default async function BookingsPage() {
           <div className="space-y-3">
             {bookings.map((booking) => {
               const startAt = new Date(booking.events.start_at);
+              // eslint-disable-next-line react-hooks/purity -- Server Component のためリクエストごとに1回だけ評価される
               const diffDays = (startAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
               const refundable = diffDays >= 2;
               return (

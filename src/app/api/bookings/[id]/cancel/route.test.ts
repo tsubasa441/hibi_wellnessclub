@@ -127,7 +127,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
     mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from: vi.fn() });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(401);
   });
@@ -135,7 +135,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
   it("予約が存在しない場合は404", async () => {
     setupSupabase({ booking: null });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(404);
   });
@@ -143,7 +143,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
   it("他人の予約の場合は403", async () => {
     setupSupabase({ booking: makeBooking({ user_id: "other-user" }) });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(403);
   });
@@ -151,7 +151,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
   it("既にキャンセル済みの場合は400", async () => {
     setupSupabase({ booking: makeBooking({ status: "cancelled" }) });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
 
     expect(res.status).toBe(400);
@@ -163,7 +163,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
       booking: makeBooking({ events: { start_at: "2026-07-19T21:00:00Z", price: 3000, title: "Yoga" } }),
     });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(400);
     expect(mocks.revokeEventPoints).not.toHaveBeenCalled();
@@ -174,7 +174,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
       booking: makeBooking({ amount_charged: 2500, points_used: 0 }),
     });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -195,7 +195,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
       booking: makeBooking({ payment_method: "paypay", payment_id: "pp-1", amount_charged: 1000, points_used: 2000 }),
     });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(200);
     expect(mocks.paypayCodeDetails).toHaveBeenCalledWith(["pp-1"]);
@@ -214,7 +214,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
     });
     mocks.paypayRefund.mockResolvedValueOnce({ BODY: { resultInfo: { code: "INVALID_PARAMS" } } });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(500);
     expect(paymentStatusUpdateSpy).not.toHaveBeenCalledWith({ payment_status: "refunded" });
@@ -226,7 +226,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
     });
     mocks.paypayCodeDetails.mockResolvedValueOnce({ BODY: { data: {} } });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(500);
     expect(mocks.paypayRefund).not.toHaveBeenCalled();
@@ -237,7 +237,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
       booking: makeBooking({ events: { start_at: "2026-07-21T00:00:00Z", price: 3000, title: "Yoga" }, points_used: 500 }),
     });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -255,7 +255,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
       booking: makeBooking({ payment_method: "free", payment_status: "free", payment_id: null, amount_charged: 0 }),
     });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
 
     expect(res.status).toBe(200);
     expect(mocks.refundPayment).not.toHaveBeenCalled();
@@ -266,7 +266,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
   it("二重キャンセル競合（同時リクエスト）: claim失敗時は400を返し返金処理をしない", async () => {
     setupSupabase({ booking: makeBooking(), claimed: null, claimError: { message: "no rows" } });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
 
     expect(res.status).toBe(400);
@@ -279,7 +279,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
     mocks.refundPayment.mockRejectedValueOnce(new Error("card network error"));
     setupSupabase({ booking: makeBooking() });
 
-    const res = await POST(DUMMY_REQUEST, { params: { id: "booking-1" } });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     const body = await res.json();
 
     expect(res.status).toBe(500);

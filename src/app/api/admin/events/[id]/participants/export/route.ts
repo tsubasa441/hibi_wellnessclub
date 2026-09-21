@@ -25,8 +25,9 @@ type BookingRow = {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = createClient();
   const {
     data: { user },
@@ -43,13 +44,13 @@ export async function GET(
     supabase
       .from("bookings")
       .select("id, user_id, payment_method, payment_status, points_used, amount_charged, option_selections, checked_in_at, created_at, profiles(name)")
-      .eq("event_id", params.id)
+      .eq("event_id", id)
       .eq("status", "confirmed")
       .order("created_at", { ascending: true }),
     supabase
       .from("event_options")
       .select("label, sort_order")
-      .eq("event_id", params.id)
+      .eq("event_id", id)
       .order("sort_order", { ascending: true }),
   ]);
 
@@ -106,7 +107,7 @@ export async function GET(
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="participants-${params.id}.csv"`,
+      "Content-Disposition": `attachment; filename="participants-${id}.csv"`,
     },
   });
 }

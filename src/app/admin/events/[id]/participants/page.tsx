@@ -19,13 +19,14 @@ type BookingRow = {
   profiles: { name: string } | { name: string }[] | null;
 };
 
-export default async function EventParticipantsPage({ params }: { params: { id: string } }) {
+export default async function EventParticipantsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   const { data: event } = await supabase
     .from("events")
     .select("id, title, capacity")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!event) notFound();
@@ -33,7 +34,7 @@ export default async function EventParticipantsPage({ params }: { params: { id: 
   const { data } = await supabase
     .from("bookings")
     .select("id, payment_method, payment_status, points_used, option_selections, checked_in_at, created_at, profiles(name)")
-    .eq("event_id", params.id)
+    .eq("event_id", id)
     .eq("status", "confirmed")
     .order("created_at", { ascending: true });
 

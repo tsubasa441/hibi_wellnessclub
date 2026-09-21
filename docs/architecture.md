@@ -6,7 +6,7 @@
 
 ```
 ブラウザ
-  └── Next.js 14（App Router）/ Vercel
+  └── Next.js 16（App Router）/ Vercel
         ├── Server Components（データ取得・ページ描画）
         ├── Client Components（インタラクション）
         └── API Routes（決済処理）
@@ -19,7 +19,7 @@
 
 | レイヤー | 技術 | バージョン |
 |---------|------|----------|
-| フレームワーク | Next.js（App Router） | 14 |
+| フレームワーク | Next.js（App Router） | 16 |
 | 言語 | TypeScript | 5 |
 | スタイリング | Tailwind CSS | v4 |
 | データベース | Supabase（PostgreSQL） | - |
@@ -28,6 +28,14 @@
 | ホスティング | Vercel | - |
 | フォント | Outfit / Cormorant Garamond / DM Sans | Google Fonts |
 | エラー監視 | Sentry（`@sentry/nextjs`） | - |
+
+Next.js 16 に関する実装上の注意（2026-09-21 に 14 から更新）：
+- **非同期のリクエスト API**: ページの `params`・`searchParams` は `Promise`。`const { id } = await params;` のように受け取る。Route Handler の第2引数 `{ params }` も同様。テストでは `{ params: Promise.resolve({ id: "..." }) }` を渡す
+- **`cookies()` も非同期**: `src/lib/supabase/server.ts` の `createClient()` は、呼び出し側（多数）を async にしないよう同期のまま残し、Cookie の読み書き（`getAll`/`setAll`）の時点で `await cookies()` する
+- **ビルド・開発サーバーは webpack**: Next.js 16 の既定は Turbopack だが、Sentry（`withSentryConfig` の `webpack` オプション）との相性と移行リスクを避けるため、`npm run dev`・`npm run build` は `--webpack` を付けている
+- **ESLint**: `next lint` は廃止。ESLint 9 のフラットコンフィグ（`eslint.config.mjs`）を使い、`npm run lint` は `eslint .` を実行する。`react-hooks/set-state-in-effect`・`react-hooks/purity` は、意図的な既存実装（BUG-6 対応、Server Component の `Date.now()`）の該当行のみ理由付きで無効化している
+- **Node.js**: 20.9 以上が必要（Vercel のプロジェクト設定の Node.js Version で確認する）
+- **`package.json` の `overrides`**: PayPay SDK の内部依存（`jsonwebtoken`・`uuid`）の脆弱性警告を、SDK が使わない機能に限った問題であることを確認した上で、新しい版に固定して解消している（SDK のリクエスト組み立てが動くことも確認済み）
 
 セキュリティ関連の実装方針：
 - **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する

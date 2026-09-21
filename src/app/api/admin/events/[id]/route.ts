@@ -16,8 +16,9 @@ function normalizeOptions(options: EventInput["options"]) {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = createClient();
   const {
     data: { user },
@@ -52,7 +53,7 @@ export async function PATCH(
       price: body.price,
       status: body.status,
     })
-    .eq("id", params.id)
+    .eq("id", id)
     .select()
     .single();
 
@@ -65,7 +66,7 @@ export async function PATCH(
   const { error: deleteError } = await supabase
     .from("event_options")
     .delete()
-    .eq("event_id", params.id);
+    .eq("event_id", id);
   if (deleteError) {
     return NextResponse.json({ error: "選択項目の更新に失敗しました" }, { status: 500 });
   }
@@ -74,7 +75,7 @@ export async function PATCH(
   if (options.length > 0) {
     const { error: optionsError } = await supabase.from("event_options").insert(
       options.map((o, i) => ({
-        event_id: params.id,
+        event_id: id,
         label: o.label,
         choices: o.choices,
         multi_select: o.multiSelect,
@@ -92,8 +93,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = createClient();
   const {
     data: { user },
@@ -109,7 +111,7 @@ export async function DELETE(
   const { data: existing } = await supabase
     .from("events")
     .select("id, status")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!existing) {
@@ -124,7 +126,7 @@ export async function DELETE(
   const { error } = await supabase
     .from("events")
     .update({ status: "cancelled" })
-    .eq("id", params.id);
+    .eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: "削除に失敗しました" }, { status: 500 });

@@ -41,7 +41,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
 
-    const res = await GET(DUMMY_REQUEST, { params: { id: "event-1" } });
+    const res = await GET(DUMMY_REQUEST, { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(401);
   });
@@ -51,7 +51,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser } });
     mocks.isAdmin.mockResolvedValueOnce(false);
 
-    const res = await GET(DUMMY_REQUEST, { params: { id: "event-1" } });
+    const res = await GET(DUMMY_REQUEST, { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(403);
   });
@@ -65,7 +65,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
     from.mockReturnValueOnce(chainable({ data: [], error: null }));
     from.mockReturnValueOnce(chainable({ data: [], error: null }));
 
-    const res = await GET(DUMMY_REQUEST, { params: { id: "event-1" } });
+    const res = await GET(DUMMY_REQUEST, { params: Promise.resolve({ id: "event-1" }) });
     const buffer = await res.arrayBuffer();
 
     expect(res.status).toBe(200);
@@ -108,7 +108,7 @@ describe("GET /api/admin/events/[id]/participants/export", () => {
       })
     );
 
-    const res = await GET(DUMMY_REQUEST, { params: { id: "event-1" } });
+    const res = await GET(DUMMY_REQUEST, { params: Promise.resolve({ id: "event-1" }) });
     const text = await res.text();
 
     expect(res.status).toBe(200);
