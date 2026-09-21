@@ -72,7 +72,8 @@ src/
 │   │   ├── page.tsx            # 予約済みイベント一覧・キャンセル・チェックイン
 │   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。Client Component）
 │   ├── auth/
-│   │   ├── confirm/route.ts         # 再設定メールのリンク先。token_hash を verifyOtp して /auth/reset-password へ
+│   │   ├── confirm/route.ts         # 再設定メールのリンク先。GET は検証せず /auth/verify へリダイレクト（リンクの先読みでトークンが消費されないように）。POST（確認ページのボタン）で token_hash を verifyOtp して /auth/reset-password へ 303
+│   │   ├── verify/page.tsx          # 再設定の確認ページ（「パスワードを再設定する」ボタンのみ。ボタンで POST /auth/confirm）
 │   │   └── reset-password/page.tsx  # パスワード再設定（confirm 経由でリカバリーセッション確立後に表示）
 │   ├── legal/
 │   │   ├── tokushoho/page.tsx   # 特定商取引法に基づく表記（認証不要・静的コンテンツ）

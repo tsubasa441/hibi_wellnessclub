@@ -10,11 +10,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
 
-const { GET } = await import("./route");
+const { GET, POST } = await import("./route");
 
 // next/navigation の redirect() は例外を投げて処理を打ち切る。その挙動を再現し、
 // 最終的なリダイレクト先を返す
-async function run(query: string) {
+async function runGet(query: string) {
   const req = { url: `http://localhost/auth/confirm${query}` } as unknown as NextRequest;
   try {
     await GET(req);
@@ -22,6 +22,15 @@ async function run(query: string) {
     return (e as Error).message.replace("REDIRECT:", "");
   }
   return null;
+}
+
+async function runPost(fields: Record<string, string>) {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.set(k, v);
+  const req = { url: "http://localhost/auth/confirm", formData: async () => form } as unknown as NextRequest;
+  const res = await POST(req);
+  const location = new URL(res.headers.get("location") ?? "http://x/");
+  return { status: res.status, dest: location.pathname + location.search };
 }
 
 beforeEach(() => {
@@ -33,39 +42,72 @@ beforeEach(() => {
   mocks.verifyOtp.mockResolvedValue({ error: null });
 });
 
-describe("GET /auth/confirm", () => {
-  it("token_hash の検証に成功したら /auth/reset-password へ", async () => {
-    const dest = await run("?token_hash=abc&type=recovery");
-    expect(dest).toBe("/auth/reset-password");
+describe("GET /auth/confirm（リンクの先読みでトークンを消費しない）", () => {
+  it("token_hash・type があっても検証せず、確認ページへ渡すだけ", async () => {
+    const dest = await runGet("?token_hash=abc&type=recovery");
+    expect(dest).toBe("/auth/verify?token_hash=abc&type=recovery");
+    expect(mocks.verifyOtp).not.toHaveBeenCalled();
+    expect(mocks.createServerClient).not.toHaveBeenCalled();
+  });
+
+  it("token_hash が無ければ確認ページへ進まず invalid_link へ", async () => {
+    const dest = await runGet("?type=recovery");
+    expect(dest).toBe("/auth/reset-password?error=invalid_link");
+  });
+
+  it("type が無ければ invalid_link へ", async () => {
+    const dest = await runGet("?token_hash=abc");
+    expect(dest).toBe("/auth/reset-password?error=invalid_link");
+  });
+
+  it("パラメータが何も無ければ invalid_link へ", async () => {
+    const dest = await runGet("");
+    expect(dest).toBe("/auth/reset-password?error=invalid_link");
+  });
+
+  it("next が同一サイト内のパスなら確認ページへ引き継ぐ", async () => {
+    const dest = await runGet("?token_hash=abc&type=recovery&next=/home");
+    expect(dest).toBe("/auth/verify?token_hash=abc&type=recovery&next=%2Fhome");
+  });
+
+  it.each([
+    ["絶対URL", "https://evil.example.com"],
+    ["プロトコル相対URL", "//evil.example.com"],
+    ["バックスラッシュ付き", "/\\evil.example.com"],
+  ])("next が外部サイトを指す場合（%s）は既定の遷移先に置き換えて引き継ぐ", async (_label, next) => {
+    const dest = await runGet(`?token_hash=abc&type=recovery&next=${encodeURIComponent(next)}`);
+    expect(dest).toBe(`/auth/verify?token_hash=abc&type=recovery&next=${encodeURIComponent("/auth/reset-password")}`);
+  });
+});
+
+describe("POST /auth/confirm（確認ページのボタンで検証する）", () => {
+  it("token_hash の検証に成功したら 303 で /auth/reset-password へ", async () => {
+    const res = await runPost({ token_hash: "abc", type: "recovery", next: "" });
+    expect(res).toEqual({ status: 303, dest: "/auth/reset-password" });
     expect(mocks.verifyOtp).toHaveBeenCalledWith({ type: "recovery", token_hash: "abc" });
   });
 
-  it("検証に失敗したら invalid_link へ", async () => {
+  it("検証に失敗したら 303 で invalid_link へ（使用済み・期限切れのトークン）", async () => {
     mocks.verifyOtp.mockResolvedValue({ error: { message: "expired" } });
-    const dest = await run("?token_hash=abc&type=recovery");
-    expect(dest).toBe("/auth/reset-password?error=invalid_link");
+    const res = await runPost({ token_hash: "abc", type: "recovery", next: "" });
+    expect(res).toEqual({ status: 303, dest: "/auth/reset-password?error=invalid_link" });
   });
 
   it("token_hash が無ければ検証せず invalid_link へ", async () => {
-    const dest = await run("?type=recovery");
-    expect(dest).toBe("/auth/reset-password?error=invalid_link");
+    const res = await runPost({ type: "recovery", next: "" });
+    expect(res.dest).toBe("/auth/reset-password?error=invalid_link");
     expect(mocks.verifyOtp).not.toHaveBeenCalled();
   });
 
   it("type が無ければ検証せず invalid_link へ", async () => {
-    const dest = await run("?token_hash=abc");
-    expect(dest).toBe("/auth/reset-password?error=invalid_link");
+    const res = await runPost({ token_hash: "abc", next: "" });
+    expect(res.dest).toBe("/auth/reset-password?error=invalid_link");
     expect(mocks.verifyOtp).not.toHaveBeenCalled();
   });
 
-  it("パラメータが何も無ければ invalid_link へ", async () => {
-    const dest = await run("");
-    expect(dest).toBe("/auth/reset-password?error=invalid_link");
-  });
-
   it("next が同一サイト内のパスならそこへ遷移する", async () => {
-    const dest = await run("?token_hash=abc&type=recovery&next=/home");
-    expect(dest).toBe("/home");
+    const res = await runPost({ token_hash: "abc", type: "recovery", next: "/home" });
+    expect(res.dest).toBe("/home");
   });
 
   it.each([
@@ -73,7 +115,7 @@ describe("GET /auth/confirm", () => {
     ["プロトコル相対URL", "//evil.example.com"],
     ["バックスラッシュ付き", "/\\evil.example.com"],
   ])("next が外部サイトを指す場合（%s）は既定の遷移先に置き換える", async (_label, next) => {
-    const dest = await run(`?token_hash=abc&type=recovery&next=${encodeURIComponent(next)}`);
-    expect(dest).toBe("/auth/reset-password");
+    const res = await runPost({ token_hash: "abc", type: "recovery", next });
+    expect(res.dest).toBe("/auth/reset-password");
   });
 });

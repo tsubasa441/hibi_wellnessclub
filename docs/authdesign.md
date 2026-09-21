@@ -56,13 +56,23 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 3. Supabase からリセットリンク付きメールが送信される
    - メールテンプレート（Supabase Dashboard > Authentication > Email Templates > Reset Password）は
      `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` を指す（token_hash 方式）
-4. ユーザーがリンクをクリック → GET /auth/confirm（route handler）が
-   supabase.auth.verifyOtp({ type: "recovery", token_hash }) をサーバー側で実行し、
-   Cookie にリカバリーセッションを確立してから /auth/reset-password へリダイレクトする
+4. ユーザーがリンクをクリック → GET /auth/confirm（route handler）は**検証せず**、
+   /auth/verify（確認ページ）へリダイレクトするだけにする
+   - メールクライアントやセキュリティスキャナがリンクを先読み（GET）すると、1回限りの
+     token_hash が消費されて「リンクが無効です」になる（PC のメールで発生していた）。
+     GET では何も消費しないことで、先読みされても本人のクリックが有効なまま残る
+   - /auth/verify は「パスワードを再設定する」ボタンだけのページ。ボタンは
+     POST /auth/confirm（フォーム送信）で、token_hash・type・next を hidden で渡す
+   - POST /auth/confirm が supabase.auth.verifyOtp({ type: "recovery", token_hash }) を
+     サーバー側で実行し、Cookie にリカバリーセッションを確立してから
+     /auth/reset-password へ 303 リダイレクトする（307 だとブラウザがリダイレクト先へ
+     POST を再送するため 303 を使う）
    - PKCE の code_verifier に依存しないため、リセット申請した端末と別の端末・ブラウザで
      メールを開いてもパスワード再設定できる
    - 検証失敗時は /auth/reset-password?error=invalid_link へ。reset-password 画面は
      error 系パラメータと getSession のポーリングで「リンクが無効です」を表示する
+   - メールテンプレートのリンク先（`/auth/confirm?token_hash=...&type=recovery`）は変更しない
+     ＝送信済みのメールのリンクもそのまま使える
 5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す
 6. 同ページ内に再設定完了画面を表示し、「ログイン画面へ」ボタンからリカバリーセッションを signOut() した上で /login へ遷移
 ```
