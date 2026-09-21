@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import PublicHeader from "@/components/PublicHeader";
 import HeroBackground, { type HeroSlide } from "./HeroBackground";
 
 // 動画・写真を追加すると自動でクロスフェード表示される
@@ -18,13 +19,7 @@ export default async function HomePage({
 
   return (
     <>
-    <header className="nm-nav-top relative z-20">
-      <div className="max-w-2xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
-        <Link href="/" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
-          Hibi
-        </Link>
-      </div>
-    </header>
+    <PublicHeader />
 
     <main className="relative min-h-[calc(100svh-11.4rem)] pb-10 flex flex-col items-center justify-start overflow-hidden">
       <HeroBackground slides={HERO_SLIDES} />

@@ -116,6 +116,7 @@ src/
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + ログアウト）
+│   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。トップ・ログイン・登録完了・法定ページに設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
 │   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・ログイン・登録完了・法定ページに設置）
 ├── lib/

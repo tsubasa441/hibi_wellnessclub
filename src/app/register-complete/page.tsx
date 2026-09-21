@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import PublicHeader from "@/components/PublicHeader";
 
 export default async function RegisterCompletePage({
   searchParams,
@@ -10,6 +11,7 @@ export default async function RegisterCompletePage({
 
   return (
     <>
+    <PublicHeader />
     <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-16 sm:pt-0">
       <div className="relative z-10 w-full max-w-sm nm-card p-6 sm:p-8 text-center space-y-6 animate-fade-up animate-delay-100">
         <div>

@@ -15,6 +15,7 @@
 | コンポーネント | パス | 説明 |
 |-------------|------|------|
 | Header | `src/components/Header.tsx` | ロゴ・ログアウトボタン |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・ログイン・登録完了・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（ログアウト付き）を使う |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |

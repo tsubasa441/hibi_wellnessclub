@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import Footer from "@/components/Footer";
+import PublicHeader from "@/components/PublicHeader";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
@@ -275,6 +276,7 @@ function LoginFormInner() {
 
   return (
     <>
+    <PublicHeader />
     <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-4 sm:pt-0 pb-4 sm:pb-10">
       <div className="relative z-10 w-full max-w-sm nm-card p-5 sm:p-8 animate-fade-up">
         <div className="text-center mb-3">
