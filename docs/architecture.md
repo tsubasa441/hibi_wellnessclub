@@ -76,7 +76,8 @@ src/
 │   │   └── reset-password/page.tsx  # パスワード再設定（confirm 経由でリカバリーセッション確立後に表示）
 │   ├── legal/
 │   │   ├── tokushoho/page.tsx   # 特定商取引法に基づく表記（認証不要・静的コンテンツ）
-│   │   └── privacy/page.tsx     # プライバシーポリシー（認証不要・静的コンテンツ）
+│   │   ├── privacy/page.tsx     # プライバシーポリシー（認証不要・静的コンテンツ）
+│   │   └── terms/page.tsx       # 利用規約（認証不要・静的コンテンツ）
 │   ├── impact/
 │   │   ├── page.tsx            # Impact（プロフィール・参加履歴・バッジ・紹介）
 │   │   ├── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
@@ -116,7 +117,7 @@ src/
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + ログアウト）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
-│   └── Footer.tsx              # 特定商取引法表記・プライバシーポリシーへのリンク（トップ・ログイン・登録完了ページに設置）
+│   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・ログイン・登録完了・法定ページに設置）
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts           # ブラウザ用クライアント
@@ -167,7 +168,7 @@ docs/                           # ドキュメント一式
 
 管理者（`profiles.is_admin = true`）は `/admin/events` から独立してイベント管理・参加者管理を行う。一般ユーザー導線とは接続しない（URLを直接開く運用）。管理者以外が `/admin/*` にアクセスした場合は `/home` へリダイレクトする。
 
-`/`・`/login`・`/register-complete` の下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/tokushoho`（特定商取引法に基づく表記）・`/legal/privacy`（プライバシーポリシー）へ遷移できる。この2画面は認証不要。
+`/`・`/login`・`/register-complete` の下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/terms`（利用規約）・`/legal/privacy`（プライバシーポリシー）・`/legal/tokushoho`（特定商取引法に基づく表記）へ遷移できる。この3画面は認証不要。フッター上部には Instagram・TikTok の公式アカウントへのアイコンリンク（新しいタブで開く）を並べる。SNS の URL は `src/components/Footer.tsx` の `SOCIAL_LINKS` で管理する。
 
 ### BottomNav 構成（全認証済み画面共通）
 

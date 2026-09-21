@@ -26,7 +26,7 @@ export default async function HomePage({
       </div>
     </header>
 
-    <main className="relative min-h-[calc(100svh-8.6rem)] pb-10 flex flex-col items-center justify-start overflow-hidden">
+    <main className="relative min-h-[calc(100svh-11.4rem)] pb-10 flex flex-col items-center justify-start overflow-hidden">
       <HeroBackground slides={HERO_SLIDES} />
       <div className="absolute inset-0 bg-black/20" />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useMemo, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
@@ -456,6 +457,14 @@ function LoginFormInner() {
               <p className={labelClass}>REFERRAL CODE <span className="text-ink-200 normal-case font-dm tracking-normal">（任意）</span></p>
               <input type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className={inputClass} placeholder="招待コードをお持ちの方" />
             </div>
+
+            <p className="font-dm text-xs text-ink-300 leading-relaxed text-center pt-1">
+              「登録」を押すと、
+              <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-sage-600 underline">利用規約</Link>
+              と
+              <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-sage-600 underline">プライバシーポリシー</Link>
+              に同意したものとみなします。
+            </p>
 
             <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-2.5 disabled:opacity-40 mt-1">
               {loading ? "登録中..." : "登録"}
