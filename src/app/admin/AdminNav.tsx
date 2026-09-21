@@ -21,12 +21,12 @@ export default function AdminNav() {
           Hibi Admin
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/home" className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition">
+          <Link href="/home" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
             ユーザー画面へ
           </Link>
           <button
             onClick={handleLogout}
-            className="font-outfit text-xs text-ink-300 hover:text-ink-700 transition"
+            className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition"
           >
             ログアウト
           </button>
