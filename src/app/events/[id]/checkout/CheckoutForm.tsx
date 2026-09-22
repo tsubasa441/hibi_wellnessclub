@@ -121,7 +121,14 @@ export default function CheckoutForm({
       const res = await fetch(`/api/payments/${method}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId: event.id, userId, sourceId, pointsToUse, optionSelections }),
+        body: JSON.stringify({
+          eventId: event.id,
+          userId,
+          sourceId,
+          pointsToUse,
+          optionSelections,
+          userAgent: navigator.userAgent,
+        }),
       });
 
       const data = await res.json();

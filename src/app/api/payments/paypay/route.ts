@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
-  const { eventId, pointsToUse, optionSelections } = await req.json();
+  const { eventId, pointsToUse, optionSelections, userAgent } = await req.json();
 
   if (!eventId) {
     return NextResponse.json({ error: "イベントIDが必要です" }, { status: 400 });
@@ -162,6 +162,8 @@ export async function POST(req: NextRequest) {
     codeType: "ORDER_QR",
     redirectUrl: callbackUrl,
     redirectType: "WEB_LINK",
+    // 決済完了後、マーチャントサイトが使っているブラウザ/タブへ戻すためにPayPayへ渡す（PayPay公式FAQ推奨）
+    ...(typeof userAgent === "string" && userAgent ? { userAgent } : {}),
     orderDescription: event.title,
     orderItems: [
       {

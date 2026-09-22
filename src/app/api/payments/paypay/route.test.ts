@@ -241,6 +241,31 @@ describe("POST /api/payments/paypay", () => {
     expect(userUpdateSpy).not.toHaveBeenCalled();
   });
 
+  it("userAgentが渡された場合はQRコード作成時にPayPayへ転送する", async () => {
+    mocks.qrCodeCreate.mockResolvedValueOnce({
+      BODY: { resultInfo: { code: "SUCCESS" }, data: { url: "https://paypay.example/pay/1" } },
+    });
+    setupSupabase({ event: makeEvent({ price: 3000 }) });
+
+    await POST(makeRequest({ eventId: "event-1", userAgent: "Mozilla/5.0 (iPhone) TestUA" }));
+
+    expect(mocks.qrCodeCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ userAgent: "Mozilla/5.0 (iPhone) TestUA" })
+    );
+  });
+
+  it("userAgentが渡されない場合はPayPayへuserAgentキーを送らない", async () => {
+    mocks.qrCodeCreate.mockResolvedValueOnce({
+      BODY: { resultInfo: { code: "SUCCESS" }, data: { url: "https://paypay.example/pay/1" } },
+    });
+    setupSupabase({ event: makeEvent({ price: 3000 }) });
+
+    await POST(makeRequest({ eventId: "event-1" }));
+
+    const calledPayload = mocks.qrCodeCreate.mock.calls.at(-1)?.[0];
+    expect(calledPayload).not.toHaveProperty("userAgent");
+  });
+
   it("QRコード作成が例外を投げた場合は予約を削除しポイントを払い戻す", async () => {
     mocks.qrCodeCreate.mockRejectedValueOnce(new Error("paypay down"));
     mocks.spendPointsForBooking.mockResolvedValueOnce(true);
