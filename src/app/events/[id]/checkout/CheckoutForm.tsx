@@ -106,6 +106,11 @@ export default function CheckoutForm({
     setLoading(true);
     setError(null);
 
+    // PayPayアプリでの支払い完了後にHibiへ戻れないケースがあるため、同一ウィンドウで遷移せず
+    // 新しいウィンドウで開く（PayPay公式FAQ推奨）。ポップアップブロックを避けるため、
+    // クリックと同期的に空ウィンドウを先に開いておき、URLが取得でき次第そこへ遷移させる
+    const paypayWindow = method === "paypay" ? window.open("", "_blank") : null;
+
     try {
       let sourceId = "FREE";
 
@@ -134,14 +139,23 @@ export default function CheckoutForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "決済に失敗しました");
 
-      if (method === "paypay" && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
+      // ポイント全額充当等で即時確定した場合は success:true かつ相対パスの redirectUrl が返る
+      // （実際のPayPay決済URLではないため、新しいウィンドウではなく現在の画面で遷移する）
+      if (method === "paypay" && data.redirectUrl && !data.success) {
+        if (paypayWindow) {
+          paypayWindow.location.href = data.redirectUrl;
+        } else {
+          // ポップアップがブロックされた場合は従来どおり同一ウィンドウで遷移する
+          window.location.href = data.redirectUrl;
+        }
         return;
       }
 
+      paypayWindow?.close();
       router.push(`/events/${event.id}?booked=1`);
       router.refresh();
     } catch (err: unknown) {
+      paypayWindow?.close();
       setError(err instanceof Error ? err.message : "決済に失敗しました");
       setLoading(false);
     }
