@@ -73,7 +73,18 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
      error 系パラメータと getSession のポーリングで「リンクが無効です」を表示する
    - メールテンプレートのリンク先（`/auth/confirm?token_hash=...&type=recovery`）は変更しない
      ＝送信済みのメールのリンクもそのまま使える
+   - ボタンの二重押し・同じリンクの2回開きで、2回目だけが「使用済み」で失敗しないよう、
+     ①確認ページのボタンは送信中に無効化（`VerifyForm`）、②POST の検証が失敗しても既にセッションが
+     あればそのまま先へ進める（セッションがない使用済みトークンは従来どおり invalid_link）
+   - 検証の失敗（`otp_expired` 等）と、再設定メールの送信失敗は、原因を後から調べられるよう
+     Sentry に記録する（`tags.area = auth_recovery`。`extra` は `authErrorCode`・`authErrorStatus`・
+     `authErrorName`・`authErrorText` のみで、メールアドレスやトークンは含めない）
 5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す
+   - 失敗したときは、原因ごとの文言を表示する（`src/lib/passwordUpdateError.ts`）。
+     `same_password`（今のパスワードと同じ）・`weak_password`・セッション切れ（リンクの期限切れ）・
+     レート制限・その他。以前は原因に関わらず「リンクの有効期限が切れている可能性があります」と
+     表示しており、パスワードが今のものと同じ場合もリンクの不具合と誤解されていた
+     （2026-09-21 の友人の利用で発覚。BUG-14）。失敗の種類は Sentry にも記録する（`area=auth_recovery`）
 6. 同ページ内に再設定完了画面を表示し、「ログイン画面へ」ボタンからリカバリーセッションを signOut() した上で /login へ遷移
 ```
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit, getClientIp, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
@@ -34,6 +35,12 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) {
+    // 送信に失敗した理由（送信数の上限・SMTP の不具合等）を後から調べられるよう、個人情報を含まない情報だけ記録する
+    Sentry.captureMessage("Password reset email failed to send", {
+      level: "error",
+      tags: { area: "auth_recovery" },
+      extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name, authErrorText: error.message },
+    });
     return NextResponse.json(
       { error: "メールの送信に失敗しました。しばらく経ってから再試行してください。" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { redirect } from "next/navigation";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -42,13 +43,29 @@ export async function POST(request: NextRequest) {
   const type = form.get("type");
   const next = form.get("next");
 
-  if (typeof tokenHash === "string" && tokenHash && typeof type === "string" && type) {
-    const supabase = createClient();
-    const { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
-    if (!error) {
-      return NextResponse.redirect(new URL(sanitizeNext(typeof next === "string" ? next : null), request.url), 303);
-    }
+  const destination = new URL(sanitizeNext(typeof next === "string" ? next : null), request.url);
+  const invalid = () =>
+    NextResponse.redirect(new URL("/auth/reset-password?error=invalid_link", request.url), 303);
+
+  if (typeof tokenHash !== "string" || !tokenHash || typeof type !== "string" || !type) {
+    return invalid();
   }
 
-  return NextResponse.redirect(new URL("/auth/reset-password?error=invalid_link", request.url), 303);
+  const supabase = createClient();
+  const { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
+  if (!error) return NextResponse.redirect(destination, 303);
+
+  // 同じリンクを2回開いた・ボタンを二重に押した場合、1回目の検証でセッションが既に確立済みで、
+  // 2回目だけが「使用済み」で失敗する。セッションがあるなら、そのまま先へ進める
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) return NextResponse.redirect(destination, 303);
+
+  // 失敗の理由（期限切れ・使用済み等）を後から調べられるよう、個人情報を含まない情報だけ記録する
+  // （Sentry は "code"/"message" というキー名をマスクするため別名で送る）
+  Sentry.captureMessage("Recovery link verification failed", {
+    level: "warning",
+    tags: { area: "auth_recovery" },
+    extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name, authErrorText: error.message },
+  });
+  return invalid();
 }

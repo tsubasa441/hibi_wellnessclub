@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
+import VerifyForm from "./VerifyForm";
 
 // パスワード再設定メールのリンクの遷移先。ここでは token_hash を検証しない（メールクライアントや
 // セキュリティスキャナのリンク先読みで、1回限りのトークンが消費されるのを防ぐため）。
@@ -28,17 +29,7 @@ export default async function VerifyPage({
             </p>
           </div>
 
-          <form method="POST" action="/auth/confirm">
-            <input type="hidden" name="token_hash" value={tokenHash} />
-            <input type="hidden" name="type" value={type} />
-            <input type="hidden" name="next" value={next ?? ""} />
-            <button
-              type="submit"
-              className="w-full nm-btn-primary text-white font-outfit font-medium py-3"
-            >
-              パスワードを再設定する
-            </button>
-          </form>
+          <VerifyForm tokenHash={tokenHash} type={type} next={next ?? ""} />
 
           <p className="font-dm text-xs text-ink-300 leading-relaxed">
             このリンクは、一度だけ使えます。

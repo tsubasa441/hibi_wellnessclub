@@ -5,10 +5,13 @@ const mocks = vi.hoisted(() => ({
   verifyOtp: vi.fn(),
   redirect: vi.fn(),
   createServerClient: vi.fn(),
+  getUser: vi.fn(),
+  captureMessage: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
+vi.mock("@sentry/nextjs", () => ({ captureMessage: mocks.captureMessage }));
 
 const { GET, POST } = await import("./route");
 
@@ -38,8 +41,9 @@ beforeEach(() => {
   mocks.redirect.mockImplementation((url: string) => {
     throw new Error(`REDIRECT:${url}`);
   });
-  mocks.createServerClient.mockReturnValue({ auth: { verifyOtp: mocks.verifyOtp } });
+  mocks.createServerClient.mockReturnValue({ auth: { verifyOtp: mocks.verifyOtp, getUser: mocks.getUser } });
   mocks.verifyOtp.mockResolvedValue({ error: null });
+  mocks.getUser.mockResolvedValue({ data: { user: null } });
 });
 
 describe("GET /auth/confirm（リンクの先読みでトークンを消費しない）", () => {
@@ -91,6 +95,24 @@ describe("POST /auth/confirm（確認ページのボタンで検証する）", (
     mocks.verifyOtp.mockResolvedValue({ error: { message: "expired" } });
     const res = await runPost({ token_hash: "abc", type: "recovery", next: "" });
     expect(res).toEqual({ status: 303, dest: "/auth/reset-password?error=invalid_link" });
+  });
+
+  it("検証に失敗したとき、失敗の理由を Sentry に記録する（token_hash 自体は記録しない）", async () => {
+    mocks.verifyOtp.mockResolvedValue({ error: { code: "otp_expired", status: 403, name: "AuthApiError", message: "Email link is invalid or has expired" } });
+    await runPost({ token_hash: "secret-token-value", type: "recovery", next: "" });
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      "Recovery link verification failed",
+      expect.objectContaining({ extra: expect.objectContaining({ authErrorCode: "otp_expired", authErrorStatus: 403 }) })
+    );
+    expect(JSON.stringify(mocks.captureMessage.mock.calls)).not.toContain("secret-token-value");
+  });
+
+  it("検証に失敗しても、既にセッションがあれば（リンクの2回開き・二重押し）そのまま先へ進める", async () => {
+    mocks.verifyOtp.mockResolvedValue({ error: { message: "used" } });
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    const res = await runPost({ token_hash: "abc", type: "recovery", next: "" });
+    expect(res).toEqual({ status: 303, dest: "/auth/reset-password" });
+    expect(mocks.captureMessage).not.toHaveBeenCalled();
   });
 
   it("token_hash が無ければ検証せず invalid_link へ", async () => {

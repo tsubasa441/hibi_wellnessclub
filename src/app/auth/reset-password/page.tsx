@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
+import * as Sentry from "@sentry/nextjs";
+import { passwordUpdateErrorMessage } from "@/lib/passwordUpdateError";
 
 const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-ink-300 transition";
 const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-1.5";
@@ -110,7 +112,13 @@ export default function ResetPasswordPage() {
     setLoading(false);
 
     if (error) {
-      setError("パスワードの更新に失敗しました。リンクの有効期限が切れている可能性があります。");
+      // 失敗の種類だけ記録する（パスワードやメールアドレスは含めない）
+      Sentry.captureMessage("Password update failed on reset page", {
+        level: "warning",
+        tags: { area: "auth_recovery" },
+        extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name },
+      });
+      setError(passwordUpdateErrorMessage(error));
     } else {
       setDone(true);
     }
@@ -141,7 +149,7 @@ export default function ResetPasswordPage() {
                 リンクが無効です
               </p>
               <p className="font-dm text-sm text-ink-300 leading-relaxed">
-                このリンクの有効期限が切れているか、既に使用されています。お手数ですが、もう一度パスワード再設定をお試しください。
+                このリンクの有効期限が切れているか、既に使用されています。メールを複数回送信した場合は、最後に届いたメールのリンクのみ有効です。お手数ですが、もう一度パスワード再設定をお試しください。
               </p>
               {invalidDetail && (
                 <p className="font-dm text-[11px] text-ink-200 leading-relaxed break-all">

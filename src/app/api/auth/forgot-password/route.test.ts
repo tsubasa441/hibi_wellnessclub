@@ -5,9 +5,11 @@ const mocks = vi.hoisted(() => ({
   resetPasswordForEmail: vi.fn(),
   createServiceClient: vi.fn(),
   checkRateLimit: vi.fn().mockResolvedValue(true),
+  captureMessage: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
+vi.mock("@sentry/nextjs", () => ({ captureMessage: mocks.captureMessage }));
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   getClientIp: () => "127.0.0.1",
@@ -68,5 +70,24 @@ describe("POST /api/auth/forgot-password", () => {
 
     const res = await POST(makeRequest({ email: "user@example.com" }));
     expect(res.status).toBe(500);
+  });
+
+  it("送信に失敗したとき、理由を Sentry に記録する（メールアドレスは記録しない）", async () => {
+    mocks.resetPasswordForEmail.mockResolvedValue({
+      error: { code: "over_email_send_rate_limit", status: 429, name: "AuthApiError", message: "email rate limit exceeded" },
+    });
+
+    await POST(makeRequest({ email: "friend-secret@example.com" }));
+
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      "Password reset email failed to send",
+      expect.objectContaining({ extra: expect.objectContaining({ authErrorCode: "over_email_send_rate_limit", authErrorStatus: 429 }) })
+    );
+    expect(JSON.stringify(mocks.captureMessage.mock.calls)).not.toContain("friend-secret@example.com");
+  });
+
+  it("送信に成功したときは Sentry に記録しない", async () => {
+    await POST(makeRequest({ email: "user@example.com" }));
+    expect(mocks.captureMessage).not.toHaveBeenCalled();
   });
 });
