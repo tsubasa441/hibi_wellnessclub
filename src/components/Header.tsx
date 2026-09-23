@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import SettingsDrawer from "@/components/SettingsDrawer";
 
 export default function Header() {
-  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [nickname, setNickname] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -16,17 +16,11 @@ export default function Header() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
+      const { data } = await supabase.from("profiles").select("is_admin, nickname").eq("id", user.id).single();
       setIsAdmin(data?.is_admin === true);
+      setNickname(data?.nickname ?? "");
     })();
   }, []);
-
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
 
   return (
     <header className="nm-nav-top">
@@ -40,12 +34,7 @@ export default function Header() {
               管理画面
             </Link>
           )}
-          <button
-            onClick={handleLogout}
-            className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition"
-          >
-            ログアウト
-          </button>
+          <SettingsDrawer nickname={nickname} />
         </div>
       </div>
     </header>

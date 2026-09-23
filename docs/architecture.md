@@ -41,7 +41,7 @@ Next.js 16 に関する実装上の注意（2026-09-21 に 14 から更新）：
 - **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する
 - **セキュリティヘッダー / CSP**: `next.config.mjs` の `headers()` で全ルートに `X-Frame-Options`・`X-Content-Type-Options`・`Referrer-Policy`・`Permissions-Policy`・`Strict-Transport-Security` を付与。`Content-Security-Policy` はまず `Content-Security-Policy-Report-Only` として段階導入し、Square決済iframe等を壊さないことを確認してから本適用に切り替える運用（環境変数 `CSP_REPORT_ONLY=false` で本適用。`NEXT_PUBLIC_SENTRY_DSN` 設定時は CSP 違反レポートを Sentry に送信）。Sentry の疎通確認は `GET /api/debug/sentry?token=<CRON_SECRET>`（`docs/deployment.md` 参照）
 - **エラー監視**: `@sentry/nextjs` を導入（`sentry.server.config.ts`・`sentry.edge.config.ts`・`src/instrumentation.ts`・`src/instrumentation-client.ts`・`src/app/global-error.tsx`）。`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN` が未設定の場合はSDKが何もしない安全なno-op状態になる
-- **アカウント削除**: `/impact` の「アカウントを削除する」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
+- **アカウント削除**: ヘッダーの歯車アイコン（設定ドロワー）の「アカウントを削除する」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
 
 ---
 
@@ -82,8 +82,7 @@ src/
 │   │   └── terms/page.tsx       # 利用規約（認証不要・静的コンテンツ）
 │   ├── impact/
 │   │   ├── page.tsx            # Impact（プロフィール・参加履歴・バッジ・紹介）
-│   │   ├── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
-│   │   └── DeleteAccountButton.tsx  # アカウント削除ボタン（確認ダイアログ→POST /api/account/delete）
+│   │   └── ReferralShare.tsx   # 紹介リンクシェアボタン（Client Component）
 │   ├── admin/                   # 管理者向け画面（is_admin のみアクセス可、layout.tsxでガード）
 │   │   ├── layout.tsx            # 認証・管理者判定・AdminNav表示
 │   │   ├── AdminNav.tsx          # 管理画面用ナビ（Client Component）
@@ -111,13 +110,15 @@ src/
 │       │       ├── route.ts
 │       │       └── callback/route.ts
 │       ├── signup/profile/route.ts        # サインアップ時プロフィール作成
+│       ├── profile/nickname/route.ts      # ニックネーム変更（設定ドロワーから）
 │       └── admin/events/
 │           ├── route.ts                    # POST イベント作成
 │           └── [id]/
 │               ├── route.ts                # PATCH 更新 / DELETE 論理削除
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
-│   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + ログアウト）
+│   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + 設定ドロワーを開く歯車アイコン）
+│   ├── SettingsDrawer.tsx      # ヘッダーの歯車アイコンで開く設定ドロワー（ニックネーム変更・ログアウト・アカウント削除）
 │   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。トップ・ログイン・登録完了・法定ページに設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
 │   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・ログイン・登録完了・法定ページに設置）

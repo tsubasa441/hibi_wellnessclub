@@ -5,7 +5,6 @@ import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import ProfileCard from "@/components/ProfileCard";
 import ReferralShare from "@/app/impact/ReferralShare";
-import DeleteAccountButton from "@/app/impact/DeleteAccountButton";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { getYearMonthJst, getJstMonthBounds, getJstParts } from "@/lib/date";
 
@@ -413,9 +412,6 @@ export default async function ImpactPage() {
             </p>
           )}
         </div>
-
-        {/* アカウント削除 */}
-        <DeleteAccountButton />
 
       </div>
       <BottomNav />

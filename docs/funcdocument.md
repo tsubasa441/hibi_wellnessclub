@@ -156,6 +156,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
+| POST | `/api/profile/nickname` | ニックネーム変更（ヘッダーの設定ドロワーから） | 必要（本人のみ） |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/auth/forgot-password` | パスワード再設定メール送信 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/account/delete` | アカウント削除（`profiles`の個人情報を匿名化・`auth.users`をban_durationで無効化。予約等の履歴は保持） | 必要（本人のみ、管理者は不可） |

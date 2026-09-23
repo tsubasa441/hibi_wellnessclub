@@ -14,8 +14,9 @@
 
 | コンポーネント | パス | 説明 |
 |-------------|------|------|
-| Header | `src/components/Header.tsx` | ロゴ・ログアウトボタン |
-| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・ログイン・登録完了・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（ログアウト付き）を使う |
+| Header | `src/components/Header.tsx` | ロゴ・歯車アイコン（`SettingsDrawer`を開く）。管理者には「管理画面」リンクも表示 |
+| SettingsDrawer | `src/components/SettingsDrawer.tsx` | ヘッダーの歯車アイコンで開く、右からスライドインするドロワー。ニックネーム変更（`POST /api/profile/nickname`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供 |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・ログイン・登録完了・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
@@ -33,7 +34,6 @@
 | BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |
-| DeleteAccountButton | `app/impact/DeleteAccountButton.tsx` | アカウント削除ボタン。確認ダイアログ→`POST /api/account/delete` | ✅ |
 | EventOptionFields | `app/events/[id]/EventOptionFields.tsx` | イベント選択項目の入力（単一=`<select>` / 複数=チェックボックスパネル型ドロップダウン） | ✅ |
 | CheckInButton | `app/bookings/CheckInButton.tsx` | 予約カードのチェックインボタン。現在時刻を30秒ごとに再評価し、イベント開始〜終了時刻のみ活性。チェックイン済みは「チェックイン済み」表示 | ✅ |
 | VerifyForm | `app/auth/verify/VerifyForm.tsx` | パスワード再設定の確認ページのフォーム。「パスワードを再設定する」ボタンで `POST /auth/confirm`。送信中はボタンを無効化して二重押しを防ぐ | ✅ |
@@ -145,15 +145,23 @@
 
 ## ヘッダー構成
 
-背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。
+背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。右端はログアウト等の個別ボタンではなく、歯車アイコン（`SettingsDrawer`）1つに集約する（2026-09-23）。
 
 ```tsx
 <header className="nm-nav-top px-5 py-4 sm:px-8 flex items-center justify-between">
   <Link href="/home" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
     Hibi
   </Link>
-  <button onClick={handleLogout} className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
-    ログアウト
-  </button>
+  <SettingsDrawer nickname={nickname} />
 </header>
 ```
+
+### SettingsDrawer（設定ドロワー）
+
+ヘッダーの歯車アイコンを押すと、画面右からスライドインするドロワー（`RankGuideModal`と同じ`createPortal`＋`fixed inset-0 bg-black/50`のオーバーレイパターンを踏襲、背景は白）が開き、以下を提供する。
+
+- **ニックネーム変更**：現在のニックネーム表示＋「変更する」でインライン編集。保存は`POST /api/profile/nickname`（サインアップ時と同じバリデーション：1〜20文字、絵文字・記号のみ不可）
+- **ログアウト**
+- **アカウントを削除する**：確認ダイアログ→`POST /api/account/delete`（旧`DeleteAccountButton`から移設。`/impact`画面からは撤去済み）
+
+オーバーレイクリック・×ボタンで閉じる。ドロワーのスライドインは`globals.css`の`.animate-slide-in-right`（0.25s ease-out）を使用。
