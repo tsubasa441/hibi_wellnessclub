@@ -63,7 +63,7 @@ export default function SettingsDrawer({ nickname }: Props) {
   async function handleDelete() {
     if (
       !confirm(
-        "アカウントを削除しますか？\n\n" +
+        "退会しますか？\n\n" +
           "氏名・性別・生年月日等の個人情報は削除・匿名化され、二度とログインできなくなります。\n" +
           "予約・決済・ポイント等の履歴は記録として残ります（他の方の紹介実績表示等に影響しないためです）。\n\n" +
           "この操作は取り消せません。"
@@ -79,7 +79,7 @@ export default function SettingsDrawer({ nickname }: Props) {
     const json = await res.json();
 
     if (!res.ok) {
-      setDeleteError(json.error ?? "アカウントの削除に失敗しました");
+      setDeleteError(json.error ?? "退会に失敗しました");
       setDeleting(false);
       return;
     }
@@ -118,87 +118,98 @@ export default function SettingsDrawer({ nickname }: Props) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+            <div className="flex-1 overflow-y-auto">
               {/* ニックネーム変更 */}
-              <div>
-                <p className="font-outfit text-xs font-medium text-ink-300 uppercase tracking-wider mb-2">
-                  ニックネーム
-                </p>
-                {editingNickname ? (
-                  <div className="space-y-2">
-                    <input
-                      value={nicknameInput}
-                      onChange={(e) => setNicknameInput(e.target.value)}
-                      maxLength={20}
-                      className="nm-inset w-full px-4 py-2.5 font-outfit text-sm text-ink-700 focus:outline-none"
-                    />
-                    {nicknameError && (
-                      <p className="font-dm text-xs text-red-500">{nicknameError}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveNickname}
-                        disabled={savingNickname}
-                        className="nm-btn-primary text-white font-outfit text-xs font-medium px-4 py-2 disabled:opacity-60"
-                      >
-                        {savingNickname ? "保存中..." : "保存する"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingNickname(false);
-                          setNicknameInput(currentNickname);
-                          setNicknameError(null);
-                        }}
-                        className="font-outfit text-xs text-ink-300 hover:text-ink-500 transition px-4 py-2"
-                      >
-                        キャンセル
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <p className="font-outfit text-sm text-ink-700">{currentNickname}</p>
+              {editingNickname ? (
+                <div className="px-5 py-4 border-b border-base-200">
+                  <p className="font-outfit text-xs text-ink-300 mb-2">ニックネーム</p>
+                  <input
+                    value={nicknameInput}
+                    onChange={(e) => setNicknameInput(e.target.value)}
+                    maxLength={20}
+                    autoFocus
+                    className="nm-inset w-full px-4 py-2.5 font-outfit text-sm text-ink-700 focus:outline-none"
+                  />
+                  {nicknameError && (
+                    <p className="font-dm text-xs text-red-500 mt-2">{nicknameError}</p>
+                  )}
+                  <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => setEditingNickname(true)}
-                      className="font-dm text-xs text-sage-600 underline underline-offset-2 hover:text-sage-500 transition"
+                      onClick={handleSaveNickname}
+                      disabled={savingNickname}
+                      className="nm-btn-primary text-white font-outfit text-xs font-medium px-4 py-2 disabled:opacity-60"
                     >
-                      変更する
+                      {savingNickname ? "保存中..." : "保存する"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingNickname(false);
+                        setNicknameInput(currentNickname);
+                        setNicknameError(null);
+                      }}
+                      className="font-outfit text-xs text-ink-300 hover:text-ink-500 transition px-4 py-2"
+                    >
+                      キャンセル
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <MenuRow label="ニックネーム" sublabel={currentNickname} onClick={() => setEditingNickname(true)} />
+              )}
 
               {/* ログアウト */}
-              <div className="border-t border-base-200 pt-5">
-                <button
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="font-outfit text-sm text-ink-700 hover:text-ink-800 transition disabled:opacity-60"
-                >
-                  {loggingOut ? "ログアウト中..." : "ログアウト"}
-                </button>
-              </div>
+              <MenuRow label={loggingOut ? "ログアウト中..." : "ログアウト"} onClick={handleLogout} disabled={loggingOut} />
 
               {/* 退会 */}
-              <div className="border-t border-base-200 pt-5">
-                {deleteError && (
-                  <p className="font-dm text-xs text-ink-500 bg-base-100 rounded-lg px-4 py-3 mb-3">
-                    {deleteError}
-                  </p>
-                )}
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="font-outfit text-xs text-ink-300 hover:text-ink-500 underline underline-offset-2 transition disabled:opacity-50"
-                >
-                  {deleting ? "削除中..." : "アカウントを削除する"}
-                </button>
-              </div>
+              {deleteError && (
+                <p className="font-dm text-xs text-red-500 px-5 pt-4">{deleteError}</p>
+              )}
+              <MenuRow
+                label={deleting ? "退会処理中..." : "退会"}
+                onClick={handleDelete}
+                disabled={deleting}
+                muted
+                showBorder={false}
+              />
             </div>
           </div>
         </div>,
         document.body
       )}
     </>
+  );
+}
+
+function MenuRow({
+  label,
+  sublabel,
+  onClick,
+  disabled = false,
+  muted = false,
+  showBorder = true,
+}: {
+  label: string;
+  sublabel?: string;
+  onClick: () => void;
+  disabled?: boolean;
+  muted?: boolean;
+  showBorder?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-full flex items-center justify-between px-5 py-4 text-left hover:bg-base-100 transition disabled:opacity-60 ${
+        showBorder ? "border-b border-base-200" : ""
+      }`}
+    >
+      <div>
+        <p className={`font-outfit text-sm ${muted ? "text-ink-500" : "text-ink-700"}`}>{label}</p>
+        {sublabel && <p className="font-dm text-xs text-ink-300 mt-0.5">{sublabel}</p>}
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-300 flex-shrink-0">
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    </button>
   );
 }
