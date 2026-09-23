@@ -8,6 +8,7 @@ import { SquareClient, SquareEnvironment } from "square";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { withPayPayProxy } from "@/lib/paypayProxy";
+import * as Sentry from "@sentry/nextjs";
 
 const squareClient = new SquareClient({
   token: process.env.SQUARE_ACCESS_TOKEN!,
@@ -113,6 +114,10 @@ export async function POST(
         reason: "お客様都合によるキャンセル",
       });
     } catch (err) {
+      Sentry.captureException(err, {
+        tags: { area: "booking_cancel_refund", payment_method: "square" },
+        extra: { bookingId, amountCharged: booking.amount_charged },
+      });
       const message = err instanceof Error ? err.message : "Square 返金に失敗しました";
       return NextResponse.json({ error: `予約はキャンセルされましたが、${message}。サポートまでお問い合わせください。` }, { status: 500 });
     }
@@ -122,8 +127,23 @@ export async function POST(
     try {
       // 返金には PayPay 側の paymentId が必要（booking.payment_id は加盟店側の merchantPaymentId）
       const details = await withPayPayProxy(() => PAYPAY.GetCodePaymentDetails([booking.payment_id!]));
-      const paypayPaymentId = (details as { BODY?: { data?: { paymentId?: string } } })?.BODY?.data?.paymentId;
-      if (!paypayPaymentId) throw new Error("PayPay の決済情報を取得できませんでした");
+      const detailsBody = (details as { BODY?: { data?: { paymentId?: string }; resultInfo?: { code?: string; message?: string } } })?.BODY;
+      const paypayPaymentId = detailsBody?.data?.paymentId;
+      if (!paypayPaymentId) {
+        Sentry.captureMessage("PayPay cancel refund: failed to resolve paymentId", {
+          level: "error",
+          tags: { area: "booking_cancel_refund", payment_method: "paypay" },
+          extra: {
+            bookingId,
+            detailsResultCode: detailsBody?.resultInfo?.code,
+            detailsResultMessage: detailsBody?.resultInfo?.message,
+          },
+        });
+        return NextResponse.json(
+          { error: "予約はキャンセルされましたが、PayPay の決済情報を取得できませんでした。サポートまでお問い合わせください。" },
+          { status: 500 }
+        );
+      }
 
       const refund = await withPayPayProxy(() =>
         PAYPAY.PaymentRefund({
@@ -133,9 +153,29 @@ export async function POST(
           reason: "お客様都合によるキャンセル",
         })
       );
-      const refundCode = (refund as { BODY?: { resultInfo?: { code?: string } } })?.BODY?.resultInfo?.code;
-      if (refundCode !== "SUCCESS") throw new Error("PayPay 返金に失敗しました");
+      const refundBody = (refund as { BODY?: { resultInfo?: { code?: string; message?: string } } })?.BODY;
+      if (refundBody?.resultInfo?.code !== "SUCCESS") {
+        Sentry.captureMessage("PayPay cancel refund: PaymentRefund did not return SUCCESS", {
+          level: "error",
+          tags: { area: "booking_cancel_refund", payment_method: "paypay" },
+          extra: {
+            bookingId,
+            amountCharged: booking.amount_charged,
+            refundResultCode: refundBody?.resultInfo?.code,
+            refundResultMessage: refundBody?.resultInfo?.message,
+          },
+        });
+        return NextResponse.json(
+          { error: "予約はキャンセルされましたが、PayPay 返金に失敗しました。サポートまでお問い合わせください。" },
+          { status: 500 }
+        );
+      }
     } catch (err) {
+      // withPayPayProxy自体が投げた例外（ネットワークエラー等）。既知の失敗（上記2パターン）はここに来ない
+      Sentry.captureException(err, {
+        tags: { area: "booking_cancel_refund", payment_method: "paypay" },
+        extra: { bookingId, amountCharged: booking.amount_charged },
+      });
       const message = err instanceof Error ? err.message : "PayPay 返金に失敗しました";
       return NextResponse.json({ error: `予約はキャンセルされましたが、${message}。サポートまでお問い合わせください。` }, { status: 500 });
     }
