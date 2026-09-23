@@ -64,8 +64,7 @@ export default function SettingsDrawer({ nickname }: Props) {
     if (
       !confirm(
         "退会しますか？\n\n" +
-          "氏名・性別・生年月日等の個人情報は削除・匿名化され、二度とログインできなくなります。\n" +
-          "予約・決済・ポイント等の履歴は記録として残ります（他の方の紹介実績表示等に影響しないためです）。\n\n" +
+          "氏名・性別・生年月日等の個人情報は削除・匿名化され、二度とログインできなくなります。\n\n" +
           "この操作は取り消せません。"
       )
     ) {
@@ -122,7 +121,7 @@ export default function SettingsDrawer({ nickname }: Props) {
               {/* ニックネーム変更 */}
               {editingNickname ? (
                 <div className="px-5 py-4 border-b border-base-200">
-                  <p className="font-outfit text-xs text-ink-300 mb-2">ニックネーム</p>
+                  <p className="font-outfit text-xs text-ink-300 mb-2">名前を変更する</p>
                   <input
                     value={nicknameInput}
                     onChange={(e) => setNicknameInput(e.target.value)}
@@ -154,7 +153,7 @@ export default function SettingsDrawer({ nickname }: Props) {
                   </div>
                 </div>
               ) : (
-                <MenuRow label="ニックネーム" sublabel={currentNickname} onClick={() => setEditingNickname(true)} />
+                <MenuRow label="名前を変更する" sublabel={currentNickname} onClick={() => setEditingNickname(true)} />
               )}
 
               {/* ログアウト */}
