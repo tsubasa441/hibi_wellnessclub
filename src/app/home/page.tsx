@@ -30,8 +30,10 @@ export default async function HomePage() {
 
   const now = new Date().toISOString();
 
-  await checkAndAwardPendingPoints(supabase, user.id);
-  await checkAndAwardReferralReward(createServiceClient(), user.id);
+  await Promise.all([
+    checkAndAwardPendingPoints(supabase, user.id),
+    checkAndAwardReferralReward(createServiceClient(), user.id),
+  ]);
 
   const [profileRes, sessionRes, eventsRes, bookingsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
