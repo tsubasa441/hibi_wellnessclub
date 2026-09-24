@@ -1,24 +1,26 @@
 "use client";
 
 import { useState, useRef, useMemo, useEffect, Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
-import Footer from "@/components/Footer";
-import PublicHeader from "@/components/PublicHeader";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
 
-const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-ink-300 transition";
-const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-1.5";
+const inputClass = "w-full border-0 border-b border-base-200 bg-transparent text-ink-700 placeholder-ink-200 font-dm text-sm px-0.5 py-2.5 focus:outline-none focus:border-ink-500 transition [color-scheme:light]";
+const labelClass = "font-outfit text-[11px] text-sage-500 font-medium tracking-[0.12em] uppercase mb-1.5";
 const toggleClass = (active: boolean) =>
-  `flex-1 py-1.5 rounded-xl font-outfit text-xs font-medium transition border ${
-    active
-      ? "bg-ink-500 border-ink-500 text-white"
-      : "bg-base-50 border-base-200 text-ink-400"
+  `flex-1 py-2 font-outfit text-xs font-medium tracking-wide transition border rounded-sm ${
+    active ? "border-ink-500 bg-ink-500 text-white" : "border-base-200 text-ink-400"
   }`;
+const tabClass = (active: boolean) =>
+  `font-outfit text-sm font-medium pb-2.5 border-b-2 transition ${
+    active ? "text-ink-700 border-sage-600" : "text-ink-300 border-transparent"
+  }`;
+const primaryButtonClass = "w-full bg-sage-600 text-white font-outfit text-sm font-medium tracking-wide py-3.5 rounded-sm hover:bg-sage-500 transition disabled:opacity-40";
 
 function LoginFormInner() {
   const router = useRouter();
@@ -275,208 +277,217 @@ function LoginFormInner() {
   }
 
   return (
-    <>
-    <PublicHeader />
-    <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-4 sm:pt-0 pb-4 sm:pb-10">
-      <div className="relative z-10 w-full max-w-sm nm-card p-5 sm:p-8 animate-fade-up">
-        <div className="text-center mb-3">
-          <span className="font-outfit text-3xl font-medium text-ink-700 tracking-wide">Hibi</span>
+    <main className="min-h-screen flex flex-col sm:flex-row bg-base-100">
+      {/* 写真パネル */}
+      <div className="relative w-full sm:w-[42%] h-[200px] sm:h-screen sm:sticky sm:top-0 shrink-0">
+        <Image src="/images/hibi-top-poster.jpg" alt="" fill priority className="object-cover" />
+        <div className="absolute inset-0 bg-ink-800/40" />
+        <div className="relative h-full flex flex-col justify-between p-6 sm:p-12">
+          <Link href="/" className="inline-block">
+            <span className="font-cormorant text-3xl sm:text-5xl font-semibold text-white tracking-wide">Hibi</span>
+            <p className="font-outfit text-[10px] sm:text-xs tracking-[0.3em] text-white/75 uppercase mt-1 sm:mt-2">Wellness Club</p>
+          </Link>
+          <div className="hidden sm:block max-w-sm">
+            <p className="font-cormorant text-2xl leading-relaxed text-white font-medium">
+              なんでもない日々が、<br />輝きだす。
+            </p>
+            <p className="font-dm text-xs leading-loose text-white/70 mt-4">
+              からだを動かし、気の合う仲間と出会い、毎日に新しい彩りが生まれる。運動からはじまる、大人のウェルネスコミュニティ。
+            </p>
+          </div>
         </div>
+      </div>
 
-        <div ref={formTopRef} className="mb-3">
+      {/* フォームパネル */}
+      <div className="flex-1 flex items-center justify-center px-5 py-10 sm:py-16">
+        <div ref={formTopRef} className="w-full max-w-sm">
           {tab !== "forgot" ? (
-            <div className="flex gap-1 p-1 rounded-full bg-base-100 border border-base-200">
-              <button
-                onClick={() => { setTab("signin"); resetForm(); }}
-                className={`flex-1 py-2 rounded-full font-outfit text-sm font-medium transition ${tab === "signin" ? "bg-sage-500 text-white" : "text-ink-300"}`}
-              >
+            <div className="flex gap-7 mb-8">
+              <button onClick={() => { setTab("signin"); resetForm(); }} className={tabClass(tab === "signin")}>
                 ログイン
               </button>
-              <button
-                onClick={() => { setTab("signup"); resetForm(); }}
-                className={`flex-1 py-2 rounded-full font-outfit text-sm font-medium transition ${tab === "signup" ? "bg-sage-500 text-white" : "text-ink-300"}`}
-              >
+              <button onClick={() => { setTab("signup"); resetForm(); }} className={tabClass(tab === "signup")}>
                 新規登録
               </button>
             </div>
           ) : (
-            <p className="text-center font-outfit text-sm font-medium text-ink-700">
-              パスワード再設定
-            </p>
+            <p className="font-outfit text-sm font-medium text-ink-700 mb-8">パスワード再設定</p>
           )}
-        </div>
 
-        {error && <div className="text-red-500 text-xs font-dm mb-4 text-center">{error}</div>}
+          {error && <div className="text-red-500 text-xs font-dm mb-4">{error}</div>}
 
-        {tab === "signin" ? (
-          <form onSubmit={handleSignIn} noValidate className="space-y-4">
-            <div>
-              <p className={labelClass}>EMAIL</p>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
-            </div>
-            <div>
-              <p className={labelClass}>PASSWORD</p>
-              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
-            </div>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => { setTab("forgot"); resetForm(); }}
-                className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
-              >
-                パスワードをお忘れの方
-              </button>
-            </div>
-            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-3 disabled:opacity-40 mt-4">
-              {loading ? "ログイン中..." : "ログイン"}
-            </button>
-          </form>
-        ) : tab === "forgot" ? (
-          resetSent ? (
-            <div className="space-y-4 text-center">
-              <div className="flex justify-center">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sage-500">
+          {tab === "signin" ? (
+            <>
+              <p className="font-cormorant text-2xl text-ink-700 mb-7">おかえりなさい</p>
+              <form onSubmit={handleSignIn} noValidate className="space-y-6">
+                <div>
+                  <p className={labelClass}>Email</p>
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+                </div>
+                <div>
+                  <p className={labelClass}>Password</p>
+                  <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => { setTab("forgot"); resetForm(); }}
+                    className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
+                  >
+                    パスワードをお忘れの方
+                  </button>
+                </div>
+                <button type="submit" disabled={loading} className={primaryButtonClass}>
+                  {loading ? "ログイン中..." : "ログイン"}
+                </button>
+              </form>
+            </>
+          ) : tab === "forgot" ? (
+            resetSent ? (
+              <div className="space-y-5">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sage-500">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="m8 12 3 3 5-6" />
                 </svg>
-              </div>
-              <div>
-                <p className="font-outfit text-sm font-medium text-ink-700">メールを送信しました</p>
-                <p className="font-dm text-xs text-ink-300 leading-relaxed mt-2">
-                  {email} 宛にパスワード再設定用のメールをお送りしました。メール内のリンクから新しいパスワードを設定してください。
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setTab("signin"); resetForm(); }}
-                className="w-full nm-btn-primary text-white font-outfit font-medium py-2.5"
-              >
-                ログインに戻る
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleForgotPassword} noValidate className="space-y-3">
-              <p className="font-dm text-xs text-ink-300 leading-relaxed text-center">
-                登録済みのメールアドレスを入力してください。
-              </p>
-              <div>
-                <p className={labelClass}>EMAIL</p>
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
-              </div>
-              <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-2 disabled:opacity-40">
-                {loading ? "送信中..." : "メールを送信"}
-              </button>
-              <div className="text-center">
+                <div>
+                  <p className="font-outfit text-sm font-medium text-ink-700">メールを送信しました</p>
+                  <p className="font-dm text-xs text-ink-300 leading-relaxed mt-2">
+                    {email} 宛にパスワード再設定用のメールをお送りしました。メール内のリンクから新しいパスワードを設定してください。
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => { setTab("signin"); resetForm(); }}
-                  className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
+                  className={primaryButtonClass}
                 >
                   ログインに戻る
                 </button>
               </div>
-            </form>
-          )
-        ) : (
-          <form onSubmit={handleSignUp} noValidate className="space-y-2">
-            <div>
-              <p className={labelClass}>NAME</p>
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="山田 太郎" />
-            </div>
-            <div>
-              <p className={labelClass}>NICKNAME</p>
-              <input type="text" required value={nickname} onChange={(e) => setNickname(e.target.value)} className={inputClass} placeholder="タロウ" />
-            </div>
-            <div>
-              <p className={labelClass}>EMAIL</p>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
-            </div>
-            <div>
-              <p className={labelClass}>PASSWORD</p>
-              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
-              <p className="font-dm text-xs text-ink-300 mt-1">8〜15文字で、以下をすべて含めてください</p>
-              <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
-            </div>
-
-            {/* 性別 */}
-            <div>
-              <p className={labelClass}>GENDER</p>
-              <div className="flex gap-2">
-                {(["male", "female", "other"] as Gender[]).map((g) => (
+            ) : (
+              <form onSubmit={handleForgotPassword} noValidate className="space-y-5">
+                <p className="font-dm text-xs text-ink-300 leading-relaxed">
+                  登録済みのメールアドレスを入力してください。
+                </p>
+                <div>
+                  <p className={labelClass}>Email</p>
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+                </div>
+                <button type="submit" disabled={loading} className={primaryButtonClass}>
+                  {loading ? "送信中..." : "メールを送信"}
+                </button>
+                <div className="text-center">
                   <button
-                    key={g}
                     type="button"
-                    onClick={() => setGender(g)}
-                    className={toggleClass(gender === g)}
+                    onClick={() => { setTab("signin"); resetForm(); }}
+                    className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
                   >
-                    {g === "male" ? "男性" : g === "female" ? "女性" : "その他"}
+                    ログインに戻る
                   </button>
-                ))}
-              </div>
-            </div>
+                </div>
+              </form>
+            )
+          ) : (
+            <>
+              <p className="font-cormorant text-2xl text-ink-700 mb-6">はじめまして</p>
+              <form onSubmit={handleSignUp} noValidate className="space-y-5">
+                <div>
+                  <p className={labelClass}>Name</p>
+                  <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="山田 太郎" />
+                </div>
+                <div>
+                  <p className={labelClass}>Nickname</p>
+                  <input type="text" required value={nickname} onChange={(e) => setNickname(e.target.value)} className={inputClass} placeholder="タロウ" />
+                </div>
+                <div>
+                  <p className={labelClass}>Email</p>
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+                </div>
+                <div>
+                  <p className={labelClass}>Password</p>
+                  <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+                  <p className="font-dm text-xs text-ink-300 mt-1.5">8〜15文字で、以下をすべて含めてください</p>
+                  <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
+                </div>
 
-            {/* 生年月日 */}
-            <div>
-              <p className={labelClass}>DATE OF BIRTH</p>
-              {/* iOS Safari の input[type=date] は内部表示が枠のCSS幅を超えてはみ出すことがあるため、
-                  ネイティブの描画に依存しないプルダウン（年・月・日）で入力させる */}
-              <div className="flex gap-2">
-                <select
-                  value={birthYear}
-                  onChange={(e) => setBirthYear(e.target.value)}
-                  className={`${inputClass} [color-scheme:light]`}
-                >
-                  <option value="">年</option>
-                  {YEAR_OPTIONS.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-                <select
-                  value={birthMonth}
-                  onChange={(e) => setBirthMonth(e.target.value)}
-                  className={`${inputClass} [color-scheme:light]`}
-                >
-                  <option value="">月</option>
-                  {MONTH_OPTIONS.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-                <select
-                  value={birthDay}
-                  onChange={(e) => setBirthDay(e.target.value)}
-                  className={`${inputClass} [color-scheme:light]`}
-                >
-                  <option value="">日</option>
-                  {DAY_OPTIONS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                {/* 性別 */}
+                <div>
+                  <p className={labelClass}>Gender</p>
+                  <div className="flex gap-2">
+                    {(["male", "female", "other"] as Gender[]).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setGender(g)}
+                        className={toggleClass(gender === g)}
+                      >
+                        {g === "male" ? "男性" : g === "female" ? "女性" : "その他"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* 紹介コード（任意） */}
-            <div>
-              <p className={labelClass}>REFERRAL CODE <span className="text-ink-200 normal-case font-dm tracking-normal">（任意）</span></p>
-              <input type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className={inputClass} placeholder="招待コードをお持ちの方" />
-            </div>
+                {/* 生年月日 */}
+                <div>
+                  <p className={labelClass}>Date of birth</p>
+                  {/* iOS Safari の input[type=date] は内部表示が枠のCSS幅を超えてはみ出すことがあるため、
+                      ネイティブの描画に依存しないプルダウン（年・月・日）で入力させる */}
+                  <div className="flex gap-3">
+                    <select
+                      value={birthYear}
+                      onChange={(e) => setBirthYear(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">年</option>
+                      {YEAR_OPTIONS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={birthMonth}
+                      onChange={(e) => setBirthMonth(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">月</option>
+                      {MONTH_OPTIONS.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={birthDay}
+                      onChange={(e) => setBirthDay(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">日</option>
+                      {DAY_OPTIONS.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            <p className="font-dm text-xs text-ink-300 leading-relaxed text-center pt-1">
-              「登録」を押すと、
-              <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-sage-600 underline">利用規約</Link>
-              と
-              <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-sage-600 underline">プライバシーポリシー</Link>
-              に同意したものとみなします。
-            </p>
+                {/* 紹介コード（任意） */}
+                <div>
+                  <p className={labelClass}>Referral code <span className="text-ink-200 normal-case font-dm tracking-normal">（任意）</span></p>
+                  <input type="text" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className={inputClass} placeholder="招待コードをお持ちの方" />
+                </div>
 
-            <button type="submit" disabled={loading} className="w-full nm-btn-primary text-white font-outfit font-medium py-2.5 disabled:opacity-40 mt-1">
-              {loading ? "登録中..." : "登録"}
-            </button>
-          </form>
-        )}
+                <p className="font-dm text-xs text-ink-300 leading-relaxed">
+                  「登録」を押すと、
+                  <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-sage-600 underline">利用規約</Link>
+                  と
+                  <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-sage-600 underline">プライバシーポリシー</Link>
+                  に同意したものとみなします。
+                </p>
+
+                <button type="submit" disabled={loading} className={primaryButtonClass}>
+                  {loading ? "登録中..." : "登録"}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
     </main>
-    <Footer />
-    </>
   );
 }
 

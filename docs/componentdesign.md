@@ -16,11 +16,11 @@
 |-------------|------|------|
 | Header | `src/components/Header.tsx` | ロゴ・歯車アイコン（`SettingsDrawer`を開く）。管理者には「管理画面」リンクも表示 |
 | SettingsDrawer | `src/components/SettingsDrawer.tsx` | ヘッダーの歯車アイコンで開く、右からスライドインするドロワー。ニックネーム変更（`POST /api/profile/nickname`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供 |
-| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・ログイン・登録完了・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・登録完了・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
-| Footer | `src/components/Footer.tsx` | Instagram・TikTok のアイコンリンク（上段）と、利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク（下段）を表示する共通フッター。トップ・ログイン・登録完了・法定ページに設置（固定 BottomNav のある認証後画面には未設置）。SNS アイコンは SVG アウトライン（`currentColor`）で、外部リンクは新しいタブで開く。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景） |
+| Footer | `src/components/Footer.tsx` | Instagram・TikTok のアイコンリンク（上段）と、利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク（下段）を表示する共通フッター。トップ・登録完了・法定ページに設置（固定 BottomNav のある認証後画面には未設置）。SNS アイコンは SVG アウトライン（`currentColor`）で、外部リンクは新しいタブで開く。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景）。**`/login`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
 
 ボタン・カードは共通コンポーネント化せず、下記バリエーションのユーティリティクラスをその都度使用する。
 
@@ -120,25 +120,27 @@
 
 ## ログイン・新規登録ページ（`/login`）
 
+2026-09-25にエディトリアル方向へ全面リデザイン。アプリ内の他画面（home・impact等）が使うニューモーフィズム（`nm-*`）とは意図的に異なるトーンで、写真を主役にした分割レイアウトにする。`PublicHeader`・`Footer`はこのページには設置しない（写真パネル内の「Hibi」ロゴ＋新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替）。
+
 ### レイアウト構成
 
 | エリア | 内容 |
 |--------|------|
-| 背景 | `app-bg`（ニューモーフィズム・写真背景なし） |
-| カード | `nm-card`（浮き出しカード）でフォーム全体を囲む |
-| 上部中央 | 「Hibi」テキスト（font-outfit / text-3xl / text-ink-700） |
-| タブ | 「ログイン」「新規登録」切り替え（`nm-inset` トラック内のピル、アクティブ時 `nm-btn-primary`） |
-| フォーム | 凹み入力欄（`nm-inset` / rounded） |
-| ボタン | 「ログイン」または「SIGN UP」（`nm-btn-primary` / text-white） |
+| 写真パネル | 画面左42%（モバイルは上部・高さ200px固定）。`public/images/hibi-top-poster.jpg`を`object-cover`、`bg-ink-800/40`の暗幕オーバーレイ。「Hibi」ロゴ（`font-cormorant`・白）＋「WELLNESS CLUB」、下部にタグライン（デスクトップのみ表示） |
+| フォームパネル | 残り58%を中央揃え、最大幅`max-w-sm` |
+| タブ | 「ログイン」「新規登録」を下線式切り替え（アクティブ時`border-sage-600 text-ink-700`、非アクティブ`border-transparent text-ink-300`）。ピル型トグルは廃止 |
+| 見出し | `font-cormorant text-2xl`（「おかえりなさい」「はじめまして」） |
+| 入力欄 | 下線のみ（`border-b border-base-200`、フォーカス時`border-ink-500`）。囲み枠・凹み表現（`nm-inset`）は使わない |
+| ボタン | フラットな`rounded-sm`・`bg-sage-600`（`nm-btn-primary`のシャドウ表現は使わない） |
 
 ### 仕様
 
-- SIGN IN / SIGN UP を1ページ内でタブ切り替え（`useState` で制御）
-- SIGN IN フォーム: EMAIL・PASSWORD
-- SIGN UP フォーム: NAME・NICKNAME・EMAIL・PASSWORD
+- ログイン／新規登録／パスワード再設定を1ページ内でタブ・状態切り替え（`useState`で制御。ロジックは変更なし）
+- ログインフォーム: EMAIL・PASSWORD
+- 新規登録フォーム: NAME・NICKNAME・EMAIL・PASSWORD・GENDER・DATE OF BIRTH・REFERRAL CODE（任意）— 項目は変更前と同一
 - タブ切り替え時にフォームをリセット
-- SIGN IN 成功後 `/home` へ、SIGN UP 成功後 `/register-complete` へ遷移
-- カラー・シャドウはアプリ全体と同じニューモーフィズムトークン（`base-*` / `ink-*` / `sage-*`、`.nm-card` / `.nm-inset` / `.nm-btn-primary`）を使用
+- ログイン成功後 `/home` へ、新規登録成功後 `/register-complete` へ遷移
+- カラーはアプリ全体と同じトークン（`base-*` / `ink-*` / `sage-*`）を使用するが、ニューモーフィズム系クラス（`.nm-card` / `.nm-inset` / `.nm-btn-primary`）は使わずフラットな表現にする
 - `"use client"` コンポーネント（Supabase Auth 使用）
 
 ---
