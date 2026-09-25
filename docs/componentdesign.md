@@ -129,7 +129,7 @@
 | 写真パネル | 画面左42%（モバイルは上部・高さ200px固定）。`public/images/hibi-top-poster.jpg`を`object-cover`、`bg-ink-800/40`の暗幕オーバーレイ。「Hibi」ロゴ（`font-outfit font-medium`・白。トップページと統一）＋「WELLNESS CLUB」（`font-outfit`）、下部にタグライン（デスクトップのみ表示） |
 | フォームパネル | 残り58%を中央揃え、最大幅`max-w-sm` |
 | タブ | 「ログイン」「新規登録」を下線式切り替え（アクティブ時`border-sage-600 text-ink-700`、非アクティブ`border-transparent text-ink-300`）。ピル型トグルは廃止 |
-| 見出し | `font-cormorant text-2xl`（ログイン「Hello」・新規登録「Nice to meet you」） |
+| 見出し | `font-yugothic text-2xl font-bold`（游ゴシック。Windows・Mac 標準、Android では sans-serif で代替表示。ログイン「Hello!」・新規登録「Nice to meet you!」） |
 | 入力欄 | 下線のみ（`border-b border-base-200`、フォーカス時`border-ink-500`）。囲み枠・凹み表現（`nm-inset`）は使わない |
 | ボタン | フラットな`rounded-sm`・`bg-sage-600`（`nm-btn-primary`のシャドウ表現は使わない） |
 

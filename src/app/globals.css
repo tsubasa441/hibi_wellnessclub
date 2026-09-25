@@ -55,7 +55,7 @@
   --font-dm: 'DM Sans', sans-serif;
   --font-didot: 'Didot', 'GFS Didot', 'Bodoni MT', 'Playfair Display', serif;
   --font-maru: 'M PLUS Rounded 1c', sans-serif;
-}
+  --font-yugothic: 'Yu Gothic', 'YuGothic', 'Yu Gothic UI', sans-serif;}
 
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(16px); }

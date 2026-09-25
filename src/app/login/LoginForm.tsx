@@ -318,7 +318,7 @@ function LoginFormInner() {
 
           {tab === "signin" ? (
             <>
-              <p className="font-cormorant text-2xl text-ink-700 mb-7">Hello</p>
+              <p className="font-yugothic text-2xl font-bold text-ink-700 mb-7">Hello!</p>
               <form onSubmit={handleSignIn} noValidate className="space-y-6">
                 <div>
                   <p className={labelClass}>Email</p>
@@ -388,7 +388,7 @@ function LoginFormInner() {
             )
           ) : (
             <>
-              <p className="font-cormorant text-2xl text-ink-700 mb-6">Nice to meet you</p>
+              <p className="font-yugothic text-2xl font-bold text-ink-700 mb-6">Nice to meet you!</p>
               <form onSubmit={handleSignUp} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Name</p>
