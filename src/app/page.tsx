@@ -34,7 +34,7 @@ export default async function HomePage({
         <h1 className="font-outfit text-5xl font-medium text-white tracking-wide drop-shadow-lg animate-fade-up animate-delay-100">
           Hibi
         </h1>
-        <p className="font-cormorant text-xs font-light text-white/90 tracking-[0.3em] drop-shadow -mt-6 animate-fade-up animate-delay-200">
+        <p className="font-outfit text-xs text-white/90 tracking-[0.3em] uppercase drop-shadow -mt-6 animate-fade-up animate-delay-200">
           Wellness Club
         </p>
         <div className="flex flex-col items-center gap-3 text-center animate-fade-up animate-delay-300">

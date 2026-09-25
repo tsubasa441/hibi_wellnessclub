@@ -284,7 +284,7 @@ function LoginFormInner() {
         <div className="absolute inset-0 bg-ink-800/40" />
         <div className="relative h-full flex flex-col justify-between p-6 sm:p-12">
           <Link href="/" className="inline-block">
-            <span className="font-cormorant text-3xl sm:text-5xl font-semibold text-white tracking-wide">Hibi</span>
+            <span className="font-outfit text-3xl sm:text-5xl font-medium text-white tracking-wide">Hibi</span>
             <p className="font-outfit text-[10px] sm:text-xs tracking-[0.3em] text-white/75 uppercase mt-1 sm:mt-2">Wellness Club</p>
           </Link>
           <div className="hidden sm:block max-w-sm">
@@ -318,7 +318,7 @@ function LoginFormInner() {
 
           {tab === "signin" ? (
             <>
-              <p className="font-cormorant text-2xl text-ink-700 mb-7">おかえりなさい</p>
+              <p className="font-cormorant text-2xl text-ink-700 mb-7">Hello</p>
               <form onSubmit={handleSignIn} noValidate className="space-y-6">
                 <div>
                   <p className={labelClass}>Email</p>
@@ -388,7 +388,7 @@ function LoginFormInner() {
             )
           ) : (
             <>
-              <p className="font-cormorant text-2xl text-ink-700 mb-6">はじめまして</p>
+              <p className="font-cormorant text-2xl text-ink-700 mb-6">Nice to meet you</p>
               <form onSubmit={handleSignUp} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Name</p>

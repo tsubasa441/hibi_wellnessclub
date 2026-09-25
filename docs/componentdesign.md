@@ -103,7 +103,7 @@
 | ヘッダー | `Header.tsx` と同じ `.nm-nav-top`（nav-bg背景）バー。中身は「Hibi」ロゴのみ（未ログインのためログアウト等のリンクはなし）。`page.tsx` 内に直接実装、ヒーローより前に通常フローで配置（オーバーレイではない） |
 | 背景 | `HeroBackground`（Client Component）が写真・動画のスライドを一定間隔（7秒）でクロスフェード切り替え。黒オーバーレイ bg-black/20 は固定。スライドは `page.tsx` の `HERO_SLIDES` 配列で管理し、現状は `public/videos/hibi-top.mp4`（ループ再生）1本のみ。複数件になると自動でクロスフェード切り替えが有効になる |
 | 中央上部 | 「Hibi」テキスト（font-outfit / text-5xl / white） |
-| Hibi直下 | 「Wellness Club」（font-cormorant / text-xs / white/90 / tracking-[0.3em]） |
+| Hibi直下 | 「Wellness Club」（font-outfit / uppercase / text-xs / white/90 / tracking-[0.3em]。ログイン画面と統一） |
 | 中央 | コンセプトコピー2行 |
 | 下部 | 「イベントご参加の方はこちら」ボタン → `/login` へ遷移 |
 | フッター | 共通 `Footer.tsx`。`.nm-nav-bottom`（nav-bg背景）バーに統一（2026-09、ヘッダーと合わせて変更。中身の法定表記リンクは変更なし） |
@@ -126,10 +126,10 @@
 
 | エリア | 内容 |
 |--------|------|
-| 写真パネル | 画面左42%（モバイルは上部・高さ200px固定）。`public/images/hibi-top-poster.jpg`を`object-cover`、`bg-ink-800/40`の暗幕オーバーレイ。「Hibi」ロゴ（`font-cormorant`・白）＋「WELLNESS CLUB」、下部にタグライン（デスクトップのみ表示） |
+| 写真パネル | 画面左42%（モバイルは上部・高さ200px固定）。`public/images/hibi-top-poster.jpg`を`object-cover`、`bg-ink-800/40`の暗幕オーバーレイ。「Hibi」ロゴ（`font-outfit font-medium`・白。トップページと統一）＋「WELLNESS CLUB」（`font-outfit`）、下部にタグライン（デスクトップのみ表示） |
 | フォームパネル | 残り58%を中央揃え、最大幅`max-w-sm` |
 | タブ | 「ログイン」「新規登録」を下線式切り替え（アクティブ時`border-sage-600 text-ink-700`、非アクティブ`border-transparent text-ink-300`）。ピル型トグルは廃止 |
-| 見出し | `font-cormorant text-2xl`（「おかえりなさい」「はじめまして」） |
+| 見出し | `font-cormorant text-2xl`（ログイン「Hello」・新規登録「Nice to meet you」） |
 | 入力欄 | 下線のみ（`border-b border-base-200`、フォーカス時`border-ink-500`）。囲み枠・凹み表現（`nm-inset`）は使わない |
 | ボタン | フラットな`rounded-sm`・`bg-sage-600`（`nm-btn-primary`のシャドウ表現は使わない） |
 
