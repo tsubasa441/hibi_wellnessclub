@@ -57,7 +57,7 @@ export default async function EventsPage() {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="block nm-card p-5 transition"
+                  className="block bg-white border border-base-200 rounded-2xl p-5 hover:border-sage-300 transition"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
