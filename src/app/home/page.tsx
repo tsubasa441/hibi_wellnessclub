@@ -125,7 +125,7 @@ export default async function HomePage() {
                 <Link
                   key={booking.id}
                   href={`/events/${booking.event_id}`}
-                  className="nm-card-sm flex items-center justify-between p-3 transition"
+                  className="bg-white border border-base-200 rounded-2xl flex items-center justify-between p-3 hover:border-sage-300 transition"
                 >
                   <div>
                     <p className="font-outfit font-medium text-sm text-ink-700">{booking.events.title}</p>
@@ -144,15 +144,15 @@ export default async function HomePage() {
           {nextEvent ? (
             <Link
               href={`/events/${nextEvent.id}`}
-              className="block nm-card p-4 transition"
+              className="block bg-white border border-base-200 rounded-2xl p-4 hover:border-sage-300 transition"
             >
               <p className="font-outfit font-semibold text-ink-700">{nextEvent.title}</p>
               <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(nextEvent.start_at)}</p>
               <p className="font-dm text-xs text-ink-300">{nextEvent.location}</p>
-              <p className="font-outfit text-xs text-ink-500 font-medium mt-3">詳細を見る →</p>
+              <span className="inline-block mt-3 font-outfit text-xs text-ink-700 font-medium bg-base-100 border border-base-200 rounded-full px-4 py-1.5">もっと見る</span>
             </Link>
           ) : (
-            <div className="nm-card p-6 text-center">
+            <div className="bg-white border border-base-200 rounded-2xl p-6 text-center">
               <p className="font-dm text-sm text-ink-300">現在開催予定のイベントはありません</p>
             </div>
           )}
