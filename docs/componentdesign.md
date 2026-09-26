@@ -17,7 +17,7 @@
 | Header | `src/components/Header.tsx` | ロゴ・歯車アイコン（`SettingsDrawer`を開く）。管理者には「管理画面」リンクも表示 |
 | SettingsDrawer | `src/components/SettingsDrawer.tsx` | ヘッダーの歯車アイコンで開く、右からスライドインするドロワー。ニックネーム変更（`POST /api/profile/nickname`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供 |
 | PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
-| AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）と登録完了（`/register-complete`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
+| AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
@@ -121,7 +121,7 @@
 
 ## ログイン・新規登録ページ（`/login`）
 
-2026-09-25にエディトリアル方向へ全面リデザイン。アプリ内の他画面（home・impact等）が使うニューモーフィズム（`nm-*`）とは意図的に異なるトーンで、写真を主役にした分割レイアウトにする。`PublicHeader`・`Footer`はこのページには設置しない。写真パネルは共通の `AuthPhotoPanel` を使い、登録完了画面（`/register-complete`）も同じ分割レイアウト・見出し（`font-yugothic`「Welcome to Hibi!」）・フラットなボタンで揃える（写真パネル内の「Hibi」ロゴ＋新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替）。
+2026-09-25にエディトリアル方向へ全面リデザイン。アプリ内の他画面（home・impact等）が使うニューモーフィズム（`nm-*`）とは意図的に異なるトーンで、写真を主役にした分割レイアウトにする。`PublicHeader`・`Footer`はこのページには設置しない。写真パネルは共通の `AuthPhotoPanel` を使い、登録完了画面（`/register-complete`）・パスワード再設定の2画面（`/auth/verify`・`/auth/reset-password`）も同じ分割レイアウト・見出し（`font-yugothic`）・下線入力欄・フラットなボタンで揃える。入力欄・ラベル・ボタン・見出しのクラスは `src/lib/authStyles.ts` に集約し、これらの画面で共用する（写真パネル内の「Hibi」ロゴ＋新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替）。
 
 ### レイアウト構成
 

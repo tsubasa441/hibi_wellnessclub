@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { primaryButtonClass } from "@/lib/authStyles";
 
 // ボタンの二重押しで、1回目の検証がトークンを消費したあとに2回目が失敗してしまうのを防ぐ
 export default function VerifyForm({
@@ -39,7 +40,7 @@ export default function VerifyForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full nm-btn-primary text-white font-outfit font-medium py-3 disabled:opacity-40"
+        className={primaryButtonClass}
       >
         {submitting ? "確認しています..." : "パスワードを再設定する"}
       </button>

@@ -6,9 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import * as Sentry from "@sentry/nextjs";
 import { passwordUpdateErrorMessage } from "@/lib/passwordUpdateError";
-
-const inputClass = "w-full bg-base-50 border border-base-200 text-ink-700 placeholder-ink-200 font-dm text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-ink-300 transition";
-const labelClass = "font-outfit text-xs text-sage-500 font-medium tracking-widest mb-1.5";
+import AuthPhotoPanel from "@/components/AuthPhotoPanel";
+import { inputClass, labelClass, primaryButtonClass, headingClass } from "@/lib/authStyles";
 
 type LinkStatus = "checking" | "ready" | "invalid";
 
@@ -132,105 +131,82 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-16 sm:pt-0">
-      <div className="relative z-10 w-full max-w-sm nm-card p-6 sm:p-8 animate-fade-up">
-        <div className="text-center mb-3">
-          <span className="font-outfit text-3xl font-medium text-ink-700 tracking-wide">Hibi</span>
-        </div>
+    <main className="min-h-screen flex flex-col sm:flex-row bg-base-100">
+      <AuthPhotoPanel />
 
-        {linkStatus === "checking" ? (
-          <div className="text-center py-8">
+      <div className="flex-1 flex items-start sm:items-center justify-center px-5 py-10 sm:py-16">
+        <div className="w-full max-w-sm">
+          {linkStatus === "checking" ? (
             <p className="font-dm text-sm text-ink-300">リンクを確認しています...</p>
-          </div>
-        ) : linkStatus === "invalid" ? (
-          <div className="text-center space-y-6">
-            <div className="space-y-2">
-              <p className="font-cormorant text-xl font-semibold text-ink-700 tracking-wide">
-                リンクが無効です
-              </p>
-              <p className="font-dm text-sm text-ink-300 leading-relaxed">
-                このリンクの有効期限が切れているか、既に使用されています。メールを複数回送信した場合は、最後に届いたメールのリンクのみ有効です。お手数ですが、もう一度パスワード再設定をお試しください。
-              </p>
-              {invalidDetail && (
-                <p className="font-dm text-[11px] text-ink-200 leading-relaxed break-all">
-                  {invalidDetail}
+          ) : linkStatus === "invalid" ? (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <p className={headingClass}>リンクが無効です</p>
+                <p className="font-dm text-sm text-ink-400 leading-relaxed">
+                  このリンクの有効期限が切れているか、既に使用されています。メールを複数回送信した場合は、最後に届いたメールのリンクのみ有効です。お手数ですが、もう一度パスワード再設定をお試しください。
                 </p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push("/login")}
-              className="w-full nm-btn-primary text-white font-outfit font-medium py-3 text-sm tracking-wider"
-            >
-              ログイン画面へ
-            </button>
-          </div>
-        ) : done ? (
-          <div className="text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="w-12 h-12 rounded-full border border-sage-300 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sage-500">
-                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                {invalidDetail && (
+                  <p className="font-dm text-[11px] text-ink-200 leading-relaxed break-all">
+                    {invalidDetail}
+                  </p>
+                )}
               </div>
-            </div>
-            <div className="space-y-2">
-              <p className="font-cormorant text-xl font-semibold text-ink-700 tracking-wide">
-                完了しました
-              </p>
-              <p className="font-dm text-sm text-ink-300 leading-relaxed">
-                パスワードの再設定が完了しました。
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="w-full nm-btn-primary text-white font-outfit font-medium py-3 text-sm tracking-wider"
-            >
-              ログイン画面へ
-            </button>
-          </div>
-        ) : (
-          <>
-            <p className="text-center font-outfit text-sm font-medium text-ink-700 mb-6">
-              パスワード再設定
-            </p>
-
-            {error && <div className="text-red-500 text-xs font-dm mb-4 text-center">{error}</div>}
-
-            <form onSubmit={handleSubmit} noValidate className="space-y-4">
-              <div>
-                <p className={labelClass}>新しいパスワード</p>
-                <PasswordInput
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={inputClass}
-                  placeholder="••••••••"
-                />
-                <p className="font-dm text-xs text-ink-300 mt-1">8〜15文字で、以下をすべて含めてください</p>
-                <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
-              </div>
-              <div>
-                <p className={labelClass}>パスワード（確認）</p>
-                <PasswordInput
-                  required
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  className={inputClass}
-                  placeholder="もう一度入力してください"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full nm-btn-primary text-white font-outfit font-medium py-3 disabled:opacity-40 mt-4"
-              >
-                {loading ? "更新中..." : "パスワードを更新"}
+              <button type="button" onClick={() => router.push("/login")} className={primaryButtonClass}>
+                ログイン画面へ
               </button>
-            </form>
-          </>
-        )}
+            </div>
+          ) : done ? (
+            <div className="space-y-6">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sage-500">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8 12 3 3 5-6" />
+              </svg>
+              <div className="space-y-3">
+                <p className={headingClass}>完了しました</p>
+                <p className="font-dm text-sm text-ink-400 leading-relaxed">
+                  パスワードの再設定が完了しました。
+                </p>
+              </div>
+              <button type="button" onClick={handleContinue} className={primaryButtonClass}>
+                ログイン画面へ
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className={`${headingClass} mb-6`}>パスワード再設定</p>
+
+              {error && <div className="text-red-500 text-xs font-dm mb-4">{error}</div>}
+
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
+                <div>
+                  <p className={labelClass}>新しいパスワード</p>
+                  <PasswordInput
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
+                    placeholder="••••••••"
+                  />
+                  <p className="font-dm text-xs text-ink-300 mt-2">8〜15文字で、以下をすべて含めてください</p>
+                  <p className="font-dm text-xs text-ink-300">半角英大文字・半角英小文字・数字・記号</p>
+                </div>
+                <div>
+                  <p className={labelClass}>パスワード（確認）</p>
+                  <PasswordInput
+                    required
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    className={inputClass}
+                    placeholder="もう一度入力してください"
+                  />
+                </div>
+                <button type="submit" disabled={loading} className={primaryButtonClass}>
+                  {loading ? "更新中..." : "パスワードを更新"}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
     </main>
   );

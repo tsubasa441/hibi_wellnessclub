@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import PublicHeader from "@/components/PublicHeader";
-import Footer from "@/components/Footer";
+import AuthPhotoPanel from "@/components/AuthPhotoPanel";
+import { headingClass } from "@/lib/authStyles";
 import VerifyForm from "./VerifyForm";
 
 // パスワード再設定メールのリンクの遷移先。ここでは token_hash を検証しない（メールクライアントや
@@ -18,13 +18,14 @@ export default async function VerifyPage({
   }
 
   return (
-    <>
-      <PublicHeader />
-      <main className="relative min-h-screen app-bg flex items-start sm:items-center justify-center px-4 pt-16 sm:pt-0">
-        <div className="relative z-10 w-full max-w-sm nm-card p-6 sm:p-8 text-center space-y-6 animate-fade-up animate-delay-100">
-          <div className="space-y-2">
-            <p className="font-cormorant text-2xl font-semibold text-ink-700 tracking-wide">パスワードの再設定</p>
-            <p className="font-dm text-sm text-ink-500 leading-relaxed">
+    <main className="min-h-screen flex flex-col sm:flex-row bg-base-100">
+      <AuthPhotoPanel />
+
+      <div className="flex-1 flex items-start sm:items-center justify-center px-5 py-10 sm:py-16">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-3">
+            <p className={headingClass}>パスワードの再設定</p>
+            <p className="font-dm text-sm text-ink-400 leading-relaxed">
               下のボタンを押して、新しいパスワードの設定に進んでください。
             </p>
           </div>
@@ -35,8 +36,7 @@ export default async function VerifyPage({
             このリンクは、一度だけ使えます。
           </p>
         </div>
-      </main>
-      <Footer />
-    </>
+      </div>
+    </main>
   );
 }

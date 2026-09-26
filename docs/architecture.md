@@ -122,7 +122,7 @@ src/
 │   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
 │   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
-│   ├── AuthPhotoPanel.tsx      # /login と /register-complete 共通の写真パネル（Server Component）
+│   ├── AuthPhotoPanel.tsx      # /login・/register-complete・/auth/verify・/auth/reset-password 共通の写真パネル（Server Component）
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts           # ブラウザ用クライアント
@@ -131,6 +131,7 @@ src/
 │   ├── admin.ts                # 管理者判定（isAdmin）
 │   ├── badges.ts               # バッジ付与ロジック
 │   ├── csv.ts                  # CSV生成ヘルパー
+│   ├── authStyles.ts           # 認証系画面（ログイン・登録完了・パスワード再設定）共通の入力欄・ラベル・ボタン・見出しのクラス
 │   ├── date.ts                 # JST基準の日付・時刻ヘルパー（サーバーの実行タイムゾーンに依存しないための共通処理）
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号

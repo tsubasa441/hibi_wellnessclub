@@ -6,12 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import AuthPhotoPanel from "@/components/AuthPhotoPanel";
+import { inputClass, labelClass, primaryButtonClass } from "@/lib/authStyles";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
 
-const inputClass = "w-full border-0 border-b border-base-200 bg-transparent text-ink-700 placeholder-ink-200 font-dm text-sm px-0.5 py-2.5 focus:outline-none focus:border-ink-500 transition [color-scheme:light]";
-const labelClass = "font-outfit text-[11px] text-sage-500 font-medium tracking-[0.12em] uppercase mb-1.5";
 const toggleClass = (active: boolean) =>
   `flex-1 py-2 font-outfit text-xs font-medium tracking-wide transition border rounded-sm ${
     active ? "border-ink-500 bg-ink-500 text-white" : "border-base-200 text-ink-400"
@@ -20,7 +19,6 @@ const tabClass = (active: boolean) =>
   `font-outfit text-sm font-medium pb-2.5 border-b-2 transition ${
     active ? "text-ink-700 border-sage-600" : "text-ink-300 border-transparent"
   }`;
-const primaryButtonClass = "w-full bg-sage-600 text-white font-outfit text-sm font-medium tracking-wide py-3.5 rounded-sm hover:bg-sage-500 transition disabled:opacity-40";
 
 function LoginFormInner() {
   const router = useRouter();
