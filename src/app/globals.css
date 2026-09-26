@@ -15,6 +15,13 @@
   }
 }
 
+/* Edge/IE はパスワード欄に標準の目のアイコンを重ねて表示する。PasswordInput が独自の
+   表示切り替えボタンを持つため、二重にならないよう標準側を隠す。 */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 @theme {
   /* Primary: ベース（背景） */
   --color-base-50:  #FBFBFB;
