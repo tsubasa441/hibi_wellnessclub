@@ -117,10 +117,10 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <>
+    <div className="min-h-screen app-bg flex flex-col">
     <PublicHeader />
-    <main className="relative min-h-screen app-bg flex flex-col items-center gap-6 px-4 pt-10 sm:pt-16 pb-4">
-      <div className="relative z-10 w-full max-w-2xl nm-card p-6 sm:p-8 animate-fade-up">
+    <main className="relative flex-1 flex flex-col items-center px-4 pt-10 sm:pt-16 pb-6">
+      <div className="relative z-10 w-full max-w-2xl bg-white border border-base-200 rounded-2xl p-6 sm:p-8 animate-fade-up">
         <div className="text-center mb-6">
           <span className="font-outfit text-2xl font-medium text-ink-700 tracking-wide">Hibi</span>
         </div>
@@ -143,9 +143,8 @@ export default function PrivacyPolicyPage() {
           </Link>
         </div>
       </div>
-
-      <Footer />
     </main>
-    </>
+    <Footer />
+    </div>
   );
 }
