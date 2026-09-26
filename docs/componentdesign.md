@@ -16,11 +16,12 @@
 |-------------|------|------|
 | Header | `src/components/Header.tsx` | ロゴ・歯車アイコン（`SettingsDrawer`を開く）。管理者には「管理画面」リンクも表示 |
 | SettingsDrawer | `src/components/SettingsDrawer.tsx` | ヘッダーの歯車アイコンで開く、右からスライドインするドロワー。ニックネーム変更（`POST /api/profile/nickname`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供 |
-| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・登録完了・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
+| AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）と登録完了（`/register-complete`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
-| Footer | `src/components/Footer.tsx` | Instagram・TikTok のアイコンリンク（上段）と、利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク（下段）を表示する共通フッター。トップ・登録完了・法定ページに設置（固定 BottomNav のある認証後画面には未設置）。SNS アイコンは SVG アウトライン（`currentColor`）で、外部リンクは新しいタブで開く。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景）。**`/login`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
+| Footer | `src/components/Footer.tsx` | Instagram・TikTok のアイコンリンク（上段）と、利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク（下段）を表示する共通フッター。トップ・法定ページに設置（固定 BottomNav のある認証後画面には未設置）。SNS アイコンは SVG アウトライン（`currentColor`）で、外部リンクは新しいタブで開く。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景）。**`/login`・`/register-complete`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
 
 ボタン・カードは共通コンポーネント化せず、下記バリエーションのユーティリティクラスをその都度使用する。
 
@@ -120,7 +121,7 @@
 
 ## ログイン・新規登録ページ（`/login`）
 
-2026-09-25にエディトリアル方向へ全面リデザイン。アプリ内の他画面（home・impact等）が使うニューモーフィズム（`nm-*`）とは意図的に異なるトーンで、写真を主役にした分割レイアウトにする。`PublicHeader`・`Footer`はこのページには設置しない（写真パネル内の「Hibi」ロゴ＋新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替）。
+2026-09-25にエディトリアル方向へ全面リデザイン。アプリ内の他画面（home・impact等）が使うニューモーフィズム（`nm-*`）とは意図的に異なるトーンで、写真を主役にした分割レイアウトにする。`PublicHeader`・`Footer`はこのページには設置しない。写真パネルは共通の `AuthPhotoPanel` を使い、登録完了画面（`/register-complete`）も同じ分割レイアウト・見出し（`font-yugothic`「Welcome to Hibi!」）・フラットなボタンで揃える（写真パネル内の「Hibi」ロゴ＋新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替）。
 
 ### レイアウト構成
 
