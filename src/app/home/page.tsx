@@ -9,6 +9,7 @@ import { decrypt } from "@/lib/encrypt";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import EventTypeIcon from "@/components/EventTypeIcon";
 import ProfileCard from "@/components/ProfileCard";
 import RankUpModal from "./RankUpModal";
 import { getJstParts } from "@/lib/date";
@@ -42,7 +43,7 @@ export default async function HomePage() {
     supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(1),
     supabase
       .from("bookings")
-      .select("id, event_id, events(title, start_at, location)")
+      .select("id, event_id, events(title, start_at, location, event_type)")
       .eq("user_id", user.id)
       .eq("status", "confirmed")
       .order("created_at", { ascending: true }),
@@ -60,12 +61,12 @@ export default async function HomePage() {
   type BookingRaw = {
     id: string;
     event_id: string;
-    events: { title: string; start_at: string; location: string } | { title: string; start_at: string; location: string }[] | null;
+    events: { title: string; start_at: string; location: string; event_type: string } | { title: string; start_at: string; location: string; event_type: string }[] | null;
   };
   type Booking = {
     id: string;
     event_id: string;
-    events: { title: string; start_at: string; location: string };
+    events: { title: string; start_at: string; location: string; event_type: string };
   };
   const upcomingBookings: Booking[] = ((bookingsRes.data ?? []) as unknown as BookingRaw[])
     .map((b) => {
@@ -126,11 +127,14 @@ export default async function HomePage() {
                 <Link
                   key={booking.id}
                   href={`/events/${booking.event_id}`}
-                  className="bg-white border border-base-200 rounded-2xl flex items-center justify-between p-3 hover:border-sage-300 transition"
+                  className="bg-white border border-base-200 rounded-2xl flex items-center justify-between gap-3 p-3 hover:border-sage-300 transition"
                 >
-                  <div>
-                    <p className="font-outfit font-medium text-sm text-ink-700">{booking.events.title}</p>
-                    <p className="font-dm text-xs text-ink-300">{formatDateTime(booking.events.start_at)}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <EventTypeIcon type={booking.events.event_type} />
+                    <div className="min-w-0">
+                      <p className="font-outfit font-medium text-sm text-ink-700">{booking.events.title}</p>
+                      <p className="font-dm text-xs text-ink-300">{formatDateTime(booking.events.start_at)}</p>
+                    </div>
                   </div>
                   <span className="font-outfit text-xs text-ink-700 font-medium bg-sage-200 px-2 py-1 rounded-full shrink-0">予約済み</span>
                 </Link>
@@ -145,12 +149,15 @@ export default async function HomePage() {
           {nextEvent ? (
             <Link
               href={`/events/${nextEvent.id}`}
-              className="block bg-white border border-base-200 rounded-2xl p-4 hover:border-sage-300 transition"
+              className="flex items-start gap-4 bg-white border border-base-200 rounded-2xl p-4 hover:border-sage-300 transition"
             >
-              <p className="font-outfit font-semibold text-ink-700">{nextEvent.title}</p>
-              <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(nextEvent.start_at)}</p>
-              <p className="font-dm text-xs text-ink-300">{nextEvent.location}</p>
-              <span className="inline-block mt-3 font-outfit text-xs text-ink-700 font-medium bg-base-100 border border-base-200 rounded-full px-4 py-1.5">もっと見る</span>
+              <EventTypeIcon type={nextEvent.event_type} />
+              <div className="flex-1 min-w-0">
+                <p className="font-outfit font-semibold text-ink-700">{nextEvent.title}</p>
+                <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(nextEvent.start_at)}</p>
+                <p className="font-dm text-xs text-ink-300">{nextEvent.location}</p>
+                <span className="inline-block mt-3 font-outfit text-xs text-ink-700 font-medium bg-base-100 border border-base-200 rounded-full px-4 py-1.5">もっと見る</span>
+              </div>
             </Link>
           ) : (
             <div className="bg-white border border-base-200 rounded-2xl p-6 text-center">

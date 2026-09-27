@@ -15,13 +15,21 @@ const ICON_PATH: Record<string, string> = {
   pilates: "m489-108-19-370-149-52H70q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32Q57.25-590 70-590h213l253-181q10-7 20.96-5.53 10.96 1.46 19 10.26Q584-756 583-743q-1 13-12 21l-123 88 97 34 320-188q8-5 17.92-2.87 9.92 2.13 18 11.35 8.08 8.52 6.55 19.86Q905.94-748.32 896-741L574-507l-22 399q-.8 11.79-10.4 19.89Q532-80 518.15-80q-11.66 0-20.04-8.11-8.38-8.1-9.11-19.89ZM240.08-647q-30.08 0-51.58-21.42t-21.5-51.5q0-30.08 21.42-51.58t51.5-21.5q30.08 0 51.58 21.42t21.5 51.5q0 30.08-21.42 51.58t-51.5 21.5Z",
 };
 
-export default function EventTypeIcon({ type, label }: { type: string; label: string }) {
+const TYPE_LABELS: Record<string, string> = {
+  yoga: "ヨガ",
+  running: "ランニング",
+  boxing: "ボクシング",
+  training: "トレーニング",
+  pilates: "ピラティス",
+};
+
+export default function EventTypeIcon({ type, label }: { type: string; label?: string }) {
   const path = ICON_PATH[type];
 
   return (
     <span
       role="img"
-      aria-label={label}
+      aria-label={label ?? TYPE_LABELS[type] ?? type}
       className={`shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white ${ICON_BG[type] ?? "bg-ink-300"}`}
     >
       <svg width="36" height="36" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
