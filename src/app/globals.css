@@ -56,6 +56,13 @@ input::-ms-clear {
   --color-nav-light: #FFFFFA;
   --color-nav-dark:  #C7C7B4;
 
+  /* Event type: イベント種別アイコン（円形背景）専用 */
+  --color-event-yoga:     #5E7A4F;
+  --color-event-running:  #C8613A;
+  --color-event-boxing:   #2F4A6B;
+  --color-event-training: #9A6D1E;
+  --color-event-pilates:  #8A4F73;
+
   /* Font families */
   --font-outfit: 'Outfit', sans-serif;
   --font-cormorant: 'Cormorant Garamond', serif;

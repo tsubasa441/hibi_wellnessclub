@@ -122,6 +122,7 @@ src/
 │   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
 │   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
+│   ├── EventTypeIcon.tsx       # イベント種別の円形ピクトグラム（イベント一覧のカード左側）
 │   ├── AuthPhotoPanel.tsx      # /login・/register-complete・/auth/verify・/auth/reset-password 共通の写真パネル（Server Component）
 ├── lib/
 │   ├── supabase/

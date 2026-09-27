@@ -47,6 +47,13 @@
   --color-nav-bg:    #FAFAEC;
   --color-nav-light: #FFFFFA;
   --color-nav-dark:  #C7C7B4;
+
+  /* Event type: イベント種別アイコン（円形背景）専用。EventTypeIcon 以外では使わない */
+  --color-event-yoga:     #5E7A4F;
+  --color-event-running:  #C8613A;
+  --color-event-boxing:   #2F4A6B;
+  --color-event-training: #9A6D1E;
+  --color-event-pilates:  #8A4F73;
 }
 ```
 
@@ -102,7 +109,7 @@
 
 ## アイコン
 
-- **SVG アウトラインのみ** を使用
+- **SVG アウトラインのみ** を使用（例外：イベント種別アイコン `EventTypeIcon` は、円形背景に白い塗りつぶしの Material Symbols を使う）
 - 絵文字（emoji）は使用禁止
 - stroke-width: 1.5px 統一
 - サイズ: 20px（インライン）/ 24px（アクション）

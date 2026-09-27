@@ -5,6 +5,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import EventTypeIcon from "@/components/EventTypeIcon";
 import { getJstParts } from "@/lib/date";
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -59,8 +60,9 @@ export default async function EventsPage() {
                   href={`/events/${event.id}`}
                   className="block bg-white border border-base-200 rounded-2xl p-5 hover:border-sage-300 transition"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
+                  <div className="flex items-start gap-4">
+                    <EventTypeIcon type={event.event_type} label={type.label} />
+                    <div className="flex-1 min-w-0">
                       <span className={`inline-flex items-center text-xs font-maru font-medium px-3 py-1 rounded-full mb-2 ${type.color}`}>
                         {type.label}
                       </span>

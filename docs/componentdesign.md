@@ -20,6 +20,7 @@
 | AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
+| EventTypeIcon | `src/components/EventTypeIcon.tsx` | イベント種別（yoga / running / boxing / training / pilates）の円形ピクトグラム。円の色は `globals.css` の `--color-event-*` トークン、図柄は Google Material Symbols（Rounded / Fill、Apache License 2.0）の白い塗りつぶしアイコン（`currentColor`）。ヨガ=`self_improvement`、ランニング=`directions_run`、ボクシング=`sports_mma`、トレーニング=`fitness_center`、ピラティス=`sports_gymnastics`。イベント一覧（`/events`）のカード左側に表示する。Server Component |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
 | Footer | `src/components/Footer.tsx` | Instagram・TikTok のアイコンリンク（上段）と、利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク（下段）を表示する共通フッター。トップ・法定ページに設置（固定 BottomNav のある認証後画面には未設置）。SNS アイコンは SVG アウトライン（`currentColor`）で、外部リンクは新しいタブで開く。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景）。**`/login`・`/register-complete`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
 
