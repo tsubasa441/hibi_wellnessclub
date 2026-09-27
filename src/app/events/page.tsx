@@ -45,7 +45,7 @@ export default async function EventsPage() {
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-8 sm:px-6 sm:py-10">
-        <h1 className="font-maru text-2xl sm:text-3xl font-semibold text-ink-700 mb-6 tracking-wide animate-fade-up animate-delay-100">Events</h1>
+        <h1 className="font-yugothic text-2xl sm:text-3xl font-bold text-ink-700 mb-6 tracking-wide animate-fade-up animate-delay-100">Events</h1>
 
         {events && events.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-up animate-delay-200">
