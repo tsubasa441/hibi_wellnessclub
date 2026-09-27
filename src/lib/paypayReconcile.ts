@@ -115,12 +115,14 @@ async function reconcileOne(supabase: SupabaseClient, user: User, booking: Pendi
 }
 
 // ログイン中ユーザーの pending な PayPay 予約を PayPay に照会し、支払い済みなら確定、
-// 期限切れの未払いなら削除してポイントを払い戻す。失敗しても呼び出し元の画面表示は妨げない
+// 期限切れの未払いなら削除してポイントを払い戻す。失敗しても呼び出し元の画面表示は妨げない。
+// 戻り値は照会した pending 予約の件数（0 なら予約の状態は変わっていないので、呼び出し元は
+// 並行して取得済みの予約データをそのまま使える）
 export async function reconcilePendingPayPayBookings(
   supabase: SupabaseClient,
   user: User,
   opts: { eventId?: string } = {}
-): Promise<void> {
+): Promise<number> {
   let query = supabase
     .from("bookings")
     .select("id, event_id, user_id, points_used, created_at")
@@ -132,11 +134,13 @@ export async function reconcilePendingPayPayBookings(
 
   const { data } = await query;
 
-  for (const booking of (data ?? []) as PendingBooking[]) {
+  const pending = (data ?? []) as PendingBooking[];
+  for (const booking of pending) {
     try {
       await reconcileOne(supabase, user, booking);
     } catch (e) {
       Sentry.captureException(e, { tags: { area: "paypay_reconcile" } });
     }
   }
+  return pending.length;
 }

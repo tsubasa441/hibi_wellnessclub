@@ -1,8 +1,15 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getRankByLevel } from "@/lib/ranks";
 import { getYearMonthJst, getJstMonthBounds } from "@/lib/date";
+import { createServiceClient } from "@/lib/supabase/service";
 
 type AwardResult = { awarded: boolean; points?: number };
+
+// ポイントの増減 RPC は service_role 専用（029_lock_points.sql で実行権限を絞っている）。
+// 一般ユーザーが他人のポイントを増減できないよう、呼び出し元のクライアントに関わらず service_role で実行する
+function pointsRpc(fn: "increment_points" | "decrement_points" | "spend_points", uid: string, amount: number) {
+  return createServiceClient().rpc(fn, { uid, amount });
+}
 
 export async function awardPoints(
   supabase: SupabaseClient,
@@ -22,7 +29,7 @@ export async function awardPoints(
   // unique制約違反 = 既に付与済み
   if (error) return { awarded: false };
 
-  await supabase.rpc("increment_points", { uid: userId, amount: points });
+  await pointsRpc("increment_points", userId, points);
 
   return { awarded: true, points };
 }
@@ -119,7 +126,7 @@ export async function spendPointsForBooking(
 ): Promise<boolean> {
   if (points <= 0) return true;
 
-  const { data: ok } = await supabase.rpc("spend_points", { uid: userId, amount: points });
+  const { data: ok } = await pointsRpc("spend_points", userId, points);
   if (!ok) return false;
 
   const { error } = await supabase.from("points_log").insert({
@@ -132,7 +139,7 @@ export async function spendPointsForBooking(
 
   if (error) {
     // ログ記録に失敗した場合は充当自体を取り消す
-    await supabase.rpc("increment_points", { uid: userId, amount: points });
+    await pointsRpc("increment_points", userId, points);
     return false;
   }
 
@@ -156,7 +163,7 @@ export async function refundUsedPoints(
   if (!log) return;
 
   await supabase.from("points_log").delete().eq("id", log.id);
-  await supabase.rpc("increment_points", { uid: userId, amount: Math.abs(log.points) });
+  await pointsRpc("increment_points", userId, Math.abs(log.points));
 }
 
 // キャンセル時: イベント参加ポイントを取り消す
@@ -176,7 +183,7 @@ export async function revokeEventPoints(
   if (!log) return;
 
   await supabase.from("points_log").delete().eq("id", log.id);
-  await supabase.rpc("decrement_points", { uid: userId, amount: log.points });
+  await pointsRpc("decrement_points", userId, log.points);
 }
 
 // 月末 cron から呼び出す（バッジ獲得数に応じたボーナスポイント）

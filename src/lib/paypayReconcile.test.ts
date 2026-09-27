@@ -81,6 +81,14 @@ describe("reconcilePendingPayPayBookings", () => {
     expect(mocks.getPaymentDetails).not.toHaveBeenCalled();
   });
 
+  it("戻り値は照会した pending 予約の件数（0 なら呼び出し元は取得済みの予約データを使い回せる）", async () => {
+    const none = setup({ bookings: [] });
+    expect(await reconcilePendingPayPayBookings(none.supabase, USER)).toBe(0);
+    const one = setup();
+    mocks.getPaymentDetails.mockResolvedValue(paypayResult("SUCCESS", "CREATED"));
+    expect(await reconcilePendingPayPayBookings(one.supabase, USER)).toBe(1);
+  });
+
   it("対象は本人の pending な PayPay 予約に絞り込む", async () => {
     const { supabase, selectEqSpy } = setup({ bookings: [] });
     await reconcilePendingPayPayBookings(supabase, USER);
@@ -188,7 +196,7 @@ describe("reconcilePendingPayPayBookings", () => {
   it("PayPay 照会が失敗しても予約は削除せず、例外も投げず、Sentry に送る", async () => {
     const { supabase, deleteSpy } = setup({ bookings: [makeBooking({ ageMs: PENDING_PAYPAY_TTL_MS + 60_000 })] });
     mocks.getPaymentDetails.mockRejectedValue(new Error("network"));
-    await expect(reconcilePendingPayPayBookings(supabase, USER)).resolves.toBeUndefined();
+    await expect(reconcilePendingPayPayBookings(supabase, USER)).resolves.toBe(1);
     expect(deleteSpy).not.toHaveBeenCalled();
     expect(mocks.captureException).toHaveBeenCalled();
   });

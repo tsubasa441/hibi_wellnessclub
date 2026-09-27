@@ -24,8 +24,6 @@ export default async function BookingsPage() {
   const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
-  await reconcilePendingPayPayBookings(supabase, user);
-
   type EventInfo = { title: string; start_at: string; end_at: string | null; location: string; event_type: string };
   type BookingRaw = {
     id: string;
@@ -40,12 +38,21 @@ export default async function BookingsPage() {
     events: EventInfo;
   };
 
-  const { data } = await supabase
-    .from("bookings")
-    .select("id, event_id, checked_in_at, events(title, start_at, end_at, location, event_type)")
-    .eq("user_id", user.id)
-    .eq("status", "confirmed")
-    .order("created_at", { ascending: true });
+  const fetchBookings = () =>
+    supabase
+      .from("bookings")
+      .select("id, event_id, checked_in_at, events(title, start_at, end_at, location, event_type)")
+      .eq("user_id", user.id)
+      .eq("status", "confirmed")
+      .order("created_at", { ascending: true });
+
+  // 待ち時間を減らすため、PayPay 予約の照会と一覧の取得を同時に走らせる。
+  // 照会で pending 予約の状態が変わりうる場合だけ、一覧を取り直す
+  const [reconciled, firstRes] = await Promise.all([
+    reconcilePendingPayPayBookings(supabase, user),
+    fetchBookings(),
+  ]);
+  const data = reconciled > 0 ? (await fetchBookings()).data : firstRes.data;
 
   const now = new Date();
   const bookings: Booking[] = ((data ?? []) as unknown as BookingRaw[])

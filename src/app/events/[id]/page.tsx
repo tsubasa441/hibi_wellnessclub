@@ -49,36 +49,39 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
-  await reconcilePendingPayPayBookings(supabase, user, { eventId: id });
-
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
-  const [{ data: event }, { count: bookedCount }, { data: eventOptions }] = await Promise.all([
+  const fetchBookedCount = () =>
+    createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed");
+  const fetchUserBooking = () =>
+    supabase.from("bookings").select("*").eq("event_id", id).eq("user_id", user.id).eq("status", "confirmed").single();
+
+  // 待ち時間を減らすため、PayPay 予約の照会と各種取得を同時に走らせる
+  const [reconciled, { data: event }, countRes, { data: eventOptions }, bookingRes] = await Promise.all([
+    reconcilePendingPayPayBookings(supabase, user, { eventId: id }),
     supabase.from("events").select("*").eq("id", id).single(),
-    createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed"),
+    fetchBookedCount(),
     supabase
       .from("event_options")
       .select("id, label, choices, multi_select, required, sort_order")
       .eq("event_id", id)
       .order("sort_order", { ascending: true }),
+    fetchUserBooking(),
   ]);
 
   if (!event) notFound();
 
+  // 照会で pending 予約の状態が変わりうる場合だけ、残席数と自分の予約を取り直す
+  let bookedCount = countRes.count;
+  let userBooking = bookingRes.data;
+  if (reconciled > 0) {
+    const [freshCount, freshBooking] = await Promise.all([fetchBookedCount(), fetchUserBooking()]);
+    bookedCount = freshCount.count;
+    userBooking = freshBooking.data;
+  }
+
   const remaining = event.capacity - (bookedCount ?? 0);
   const isSoldOut = remaining <= 0;
   const type = EVENT_TYPE_LABELS[event.event_type] ?? { label: event.event_type, color: "bg-base-100 text-ink-500" };
-
-  let userBooking = null;
-  if (user) {
-    const { data } = await supabase
-      .from("bookings")
-      .select("*")
-      .eq("event_id", id)
-      .eq("user_id", user.id)
-      .eq("status", "confirmed")
-      .single();
-    userBooking = data;
-  }
 
   return (
     <main className="relative min-h-screen app-bg pb-24">

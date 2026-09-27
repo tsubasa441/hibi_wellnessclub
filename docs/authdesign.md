@@ -159,7 +159,7 @@ if (!user) redirect("/login");
 
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
 |---------|--------|--------|--------|--------|
-| profiles | 本人のみ | 不可（トリガー） | 本人のみ（`is_admin` 列は本人からの変更を無効化） | 不可 |
+| profiles | 本人のみ | 不可（トリガー） | 本人のみ（`is_admin`・`points` 列は本人からの変更を無効化。`029_lock_points.sql`） | 不可 |
 | events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（アプリからは呼ばず論理削除で運用） |
 | event_options | 全員（親イベントが公開済みのもの）／管理者は全件 | 管理者のみ | 管理者のみ | 管理者のみ |
 | bookings | 本人のみ／管理者は全件 | 本人のみ | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
@@ -168,6 +168,14 @@ if (!user) redirect("/login");
 | referrals | 本人のみ | サーバーのみ | サーバーのみ | 不可 |
 
 ---
+
+## ポイント操作の権限
+
+ポイントは参加費の割引（1pt = 1円）に使えるため、一般ユーザー（anon / authenticated）が直接増減できないようにする（`supabase/migrations/029_lock_points.sql`、2026-09-27）。
+
+- `increment_points` / `decrement_points` / `spend_points`（いずれも SECURITY DEFINER）の実行権限は `service_role` のみ。アプリ側は `src/lib/points.ts` の `pointsRpc` が、呼び出し元のクライアントに関わらず `createServiceClient()` で実行する
+- `profiles.points` は、`authenticated` / `anon` からの UPDATE を `trg_prevent_points_self_update` トリガーで無効化する（`is_admin` と同じ方式）。service_role・Studio からの更新は対象外
+- 新しい SECURITY DEFINER 関数を作るときは、`revoke execute ... from public, anon, authenticated` を必ず併記する（PostgreSQL の既定では PUBLIC に実行権限が付き、PostgREST の RPC から誰でも呼べてしまうため）
 
 ## 紹介コードの処理
 

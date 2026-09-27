@@ -35,7 +35,7 @@ export default async function CheckoutPage({
   if (!user) redirect("/login");
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える
-  const [{ data: event }, { count: bookedCount }, { data: profile }, { data: eventOptions }] = await Promise.all([
+  const [{ data: event }, { count: bookedCount }, { data: profile }, { data: eventOptions }, { data: existingBooking }] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).single(),
     createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed"),
     supabase.from("profiles").select("points").eq("id", user.id).single(),
@@ -44,6 +44,13 @@ export default async function CheckoutPage({
       .select("id, label, choices, multi_select, required, sort_order")
       .eq("event_id", id)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("bookings")
+      .select("id")
+      .eq("event_id", id)
+      .eq("user_id", user.id)
+      .eq("status", "confirmed")
+      .single(),
   ]);
 
   if (!event) notFound();
@@ -56,14 +63,6 @@ export default async function CheckoutPage({
   // 必須の選択項目が未回答のままここに来た場合は詳細画面に戻す
   if (optionError) redirect(`/events/${id}`);
   const checkoutOptionPayload = optionSelections.map((s) => ({ optionId: s.option_id, values: s.values }));
-
-  const { data: existingBooking } = await supabase
-    .from("bookings")
-    .select("id")
-    .eq("event_id", id)
-    .eq("user_id", user.id)
-    .eq("status", "confirmed")
-    .single();
 
   if (existingBooking) redirect(`/events/${id}`);
 

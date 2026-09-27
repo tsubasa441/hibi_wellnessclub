@@ -7,9 +7,34 @@ import {
   revokeEventPoints,
   spendPointsForBooking,
 } from "@/lib/points";
-import { chainable, createSupabaseMock } from "@/lib/testUtils/supabaseMock";
+import { chainable, createSupabaseMock as createBaseMock } from "@/lib/testUtils/supabaseMock";
+
+// ポイント増減の RPC は service_role のクライアント（createServiceClient）経由で呼ばれる。
+// 既存テストの `rpc` をその呼び出し先に差し込み、渡されたユーザーのクライアントの rpc は別物（userRpc）にする
+const mocks = vi.hoisted(() => ({ serviceRpc: vi.fn() }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: () => ({ rpc: (...args: unknown[]) => mocks.serviceRpc(...args) }),
+}));
+
+function createSupabaseMock() {
+  const base = createBaseMock();
+  const userRpc = vi.fn();
+  mocks.serviceRpc = base.rpc;
+  return { supabase: { from: base.from, rpc: userRpc } as never, from: base.from, rpc: base.rpc, userRpc };
+}
 
 describe("awardPoints", () => {
+  it("ポイント増減の RPC は渡されたユーザーのクライアントでは呼ばず、service_role で呼ぶ", async () => {
+    const { supabase, from, rpc, userRpc } = createSupabaseMock();
+    from.mockReturnValueOnce(chainable({ error: null }));
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    await awardPoints(supabase, "user-1", 30, "event_participation", "booking-1");
+
+    expect(rpc).toHaveBeenCalledWith("increment_points", { uid: "user-1", amount: 30 });
+    expect(userRpc).not.toHaveBeenCalled();
+  });
+
   it("付与に成功した場合 increment_points を呼び、awarded:true を返す", async () => {
     const { supabase, from, rpc } = createSupabaseMock();
     from.mockReturnValueOnce(chainable({ error: null }));
