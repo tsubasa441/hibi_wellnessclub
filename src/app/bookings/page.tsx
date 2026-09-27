@@ -75,7 +75,7 @@ export default async function BookingsPage() {
         </div>
 
         {bookings.length === 0 ? (
-          <div className="nm-card p-8 text-center">
+          <div className="bg-white border border-base-200 rounded-2xl p-8 text-center">
             <p className="font-dm text-sm text-ink-300 mb-4">予約中のイベントはありません</p>
             <Link
               href="/events"
@@ -92,7 +92,7 @@ export default async function BookingsPage() {
               const diffDays = (startAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
               const refundable = diffDays >= 2;
               return (
-                <div key={booking.id} className="nm-card-sm p-4">
+                <div key={booking.id} className="bg-white border border-base-200 rounded-2xl p-4">
                   <div className="flex items-start justify-between gap-3">
                     <Link href={`/events/${booking.event_id}`} className="flex-1 min-w-0 flex items-start gap-3">
                       <EventTypeIcon type={booking.events.event_type} />
