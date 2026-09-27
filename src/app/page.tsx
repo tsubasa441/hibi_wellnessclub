@@ -19,7 +19,7 @@ export default async function HomePage({
 
   return (
     <>
-    <PublicHeader />
+    <PublicHeader flat />
 
     <main className="relative min-h-[calc(100svh-11.4rem)] pb-10 flex flex-col items-center justify-start overflow-hidden">
       <HeroBackground slides={HERO_SLIDES} />

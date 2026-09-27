@@ -158,6 +158,10 @@ input::-ms-clear {
   background: var(--color-nav-bg);
   box-shadow: 0 4px 10px var(--color-nav-dark), 0 1px 3px var(--color-nav-light);
 }
+/* 動画などの暗い背景の直上に置くヘッダー用。影が下端にグラデーションとして出るのを避ける */
+.nm-nav-top.nm-nav-flat {
+  box-shadow: none;
+}
 .nm-nav-bottom {
   background: var(--color-nav-bg);
   box-shadow: 0 -4px 10px var(--color-nav-dark), 0 -1px 3px var(--color-nav-light);
