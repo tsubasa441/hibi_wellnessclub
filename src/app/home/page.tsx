@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkAndAwardPendingPoints } from "@/lib/points";
 import { checkAndAwardReferralReward } from "@/lib/referrals";
@@ -25,7 +26,7 @@ function formatDateTime(iso: string) {
 
 export default async function HomePage() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const now = new Date().toISOString();

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import CheckoutForm from "./CheckoutForm";
 import BottomNav from "@/components/BottomNav";
@@ -30,7 +31,7 @@ export default async function CheckoutPage({
   const { opts } = await searchParams;
   const supabase = createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   // bookings の SELECT RLS は本人の行のみ許可のため、他人の予約も含めた残席数は service_role で数える

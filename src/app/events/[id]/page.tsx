@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/service";
 import { reconcilePendingPayPayBookings } from "@/lib/paypayReconcile";
 import BookingButton from "./BookingButton";
@@ -45,7 +46,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const supabase = createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   await reconcilePendingPayPayBookings(supabase, user, { eventId: id });

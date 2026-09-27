@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { decrypt } from "@/lib/encrypt";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
@@ -68,7 +69,7 @@ function MeterRow({
 
 export default async function ImpactPage() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const now = new Date();
