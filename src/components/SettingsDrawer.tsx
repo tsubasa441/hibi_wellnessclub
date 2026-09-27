@@ -127,7 +127,7 @@ export default function SettingsDrawer({ nickname }: Props) {
                     onChange={(e) => setNicknameInput(e.target.value)}
                     maxLength={20}
                     autoFocus
-                    className="nm-inset w-full px-4 py-2.5 font-outfit text-sm text-ink-700 focus:outline-none"
+                    className="w-full border-0 border-b border-base-200 bg-transparent px-0.5 py-2.5 font-outfit text-sm text-ink-700 focus:outline-none focus:border-ink-500 transition"
                   />
                   {nicknameError && (
                     <p className="font-dm text-xs text-red-500 mt-2">{nicknameError}</p>
@@ -136,7 +136,7 @@ export default function SettingsDrawer({ nickname }: Props) {
                     <button
                       onClick={handleSaveNickname}
                       disabled={savingNickname}
-                      className="nm-btn-primary text-white font-outfit text-xs font-medium px-4 py-2 disabled:opacity-60"
+                      className="bg-sage-600 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-sage-500 transition disabled:opacity-60"
                     >
                       {savingNickname ? "保存中..." : "保存する"}
                     </button>
