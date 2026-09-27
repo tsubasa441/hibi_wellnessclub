@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 type Event = { id: string; title: string; price: number };
@@ -169,8 +170,8 @@ export default function CheckoutForm({
           <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${method === "square" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
             <input type="radio" name="method" value="square" checked={method === "square"} onChange={() => setMethod("square")} className="accent-ink-500" />
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-ink-800 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
+              <div className="w-20 h-14 shrink-0 bg-white rounded-lg border border-base-200 flex items-center justify-center overflow-hidden">
+                <Image src="/images/square-logo.png" alt="Square" width={72} height={18} />
               </div>
               <div>
                 <p className="font-outfit font-medium text-sm text-ink-700">クレジットカード</p>
@@ -182,8 +183,8 @@ export default function CheckoutForm({
           <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${method === "paypay" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
             <input type="radio" name="method" value="paypay" checked={method === "paypay"} onChange={() => setMethod("paypay")} className="accent-ink-500" />
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">Pay</span>
+              <div className="w-20 h-14 shrink-0 bg-white rounded-lg border border-base-200 flex items-center justify-center overflow-hidden">
+                <Image src="/images/paypay-logo.png" alt="PayPay" width={52} height={52} />
               </div>
               <div>
                 <p className="font-outfit font-medium text-sm text-ink-700">PayPay</p>
