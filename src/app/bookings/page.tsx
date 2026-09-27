@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import EventTypeIcon from "@/components/EventTypeIcon";
 import CancelButton from "@/app/home/CancelButton";
 import CheckInButton from "./CheckInButton";
 import { getJstParts } from "@/lib/date";
@@ -25,7 +26,7 @@ export default async function BookingsPage() {
 
   await reconcilePendingPayPayBookings(supabase, user);
 
-  type EventInfo = { title: string; start_at: string; end_at: string | null; location: string };
+  type EventInfo = { title: string; start_at: string; end_at: string | null; location: string; event_type: string };
   type BookingRaw = {
     id: string;
     event_id: string;
@@ -41,7 +42,7 @@ export default async function BookingsPage() {
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, event_id, checked_in_at, events(title, start_at, end_at, location)")
+    .select("id, event_id, checked_in_at, events(title, start_at, end_at, location, event_type)")
     .eq("user_id", user.id)
     .eq("status", "confirmed")
     .order("created_at", { ascending: true });
@@ -93,10 +94,13 @@ export default async function BookingsPage() {
               return (
                 <div key={booking.id} className="nm-card-sm p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <Link href={`/events/${booking.event_id}`} className="flex-1 min-w-0">
-                      <p className="font-outfit font-semibold text-sm text-ink-700">{booking.events.title}</p>
-                      <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(booking.events.start_at)}</p>
-                      <p className="font-dm text-xs text-ink-300">{booking.events.location}</p>
+                    <Link href={`/events/${booking.event_id}`} className="flex-1 min-w-0 flex items-start gap-3">
+                      <EventTypeIcon type={booking.events.event_type} />
+                      <div className="min-w-0">
+                        <p className="font-outfit font-semibold text-sm text-ink-700">{booking.events.title}</p>
+                        <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(booking.events.start_at)}</p>
+                        <p className="font-dm text-xs text-ink-300">{booking.events.location}</p>
+                      </div>
                     </Link>
                     <span className="font-outfit text-xs font-medium text-ink-700 bg-sage-100 px-2 py-1 rounded-full shrink-0">予約済み</span>
                   </div>
