@@ -12,9 +12,12 @@ export default function Header() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
+      // getSession はブラウザ側で Cookie を読むだけで通信しない（getUser は毎回認証サーバーへ問い合わせる）。
+      // ここでは自分の行を読む id を得るだけで、アクセス制御は RLS が担う
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
       const { data } = await supabase.from("profiles").select("is_admin, nickname").eq("id", user.id).single();
       setIsAdmin(data?.is_admin === true);
