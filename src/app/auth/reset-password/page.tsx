@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import * as Sentry from "@sentry/nextjs";
 import { passwordUpdateErrorMessage } from "@/lib/passwordUpdateError";
+import { validatePasswordFormat } from "@/lib/passwordPolicy";
 import AuthPhotoPanel from "@/components/AuthPhotoPanel";
 import { inputClass, labelClass, primaryButtonClass, headingClass } from "@/lib/authStyles";
 
@@ -92,16 +93,9 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (password.length > 15) {
-      setError("パスワードは15文字以内で入力してください");
-      return;
-    }
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasDigit = /[0-9]/.test(password);
-    const hasSymbol = /[^a-zA-Z0-9]/.test(password);
-    if (password.length < 8 || !hasUpper || !hasLower || !hasDigit || !hasSymbol) {
-      setError("パスワードを正しく設定してください");
+    const formatError = validatePasswordFormat(password);
+    if (formatError) {
+      setError(formatError);
       return;
     }
 

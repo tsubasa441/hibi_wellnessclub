@@ -38,7 +38,7 @@ export default async function CheckoutPage({
   const [{ data: event }, { count: bookedCount }, { data: profile }, { data: eventOptions }, { data: existingBooking }] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).single(),
     createServiceClient().from("bookings").select("*", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed"),
-    supabase.from("profiles").select("points").eq("id", user.id).single(),
+    supabase.from("profiles").select("points, card_brand, card_last4, card_exp_month, card_exp_year").eq("id", user.id).single(),
     supabase
       .from("event_options")
       .select("id, label, choices, multi_select, required, sort_order")
@@ -136,6 +136,16 @@ export default async function CheckoutPage({
           userId={user.id}
           locationId={process.env.SQUARE_LOCATION_ID!}
           pointsBalance={profile?.points ?? 0}
+          savedCard={
+            profile?.card_last4
+              ? {
+                  brand: profile.card_brand,
+                  last4: profile.card_last4,
+                  expMonth: profile.card_exp_month,
+                  expYear: profile.card_exp_year,
+                }
+              : null
+          }
           optionSelections={checkoutOptionPayload}
         />
       </div>

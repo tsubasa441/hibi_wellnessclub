@@ -177,6 +177,14 @@ if (!user) redirect("/login");
 - `profiles.points` は、`authenticated` / `anon` からの UPDATE を `trg_prevent_points_self_update` トリガーで無効化する（`is_admin` と同じ方式）。service_role・Studio からの更新は対象外
 - 新しい SECURITY DEFINER 関数を作るときは、`revoke execute ... from public, anon, authenticated` を必ず併記する（PostgreSQL の既定では PUBLIC に実行権限が付き、PostgREST の RPC から誰でも呼べてしまうため）
 
+## クレジットカード情報の権限（`030_saved_square_card.sql`）
+
+`profiles` の `square_customer_id`・`square_card_id`・`card_brand`・`card_last4`・`card_exp_month`・`card_exp_year` は、既存の「本人のみ SELECT/UPDATE」の RLS をそのまま使う（`is_admin`・`points`のような自己改ざん防止トリガーは設けていない）。
+
+- 生の PAN・CVV は保存しないため、これらの列自体は機微情報ではない（下4桁・ブランド・有効期限は PCI DSS 上も暗号化対象外、`docs/codingstandards.md` 参照）
+- 本人がこれらの列を直接書き換えても、実際の課金は毎回 Square 側で `card_id` と `customer_id` の紐付けを検証されるため、なりすまし課金や他人のカードの不正利用にはつながらない
+- 書き込みは `src/lib/squareCards.ts` のヘルパーが、呼び出しユーザー自身のセッション（`createClient()`）で行う（nickname 変更と同じパターン、service_role は使わない）
+
 ## 紹介コードの処理
 
 1. `/login?ref=XXXX` のクエリパラメータを取得し、SIGN UP タブを自動選択・紹介コード欄に初期値としてセット

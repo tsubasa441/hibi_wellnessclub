@@ -1,33 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSquareCard } from "@/lib/useSquareCard";
 
 type Event = { id: string; title: string; price: number };
 type PaymentMethod = "square" | "paypay";
-
-declare global {
-  interface Window {
-    Square?: {
-      payments: (appId: string, locationId: string, options?: SquareInitOptions) => Promise<SquarePayments>;
-    };
-  }
-}
-
-interface SquarePayments {
-  card: () => Promise<SquareCard>;
-}
-
-interface SquareInitOptions {
-  countryCode: string;
-}
-
-interface SquareCard {
-  attach: (selector: string) => Promise<void>;
-  tokenize: () => Promise<{ status: string; token?: string; errors?: { message: string }[] }>;
-  destroy: () => Promise<void>;
-}
+type SavedCard = { brand: string | null; last4: string | null; expMonth: number | null; expYear: number | null } | null;
 
 type OptionSelectionPayload = { optionId: string; values: string[] };
 
@@ -36,12 +16,14 @@ export default function CheckoutForm({
   userId,
   locationId,
   pointsBalance,
+  savedCard = null,
   optionSelections = [],
 }: {
   event: Event;
   userId: string;
   locationId: string;
   pointsBalance: number;
+  savedCard?: SavedCard;
   optionSelections?: OptionSelectionPayload[];
 }) {
   const router = useRouter();
@@ -49,58 +31,15 @@ export default function CheckoutForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pointsInput, setPointsInput] = useState("0");
-  const cardRef = useRef<SquareCard | null>(null);
+  const [useNewCard, setUseNewCard] = useState(!savedCard);
 
   const maxPoints = Math.max(0, Math.min(pointsBalance, event.price));
   const pointsToUse = Math.max(0, Math.min(Math.floor(Number(pointsInput) || 0), maxPoints));
   const discountedAmount = event.price - pointsToUse;
-  const needsCard = method === "square" && discountedAmount > 0;
+  const willUseSavedCard = method === "square" && discountedAmount > 0 && !!savedCard && !useNewCard;
+  const needsCardInput = method === "square" && discountedAmount > 0 && !willUseSavedCard;
 
-  useEffect(() => {
-    if (!needsCard) return;
-
-    const appId = process.env.NEXT_PUBLIC_SQUARE_APP_ID!;
-    let active = true;
-    let localCard: SquareCard | null = null;
-
-    const loadScript = () =>
-      new Promise<void>((resolve, reject) => {
-        if (window.Square) { resolve(); return; }
-        const existing = document.querySelector('script[src*="squarecdn.com"]');
-        if (existing) { existing.addEventListener("load", () => resolve()); return; }
-        const script = document.createElement("script");
-        const isProduction = process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT === "production";
-        script.src = isProduction
-          ? "https://web.squarecdn.com/v1/square.js"
-          : "https://sandbox.web.squarecdn.com/v1/square.js";
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Square SDK の読み込みに失敗しました"));
-        document.head.appendChild(script);
-      });
-
-    async function initCard() {
-      try {
-        await loadScript();
-        if (!active) return;
-        const payments = await window.Square!.payments(appId, locationId, { countryCode: "JP" });
-        if (!active) return;
-        localCard = await payments.card();
-        if (!active) { localCard.destroy(); return; }
-        await localCard.attach("#card-container");
-        cardRef.current = localCard;
-      } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "カードフォームの初期化に失敗しました");
-      }
-    }
-
-    initCard();
-
-    return () => {
-      active = false;
-      if (localCard) localCard.destroy();
-      cardRef.current = null;
-    };
-  }, [needsCard, locationId]);
+  const { error: cardError, tokenize } = useSquareCard("card-container", needsCardInput, locationId);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,13 +54,8 @@ export default function CheckoutForm({
     try {
       let sourceId = "FREE";
 
-      if (needsCard) {
-        if (!cardRef.current) throw new Error("カードフォームが準備できていません");
-        const result = await cardRef.current.tokenize();
-        if (result.status !== "OK" || !result.token) {
-          throw new Error(result.errors?.[0]?.message ?? "カード情報の取得に失敗しました");
-        }
-        sourceId = result.token;
+      if (needsCardInput) {
+        sourceId = await tokenize();
       }
 
       const res = await fetch(`/api/payments/${method}`, {
@@ -131,6 +65,7 @@ export default function CheckoutForm({
           eventId: event.id,
           userId,
           sourceId,
+          useSavedCard: willUseSavedCard,
           pointsToUse,
           optionSelections,
           userAgent: navigator.userAgent,
@@ -235,7 +170,28 @@ export default function CheckoutForm({
         </div>
       )}
 
-      {needsCard && (
+      {method === "square" && discountedAmount > 0 && willUseSavedCard && (
+        <div className="bg-white rounded-xl border border-base-200 p-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="font-outfit text-xs text-ink-300 mb-1">登録済みのカードで支払う</p>
+            <p className="font-outfit text-sm font-medium text-ink-700">
+              {savedCard?.brand ?? "カード"} •••• {savedCard?.last4}
+              <span className="font-dm text-xs text-ink-300 ml-2">
+                有効期限 {String(savedCard?.expMonth).padStart(2, "0")}/{String(savedCard?.expYear).slice(-2)}
+              </span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUseNewCard(true)}
+            className="font-outfit text-xs text-sage-600 hover:text-sage-500 transition shrink-0"
+          >
+            別のカードを使う
+          </button>
+        </div>
+      )}
+
+      {needsCardInput && (
         <div className="bg-white rounded-xl border border-base-200 p-4">
           <p className="font-outfit text-xs text-ink-300 mb-1">カード情報</p>
           {process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT !== "production" && (
@@ -244,11 +200,23 @@ export default function CheckoutForm({
             </p>
           )}
           <div id="card-container" />
+          <p className="font-dm text-xs text-ink-300 mt-3">
+            次回以降の支払いのため、このカードは自動的に保存されます。
+          </p>
+          {savedCard && (
+            <button
+              type="button"
+              onClick={() => setUseNewCard(false)}
+              className="font-outfit text-xs text-sage-600 hover:text-sage-500 transition mt-2"
+            >
+              登録済みのカードを使う
+            </button>
+          )}
         </div>
       )}
 
-      {error && (
-        <div className="bg-red-50 text-red-600 font-dm text-sm rounded-lg px-4 py-3">{error}</div>
+      {(error || cardError) && (
+        <div className="bg-red-50 text-red-600 font-dm text-sm rounded-lg px-4 py-3">{error ?? cardError}</div>
       )}
 
       <button

@@ -34,6 +34,12 @@
 | referred_by | uuid | FK → profiles.id |
 | points | integer | 累計ポイント |
 | is_admin | boolean | 管理者フラグ。既定値 false。付与は Supabase Studio から手動 UPDATE（@docs/authdesign.md 参照） |
+| square_customer_id | text | Square の Customer ID（クレジットカード保存機能用）。カード未登録の間は null |
+| square_card_id | text | Square の Card ID（Card on File）。カード未登録の間は null |
+| card_brand | text | 保存済みカードのブランド（例: VISA）。表示専用、生のカード番号は保存しない |
+| card_last4 | text | 保存済みカードの下4桁。表示専用 |
+| card_exp_month | integer | 保存済みカードの有効期限（月） |
+| card_exp_year | integer | 保存済みカードの有効期限（年） |
 | created_at | timestamptz | |
 
 ### events
@@ -143,7 +149,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | count | integer | 直近の時間窓内のリクエスト数 |
 | window_start | timestamptz | 時間窓の開始時刻 |
 
-決済系API・サインアッププロフィール作成・チェックイン・予約キャンセル・アカウント削除・名前のローマ字変換・パスワード再設定メール送信（未認証の2つはIPアドレス単位）に適用（ジャーナルは2026-09-13に機能停止したため対象外）。RPC呼び出し自体が失敗した場合は fail open（正規のリクエストを誤ってブロックしない）。
+決済系API・クレジットカード登録/変更/削除・サインアッププロフィール作成・チェックイン・予約キャンセル・アカウント削除・名前のローマ字変換・パスワード再設定メール送信（未認証の2つはIPアドレス単位）に適用（ジャーナルは2026-09-13に機能停止したため対象外）。RPC呼び出し自体が失敗した場合は fail open（正規のリクエストを誤ってブロックしない）。
 
 ---
 
@@ -151,7 +157,9 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 
 | メソッド | エンドポイント | 説明 | 認証 |
 |---------|--------------|------|------|
-| POST | `/api/payments/square` | Square 決済処理（予約作成込み） | 必要 |
+| POST | `/api/payments/square` | Square 決済処理（予約作成込み）。`useSavedCard:true` で保存済みカードに直接課金。新しいカードで支払った場合は決済成功後に自動でカードを保存する（クレジットカード保存機能、5-2参照） | 必要 |
+| POST | `/api/payment-methods/square` | クレジットカードの登録・変更（決済を伴わない。設定画面の設定ドロワーから） | 必要（本人のみ） |
+| DELETE | `/api/payment-methods/square` | 登録済みクレジットカードの削除 | 必要（本人のみ） |
 | POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み。確定はコールバックまたは `/bookings`・`/events/[id]` ロード時の照会で行う。`docs/architecture.md` の決済フロー参照） | 必要 |
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
@@ -213,6 +221,21 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | Ambassador | 今月友人を5人招待 | monthly_referral_count | 5 |
 
 バッジ自体にポイント付与はなく、月間の獲得数に応じたボーナスポイント（3個:300pt / 5個:500pt / 9個:1000pt、最高ティアのみ付与）を翌月1日の Cron で一括付与する（4. ポイント設計を参照）。
+
+---
+
+## 5-2. クレジットカード保存機能（2026-09-29 追加）
+
+決済画面でカードを入力して支払うと、決済成功後に自動でカードが保存され（保存の要否をユーザーに選ばせるチェックボックス等は設けない）、2回目以降の決済ではカード入力を省略してその保存済みカードで支払える。設定画面（ヘッダーの歯車アイコン→設定ドロワー）からも、決済とは無関係にカードを事前登録・変更できる。1ユーザーにつき保存できるカードは1枚（新しいカードを保存すると古いカードは無効化して差し替える）。PayPay は対象外。
+
+生のカード番号・CVV は Square Web Payments SDK がブラウザ上でトークン化した時点で Square 側に渡り、Hibi のサーバーには一切届かない。Hibi が保存するのは Square の識別子（`square_customer_id`・`square_card_id`）と、表示用の非機微情報（ブランド・下4桁・有効期限）のみで、PCI DSS 上も暗号化対象の機微情報ではない（`docs/codingstandards.md` の氏名等の暗号化ルールの対象外、nickname と同じ扱い）。
+
+**カードを保存する順序**：Web Payments SDK の `tokenize()` が返すノンスは一度きりしか使えないため、「保存してから課金する」順序で実装している（Square 公式の案内どおり）。
+
+1. ノンスで `Cards.CreateCard`（`customerId` に紐付け）→ `card.id` を得る（＝カードの保存）
+2. その `card.id` を `sourceId` に、`customerId` を添えて `Payments.CreatePayment`（＝課金）
+
+決済が失敗した場合は、直前に保存したカードを `Cards.DisableCard` で無効化し、`profiles` にも書き込まない（保存されるのは、実際に決済が成功したカードだけ）。共通ロジックは `src/lib/squareCards.ts` にまとめ、決済 API（`/api/payments/square`）と設定画面用 API（`/api/payment-methods/square`）の両方から呼ぶ。カード入力欄の読み込み・トークン化ロジックも `src/lib/useSquareCard.ts` に共通化し、`CheckoutForm.tsx`・`SettingsDrawer.tsx` の両方から使う。
 
 ---
 

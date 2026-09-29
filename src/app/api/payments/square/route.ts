@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { SquareClient, SquareEnvironment } from "square";
+import { getSquareClient } from "@/lib/squareClient";
 import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
 import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
+import { getOrCreateCustomerId, saveCard, disableCard, persistSavedCard } from "@/lib/squareCards";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
-const squareClient = new SquareClient({
-  token: process.env.SQUARE_ACCESS_TOKEN!,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "production"
-      ? SquareEnvironment.Production
-      : SquareEnvironment.Sandbox,
-});
+const squareClient = getSquareClient();
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -28,9 +23,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
-  const { eventId, sourceId, pointsToUse, optionSelections } = await req.json();
+  const { eventId, sourceId, pointsToUse, optionSelections, useSavedCard } = await req.json();
 
-  if (!eventId || !sourceId) {
+  if (!eventId || (!sourceId && !useSavedCard)) {
     return NextResponse.json({ error: "パラメータが不足しています" }, { status: 400 });
   }
 
@@ -159,10 +154,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // 保存済みカードの利用・新しいカードの保存（クレジットカード保存機能）
+  const { data: cardProfile } = await supabase
+    .from("profiles")
+    .select("square_customer_id, square_card_id")
+    .eq("id", user.id)
+    .single();
+  const existingCustomerId: string | null = cardProfile?.square_customer_id ?? null;
+  const existingCardId: string | null = cardProfile?.square_card_id ?? null;
+
+  // 決済前に新規保存したカード（決済が失敗した場合はロールバックで無効化する）
+  let newlyCreatedCard: Awaited<ReturnType<typeof saveCard>> | null = null;
+  let chargeSourceId: string;
+  let chargeCustomerId: string;
+
+  try {
+    if (useSavedCard) {
+      if (!existingCardId || !existingCustomerId) {
+        return NextResponse.json({ error: "保存されたカードがありません" }, { status: 400 });
+      }
+      chargeSourceId = existingCardId;
+      chargeCustomerId = existingCustomerId;
+    } else {
+      chargeCustomerId = await getOrCreateCustomerId(supabase, user.id, existingCustomerId, user.email ?? null);
+      newlyCreatedCard = await saveCard(chargeCustomerId, sourceId);
+      chargeSourceId = newlyCreatedCard.cardId;
+    }
+  } catch (err) {
+    if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
+    const message = err instanceof Error ? err.message : "カードの処理に失敗しました";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
   // Square 決済実行
   try {
     const { payment } = await squareClient.payments.create({
-      sourceId,
+      sourceId: chargeSourceId,
+      customerId: chargeCustomerId,
       idempotencyKey: crypto.randomUUID(),
       amountMoney: {
         amount: BigInt(amountToCharge),
@@ -173,6 +201,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (payment?.status !== "COMPLETED") {
+      if (newlyCreatedCard) await disableCard(newlyCreatedCard.cardId);
       if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
       return NextResponse.json({ error: "決済に失敗しました" }, { status: 400 });
     }
@@ -207,6 +236,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "予約の作成に失敗したため、決済を取り消しました" }, { status: 500 });
     }
 
+    // 決済に成功したカードだけを「保存されたカード」として確定する（新しいカードを使った場合のみ）
+    if (newlyCreatedCard) {
+      await persistSavedCard(supabase, user.id, newlyCreatedCard);
+      if (existingCardId && existingCardId !== newlyCreatedCard.cardId) {
+        await disableCard(existingCardId);
+      }
+    }
+
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({
       to: user.email!,
@@ -224,6 +261,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (newlyCreatedCard) await disableCard(newlyCreatedCard.cardId);
     if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
     const message = err instanceof Error ? err.message : "決済処理中にエラーが発生しました";
     return NextResponse.json({ error: message }, { status: 500 });

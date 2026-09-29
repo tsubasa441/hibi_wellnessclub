@@ -105,10 +105,11 @@ src/
 │       ├── cron/badges/route.ts           # バッジ付与 Cron（Vercel）
 │       ├── debug/sentry/route.ts          # Sentry疎通確認（?token=<CRON_SECRET>で意図的にエラー。不一致は404）
 │       ├── payments/
-│       │   ├── square/route.ts
+│       │   ├── square/route.ts             # 保存済みカードでの決済（useSavedCard）・新カードでの決済成功時の自動保存を含む
 │       │   └── paypay/
 │       │       ├── route.ts
 │       │       └── callback/route.ts
+│       ├── payment-methods/square/route.ts  # POST クレジットカードの登録/変更 / DELETE 削除（決済を伴わない、設定ドロワーから）
 │       ├── signup/profile/route.ts        # サインアップ時プロフィール作成
 │       ├── profile/nickname/route.ts      # ニックネーム変更（設定ドロワーから）
 │       └── admin/events/
@@ -118,7 +119,7 @@ src/
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + 設定ドロワーを開く歯車アイコン）
-│   ├── SettingsDrawer.tsx      # ヘッダーの歯車アイコンで開く設定ドロワー（ニックネーム変更・ログアウト・アカウント削除）
+│   ├── SettingsDrawer.tsx      # ヘッダーの歯車アイコンで開く設定ドロワー（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除）
 │   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
 │   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
@@ -140,8 +141,13 @@ src/
 │   ├── paypayReconcile.ts      # pending な PayPay 予約の照会・確定／期限切れの解放（/bookings・/events/[id] のロード時に実行）
 │   ├── paypayProxy.ts          # PayPay SDK呼び出しを固定IPプロキシ経由にする一時ラッパー（PAYPAY_PROXY_URL未設定時は素通し）
 │   ├── points.ts               # ポイント付与・取り消しロジック
+│   ├── passwordPolicy.ts       # パスワードの形式検証（サインアップ・パスワード再設定・設定画面でのパスワード変更で共通）
+│   ├── passwordUpdateError.ts  # updateUser 失敗時の原因別メッセージ（再設定画面・設定画面でのパスワード変更で共通）
 │   ├── ranks.ts                # ランク定義・ランクアップ判定
 │   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）
+│   ├── squareClient.ts         # Square クライアントの共通生成（決済APIとカード保存ヘルパーで使い回す）
+│   ├── squareCards.ts          # クレジットカード保存機能: Customer/Card on File の作成・保存・無効化（/api/payments/square・/api/payment-methods/square から使用）
+│   ├── useSquareCard.ts        # Square カード入力欄（Web Payments SDK）の読み込み・トークン化の共通フック（CheckoutForm・SettingsDrawer から使用）
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）
 ├── instrumentation.ts          # Sentry初期化フック（サーバー/Edge、Next.js標準の起動フック）
 └── instrumentation-client.ts   # Sentry初期化（ブラウザ側）
