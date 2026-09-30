@@ -28,7 +28,7 @@ export default function ReferralShare({ referralUrl, code }: Props) {
     <div className="space-y-1.5">
       <button
         onClick={handleShare}
-        className="w-full font-outfit font-semibold text-xs nm-btn-primary text-white py-2"
+        className="w-full font-outfit font-semibold text-xs bg-sage-600 text-white rounded-xl py-2 hover:bg-sage-500 transition"
       >
         紹介リンクをシェア
       </button>

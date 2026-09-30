@@ -48,7 +48,7 @@ function MeterRow({
         <p className="font-outfit text-xs font-medium text-ink-700 leading-tight">{label}</p>
         <p className="font-dm text-xs text-ink-300 mt-0.5">{sublabel}</p>
       </div>
-      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{boxShadow:"inset 2px 2px 5px #BCC0BE,inset -2px -2px 5px #FBFBFB",background:"var(--nm-bg)"}}>
+      <div className="nm-inset flex-1 h-2 !rounded-full overflow-hidden">
         <div
           className="h-full rounded-full bg-sage-600 transition-all"
           style={{ width: `${pct}%` }}
@@ -244,7 +244,7 @@ export default async function ImpactPage() {
         />
 
         {/* 月間バッジ */}
-        <div className="nm-card px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-200">
+        <div className="bg-white border border-base-200 rounded-2xl px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-200">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-outfit font-semibold text-base text-ink-700">月間バッジ</h2>
             <p className="font-dm text-xs text-ink-300">{getJstParts(now).month}月</p>
@@ -362,7 +362,7 @@ export default async function ImpactPage() {
         </div>
 
         {/* 紹介コード・シェアボタン */}
-        <div className="nm-card px-4 py-2.5">
+        <div className="bg-white border border-base-200 rounded-2xl px-4 py-2.5">
           <p className="font-outfit text-xs text-ink-300 mb-0.5">あなたの紹介コード</p>
           <p className="font-outfit font-bold text-lg text-ink-700 tracking-widest mb-1.5">{profile?.referral_code}</p>
           <ReferralShare referralUrl={referralUrl} code={profile?.referral_code ?? ""} />
@@ -370,18 +370,18 @@ export default async function ImpactPage() {
 
         {/* 紹介実績 */}
         <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-          <div className="nm-card p-2.5 text-center">
+          <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
             <p className="font-outfit text-xl font-bold text-ink-700">{(referrals ?? []).length}</p>
             <p className="font-dm text-xs text-ink-300 mt-0.5">紹介した人数</p>
           </div>
-          <div className="nm-card p-2.5 text-center">
+          <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
             <p className="font-outfit text-xl font-bold text-ink-500">{rewardedCount}</p>
             <p className="font-dm text-xs text-ink-300 mt-0.5">報酬確定</p>
           </div>
         </div>
 
         {/* 紹介履歴 */}
-        <div className="nm-card p-6">
+        <div className="bg-white border border-base-200 rounded-2xl p-6">
           <h2 className="font-outfit font-semibold text-lg text-ink-700 mb-4">紹介履歴</h2>
           {(referrals ?? []).length > 0 ? (
             <div className="space-y-3">
@@ -389,7 +389,7 @@ export default async function ImpactPage() {
                 const referred = referredNameMap.get(r.referee_id);
                 const refName = referred?.nickname || (referred?.name ? decrypt(referred.name) : null);
                 return (
-                  <div key={r.id} className="nm-card-sm flex items-center justify-between p-3">
+                  <div key={r.id} className="bg-white border border-base-200 rounded-2xl flex items-center justify-between p-3">
                     <div>
                       <p className="font-outfit font-medium text-sm text-ink-700">{refName ?? "ユーザー"}</p>
                       <p className="font-dm text-xs text-ink-300">
