@@ -124,6 +124,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 | `/home` | `/login` にリダイレクト |
 | `/impact` | `/login` にリダイレクト |
 | `/bookings` | `/login` にリダイレクト |
+| `/events/[id]` | `/login` にリダイレクト（イベント詳細も認証必須。一覧 `/events` 自体は未認証でも閲覧できる） |
 | `/events/[id]/checkout` | `/login` にリダイレクト |
 | `/admin/*` | 未認証は `/login` へ、認証済みでも `is_admin` でなければ `/home` へリダイレクト |
 
