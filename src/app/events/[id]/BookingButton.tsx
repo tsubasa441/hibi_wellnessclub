@@ -28,6 +28,7 @@ export default function BookingButton({
 
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState(false);
 
   const [selections, setSelections] = useState<Record<string, string[]>>({});
 
@@ -44,6 +45,7 @@ export default function BookingButton({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 上記の理由で、prop の切り替わりを契機にリセットする
     setLoading(false);
     setCancelLoading(false);
+    setCancelled(false);
   }, [userBooking]);
 
   async function handleCancel() {
@@ -58,9 +60,19 @@ export default function BookingButton({
       setCancelLoading(false);
       return;
     }
+    setCancelled(true);
     // サーバーから最新の userBooking が届くまでボタンを無効化したまま待ち、
-    // 反映前に「予約する」ボタンへ切り替わって誤タップされるのを防ぐ
-    router.refresh();
+    // 反映前に「予約する」ボタンへ切り替わって誤タップされるのを防ぐ。
+    // アナウンスを見せてから refresh する
+    setTimeout(() => router.refresh(), 2000);
+  }
+
+  if (cancelled) {
+    return (
+      <div className="bg-sage-100 border border-sage-200 rounded-xl p-4 text-center">
+        <p className="font-maru font-semibold text-ink-700">ご予約をキャンセルしました。</p>
+      </div>
+    );
   }
 
   if (userBooking) {

@@ -13,6 +13,7 @@ export default function CancelButton({ bookingId, refundable }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState(false);
 
   async function handleCancel() {
     setLoading(true);
@@ -31,7 +32,12 @@ export default function CancelButton({ bookingId, refundable }: Props) {
       return;
     }
 
-    router.refresh();
+    setCancelled(true);
+    setTimeout(() => router.refresh(), 2000);
+  }
+
+  if (cancelled) {
+    return <p className="font-dm text-xs text-sage-600">ご予約をキャンセルしました。</p>;
   }
 
   if (error) {
