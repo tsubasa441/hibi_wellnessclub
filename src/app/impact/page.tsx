@@ -123,6 +123,12 @@ export default async function ImpactPage() {
   const countToNext = nextRank ? nextRank.minCount - totalCount : null;
 
   // ---- 紹介 ----
+  // 「紹介したお友達」の数値は、被紹介者が初回イベントにチェックインし、
+  // そのイベント終了後にポイントが確定した（rewarded）分のみをカウントする。
+  // pending（登録済みだが未参加）の段階ではまだカウントしない
+  const rewardedReferralCount = (referrals ?? []).filter(
+    (r: { status: string }) => r.status === "rewarded"
+  ).length;
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
@@ -369,7 +375,7 @@ export default async function ImpactPage() {
 
         {/* 紹介実績 */}
         <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
-          <p className="font-outfit text-xl font-bold text-ink-700">{(referrals ?? []).length}</p>
+          <p className="font-outfit text-xl font-bold text-ink-700">{rewardedReferralCount}</p>
           <p className="font-dm text-xs text-ink-300 mt-0.5">紹介したお友達</p>
         </div>
 
