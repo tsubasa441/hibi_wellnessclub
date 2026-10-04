@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Toast from "@/components/Toast";
 
 type Props = {
   bookingId: string;
@@ -37,7 +38,7 @@ export default function CancelButton({ bookingId, refundable }: Props) {
   }
 
   if (cancelled) {
-    return <p className="font-dm text-xs text-sage-600">ご予約をキャンセルしました。</p>;
+    return <Toast message="ご予約をキャンセルしました。" />;
   }
 
   if (error) {

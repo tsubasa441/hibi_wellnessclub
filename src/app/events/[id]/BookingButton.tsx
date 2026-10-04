@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import EventOptionFields, { EventOption } from "./EventOptionFields";
+import Toast from "@/components/Toast";
 
 type Event = { id: string; price: number; title: string };
 type User = { id: string };
@@ -68,11 +69,7 @@ export default function BookingButton({
   }
 
   if (cancelled) {
-    return (
-      <div className="bg-sage-100 border border-sage-200 rounded-xl p-4 text-center">
-        <p className="font-maru font-semibold text-ink-700">ご予約をキャンセルしました。</p>
-      </div>
-    );
+    return <Toast message="ご予約をキャンセルしました。" />;
   }
 
   if (userBooking) {
