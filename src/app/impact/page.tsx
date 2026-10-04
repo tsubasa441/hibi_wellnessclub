@@ -123,7 +123,6 @@ export default async function ImpactPage() {
   const countToNext = nextRank ? nextRank.minCount - totalCount : null;
 
   // ---- 紹介 ----
-  const rewardedCount = (referrals ?? []).filter((r: { status: string }) => r.status === "rewarded").length;
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
@@ -369,15 +368,9 @@ export default async function ImpactPage() {
         </div>
 
         {/* 紹介実績 */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-          <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
-            <p className="font-outfit text-xl font-bold text-ink-700">{(referrals ?? []).length}</p>
-            <p className="font-dm text-xs text-ink-300 mt-0.5">紹介した人数</p>
-          </div>
-          <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
-            <p className="font-outfit text-xl font-bold text-ink-500">{rewardedCount}</p>
-            <p className="font-dm text-xs text-ink-300 mt-0.5">報酬確定</p>
-          </div>
+        <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
+          <p className="font-outfit text-xl font-bold text-ink-700">{(referrals ?? []).length}</p>
+          <p className="font-dm text-xs text-ink-300 mt-0.5">紹介したお友達</p>
         </div>
 
         {/* 紹介履歴 */}
