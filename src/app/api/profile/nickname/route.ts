@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
-
-const NICKNAME_REGEX = /^[a-zA-Z0-9぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,20}$/;
+import { validateNickname } from "@/lib/nameValidation";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -17,11 +16,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json() as { nickname?: string };
-  const nickname = body.nickname?.trim();
-
-  if (!nickname || !NICKNAME_REGEX.test(nickname)) {
-    return NextResponse.json({ error: "ニックネームの形式が正しくありません" }, { status: 400 });
+  const result = validateNickname(body.nickname);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
   }
+  const nickname = result.value;
 
   const { error } = await supabase.from("profiles").update({ nickname }).eq("id", user.id);
 

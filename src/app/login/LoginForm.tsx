@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import AuthPhotoPanel from "@/components/AuthPhotoPanel";
 import { inputClass, labelClass, primaryButtonClass } from "@/lib/authStyles";
+import { validateName, validateNickname } from "@/lib/nameValidation";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
@@ -141,29 +142,19 @@ function LoginFormInner() {
       return;
     }
 
-    // 名前：日本語・英字・スペースのみ、1〜30文字
-    const trimmedName = name.trim();
-    if (trimmedName.length > 30) {
-      showError("30文字以内で入力してください");
+    const nameResult = validateName(name);
+    if (!nameResult.ok) {
+      showError(nameResult.error);
       return;
     }
-    const nameRegex = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
-    if (!nameRegex.test(trimmedName)) {
-      showError("お名前は日本語・英字のみ入力してください");
-      return;
-    }
+    const validName = nameResult.value;
 
-    // ニックネーム：日本語・英数字・スペースのみ、1〜20文字
-    const trimmedNickname = nickname.trim();
-    if (trimmedNickname.length > 20) {
-      showError("ニックネームは20文字以内で入力してください");
+    const nicknameResult = validateNickname(nickname);
+    if (!nicknameResult.ok) {
+      showError(nicknameResult.error);
       return;
     }
-    const nicknameRegex = /^[a-zA-Z0-9぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,20}$/;
-    if (!nicknameRegex.test(trimmedNickname)) {
-      showError("ニックネームは日本語・英数字のみ入力してください");
-      return;
-    }
+    const validNickname = nicknameResult.value;
 
     // メール：標準形式・最大254文字
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -202,16 +193,16 @@ function LoginFormInner() {
     }
 
     // ローマ字変換
-    let nameRoman = name;
+    let nameRoman = validName;
     try {
       const res = await fetch("/api/convert-name", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: validName }),
       });
       if (res.ok) {
         const data = await res.json();
-        nameRoman = data.romaji ?? name;
+        nameRoman = data.romaji ?? validName;
       }
     } catch {
       // 変換失敗時は元の名前をそのまま使用
@@ -220,7 +211,7 @@ function LoginFormInner() {
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name: validName } },
     });
 
     if (signUpError) {
@@ -243,9 +234,9 @@ function LoginFormInner() {
 
     if (signUpData.user) {
       const profileBody = JSON.stringify({
-        name: name.trim(),
+        name: validName,
         nameRoman,
-        nickname: nickname.trim(),
+        nickname: validNickname,
         gender,
         birthDate,
         referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,

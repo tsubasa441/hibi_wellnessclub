@@ -164,7 +164,7 @@
 
 ヘッダーの歯車アイコンを押すと、画面右からスライドインするドロワー（`RankGuideModal`と同じ`createPortal`＋`fixed inset-0 bg-black/50`のオーバーレイパターンを踏襲、背景は白）が開き、以下を提供する。
 
-- **ニックネーム変更**：現在のニックネーム表示＋「変更する」でインライン編集。保存は`POST /api/profile/nickname`（サインアップ時と同じバリデーション：1〜20文字、絵文字・記号のみ不可）
+- **ニックネーム変更**：現在のニックネーム表示＋「変更する」でインライン編集。保存は`POST /api/profile/nickname`（サインアップ時と同じバリデーション、`src/lib/nameValidation.ts` の `validateNickname`：1〜20文字、漢字・ひらがな・カタカナ・英数字・スペースと文字間の「ー」「・」のみ。記号・絵文字は不可。全角英数字・半角カナは NFKC で揃えてから判定・保存）
 - **パスワード変更**：現在のパスワード・新しいパスワード・確認の3つを入力。`signInWithPassword`で現在のパスワードを確認してから`updateUser`で変更する（本人以外がログイン中の端末を操作しただけで変更できてしまわないようにするため）。バリデーション（`src/lib/passwordPolicy.ts`）・失敗時の文言（`src/lib/passwordUpdateError.ts`）は再設定画面（`/auth/reset-password`）と共通
 - **クレジットカード**：現在の保存済みカード（ブランド・下4桁・有効期限）を表示、無い場合は「登録されていません」。行を押すとインラインで Square のカード入力欄が開き、保存は`POST /api/payment-methods/square`（クレジットカード保存機能、`docs/funcdocument.md`の5-2参照）。入力欄の読み込み・トークン化は`src/lib/useSquareCard.ts`を`CheckoutForm`と共用
 - **ログアウト**

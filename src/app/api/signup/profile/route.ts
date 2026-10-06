@@ -4,12 +4,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt } from "@/lib/encrypt";
 import { getJstParts } from "@/lib/date";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
+import { validateName, validateNickname } from "@/lib/nameValidation";
 
-const NAME_REGEX = /^[a-zA-Z぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,30}$/;
 // ローマ字変換（kuroshiro）は長音を ō 等のマクロン付き文字で返すため、
 // a-z の範囲だけでなく Unicode の文字全般（\p{L}）を許容する
 const NAME_ROMAN_REGEX = /^[\p{L}\s　'-]{1,100}$/u;
-const NICKNAME_REGEX = /^[a-zA-Z0-9぀-ゟ゠-ヿ一-龯･-ﾟ\s　]{1,20}$/;
 const BIRTH_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const REFERRAL_CODE_REGEX = /^[A-Z0-9]{1,20}$/;
 const GENDERS = new Set(["male", "female", "other"]);
@@ -32,14 +31,16 @@ export async function POST(req: NextRequest) {
     referralCode?: string;
   };
 
-  if (!body.name || !NAME_REGEX.test(body.name.trim())) {
-    return NextResponse.json({ error: "名前の形式が正しくありません" }, { status: 400 });
+  const nameResult = validateName(body.name);
+  if (!nameResult.ok) {
+    return NextResponse.json({ error: nameResult.error }, { status: 400 });
   }
   if (body.nameRoman && !NAME_ROMAN_REGEX.test(body.nameRoman.trim())) {
     return NextResponse.json({ error: "nameRoman の形式が正しくありません" }, { status: 400 });
   }
-  if (!body.nickname || !NICKNAME_REGEX.test(body.nickname.trim())) {
-    return NextResponse.json({ error: "ニックネームの形式が正しくありません" }, { status: 400 });
+  const nicknameResult = validateNickname(body.nickname);
+  if (!nicknameResult.ok) {
+    return NextResponse.json({ error: nicknameResult.error }, { status: 400 });
   }
   if (!body.gender || !GENDERS.has(body.gender)) {
     return NextResponse.json({ error: "性別の値が正しくありません" }, { status: 400 });
@@ -56,10 +57,10 @@ export async function POST(req: NextRequest) {
   }
 
   const updates: Record<string, string> = {};
-  updates.name = encrypt(body.name.trim());
+  updates.name = encrypt(nameResult.value);
   if (body.nameRoman) updates.name_roman = encrypt(body.nameRoman.trim());
   // ニックネームは本人が公開を意図した表示名のため暗号化しない（docs/codingstandards.md参照）
-  updates.nickname = body.nickname.trim();
+  updates.nickname = nicknameResult.value;
   updates.gender = encrypt(body.gender);
   updates.birth_date = encrypt(body.birthDate);
   if (body.referralCode) updates.referral_code_used = encrypt(body.referralCode);

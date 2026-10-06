@@ -94,6 +94,8 @@ describe("POST /api/signup/profile: 入力バリデーション", () => {
     ["nickname が無い", { nickname: undefined }],
     ["nickname が21文字", { nickname: "a".repeat(21) }],
     ["nickname が絵文字のみ", { nickname: "😀😀" }],
+    ["nickname に記号を含む", { nickname: "mai." }],
+    ["name が長音符だけ", { name: "ー" }],
     ["gender が不正値", { gender: "unknown" }],
     ["gender が無い", { gender: undefined }],
     ["birthDate が形式不正", { birthDate: "2000/01/15" }],
@@ -135,6 +137,21 @@ describe("POST /api/signup/profile: 保存内容", () => {
       gender: "enc(male)",
       birth_date: "enc(2000-01-15)",
     });
+  });
+
+  it("々・異体字を含む氏名を受け付け、全角英数字・全角スペースは揃えて保存する", async () => {
+    const { profileUpdateSpy } = setup();
+    const res = await POST(makeRequest(validBody({ name: "佐々木　花子", nickname: "ＭＡＩ１２３" })));
+    expect(res.status).toBe(200);
+    expect(profileUpdateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "enc(佐々木 花子)", nickname: "MAI123" })
+    );
+  });
+
+  it("入力チェックの失敗理由を具体的に返す", async () => {
+    setup();
+    const res = await POST(makeRequest(validBody({ nickname: "mai." })));
+    expect((await res.json()).error).toContain("記号・絵文字は使えません");
   });
 
   it("nameRoman を省略した場合は name_roman を更新対象に含めない", async () => {

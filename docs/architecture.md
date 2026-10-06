@@ -138,6 +138,7 @@ src/
 │   ├── email.ts                # メール送信（Resend）
 │   ├── encrypt.ts              # 名前の暗号化・復号
 │   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）・選択項目の検証とスナップショット組み立て
+│   ├── nameValidation.ts       # 氏名・ニックネームの正規化（NFKC）と入力チェック（新規登録フォーム・登録 API・ニックネーム変更 API で共通）
 │   ├── paypayReconcile.ts      # pending な PayPay 予約の照会・確定／期限切れの解放（/bookings・/events/[id] のロード時に実行）
 │   ├── paypayProxy.ts          # PayPay SDK呼び出しを固定IPプロキシ経由にする一時ラッパー（PAYPAY_PROXY_URL未設定時は素通し）
 │   ├── points.ts               # ポイント付与・取り消しロジック
