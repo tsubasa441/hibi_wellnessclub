@@ -283,7 +283,9 @@ describe("POST /api/bookings/[id]/cancel", () => {
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body.error).toContain("card network error");
+    expect(body.error).toContain("返金処理に失敗しました");
+    // Square のエラー本文は画面に出さない
+    expect(body.error).not.toContain("card network error");
     expect(mocks.revokeEventPoints).not.toHaveBeenCalled();
   });
 });

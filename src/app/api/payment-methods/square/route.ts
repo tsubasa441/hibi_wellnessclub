@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { getOrCreateCustomerId, saveCard, disableCard, persistSavedCard } from "@/lib/squareCards";
+import { squareErrorCodes, squareErrorMessage } from "@/lib/squareErrors";
+import * as Sentry from "@sentry/nextjs";
 
 // 設定画面からのクレジットカード登録・変更（決済を伴わない）
 export async function POST(req: NextRequest) {
@@ -38,8 +40,16 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ brand: card.brand, last4: card.last4, expMonth: card.expMonth, expYear: card.expYear });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "カードの保存に失敗しました";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const codes = squareErrorCodes(err);
+    Sentry.captureException(err, {
+      level: codes.length > 0 ? "warning" : "error",
+      tags: { area: "square_card_save", step: "settings" },
+      extra: { squareErrorCodes: codes },
+    });
+    return NextResponse.json(
+      { error: squareErrorMessage(err, "カードの登録に失敗しました。時間をおいて再度お試しください。") },
+      { status: codes.length > 0 ? 400 : 500 }
+    );
   }
 }
 

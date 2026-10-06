@@ -147,7 +147,8 @@ src/
 │   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）
 │   ├── squareClient.ts         # Square クライアントの共通生成（決済APIとカード保存ヘルパーで使い回す）
 │   ├── squareCards.ts          # クレジットカード保存機能: Customer/Card on File の作成・保存・無効化（/api/payments/square・/api/payment-methods/square から使用）
-│   ├── useSquareCard.ts        # Square カード入力欄（Web Payments SDK）の読み込み・トークン化の共通フック（CheckoutForm・SettingsDrawer から使用）
+│   ├── squareErrors.ts         # Square API のエラーコードをユーザー向けの日本語の案内に変換（Square のエラー本文は画面に出さない）
+│   ├── useSquareCard.ts        # Square カード入力欄（Web Payments SDK）の読み込み・トークン化の共通フック（CheckoutForm・SettingsDrawer から使用）。tokenize に 3-D セキュア用の verificationDetails を渡す
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）
 ├── instrumentation.ts          # Sentry初期化フック（サーバー/Edge、Next.js標準の起動フック）
 └── instrumentation-client.ts   # Sentry初期化（ブラウザ側）

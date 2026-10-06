@@ -118,8 +118,7 @@ export async function POST(
         tags: { area: "booking_cancel_refund", payment_method: "square" },
         extra: { bookingId, amountCharged: booking.amount_charged },
       });
-      const message = err instanceof Error ? err.message : "Square 返金に失敗しました";
-      return NextResponse.json({ error: `予約はキャンセルされましたが、${message}。サポートまでお問い合わせください。` }, { status: 500 });
+      return NextResponse.json({ error: "予約はキャンセルされましたが、返金処理に失敗しました。サポートまでお問い合わせください。" }, { status: 500 });
     }
   }
 
@@ -176,8 +175,7 @@ export async function POST(
         tags: { area: "booking_cancel_refund", payment_method: "paypay" },
         extra: { bookingId, amountCharged: booking.amount_charged },
       });
-      const message = err instanceof Error ? err.message : "PayPay 返金に失敗しました";
-      return NextResponse.json({ error: `予約はキャンセルされましたが、${message}。サポートまでお問い合わせください。` }, { status: 500 });
+      return NextResponse.json({ error: "予約はキャンセルされましたが、PayPay 返金に失敗しました。サポートまでお問い合わせください。" }, { status: 500 });
     }
   }
 

@@ -9,9 +9,11 @@ const mocks = vi.hoisted(() => ({
   customersCreate: vi.fn(),
   cardsCreate: vi.fn(),
   cardsDisable: vi.fn().mockResolvedValue({}),
+  captureException: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
+vi.mock("@sentry/nextjs", () => ({ captureException: mocks.captureException }));
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
@@ -109,15 +111,39 @@ describe("POST /api/payment-methods/square", () => {
     expect(mocks.cardsDisable).toHaveBeenCalledWith({ cardId: "sq-card-old" });
   });
 
-  it("カード保存に失敗した場合は500", async () => {
+  it("カード保存が想定外のエラーで失敗した場合は500で汎用の案内を返し、Sentry に記録する", async () => {
     setupSupabase({ square_customer_id: "sq-customer-old", square_card_id: null });
-    mocks.cardsCreate.mockRejectedValueOnce(new Error("invalid card"));
+    mocks.cardsCreate.mockRejectedValueOnce(new Error("network error"));
 
     const res = await POST(makeRequest({ sourceId: "nonce-3" }));
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body.error).toBe("invalid card");
+    expect(body.error).toContain("カードの登録に失敗しました");
+    expect(body.error).not.toContain("network error");
+    expect(mocks.captureException).toHaveBeenCalled();
+  });
+
+  it("Square がカードを拒否した場合は400で日本語の案内を返し、Square のエラー本文は返さない", async () => {
+    setupSupabase({ square_customer_id: "sq-customer-old", square_card_id: "sq-card-old" });
+    mocks.cardsCreate.mockRejectedValueOnce(
+      Object.assign(new Error('Status code: 400 Body: {"errors":[{"code":"INVALID_CARD_DATA"}]}'), {
+        errors: [{ category: "INVALID_REQUEST_ERROR", code: "INVALID_CARD_DATA", detail: "Invalid card data." }],
+      })
+    );
+
+    const res = await POST(makeRequest({ sourceId: "nonce-4" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toContain("カードがご利用いただけませんでした");
+    expect(body.error).not.toContain("Status code");
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ extra: { squareErrorCodes: ["INVALID_CARD_DATA"] } })
+    );
+    // 失敗した場合、既存の保存カードは無効化しない
+    expect(mocks.cardsDisable).not.toHaveBeenCalled();
   });
 });
 

@@ -16,9 +16,47 @@ interface SquarePayments {
 
 interface SquareCard {
   attach: (selector: string) => Promise<void>;
-  tokenize: () => Promise<{ status: string; token?: string; errors?: { message: string }[] }>;
+  tokenize: (verificationDetails?: CardVerificationDetails) => Promise<{ status: string; token?: string; errors?: { message: string }[] }>;
   destroy: () => Promise<void>;
 }
+
+// 個人情報を Square に追加で渡さないため、国コードのみ指定する
+type BillingContact = { countryCode: "JP" };
+
+// 3-D セキュア（本人認証）用。Square の charge-and-store / store の公式フローに合わせて tokenize() に渡す
+export type CardVerificationDetails =
+  | {
+      intent: "CHARGE_AND_STORE";
+      amount: string;
+      currencyCode: "JPY";
+      billingContact: BillingContact;
+      customerInitiated: true;
+      sellerKeyedIn: false;
+    }
+  | {
+      intent: "STORE";
+      billingContact: BillingContact;
+      customerInitiated: true;
+      sellerKeyedIn: false;
+    };
+
+export function chargeAndStoreVerification(amount: number): CardVerificationDetails {
+  return {
+    intent: "CHARGE_AND_STORE",
+    amount: String(amount),
+    currencyCode: "JPY",
+    billingContact: { countryCode: "JP" },
+    customerInitiated: true,
+    sellerKeyedIn: false,
+  };
+}
+
+export const STORE_VERIFICATION: CardVerificationDetails = {
+  intent: "STORE",
+  billingContact: { countryCode: "JP" },
+  customerInitiated: true,
+  sellerKeyedIn: false,
+};
 
 function loadSquareScript(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -73,11 +111,12 @@ export function useSquareCard(containerId: string, active: boolean, locationId: 
     };
   }, [active, containerId, locationId]);
 
-  async function tokenize(): Promise<string> {
+  async function tokenize(verificationDetails: CardVerificationDetails): Promise<string> {
     if (!cardRef.current) throw new Error("カードフォームが準備できていません");
-    const result = await cardRef.current.tokenize();
+    const result = await cardRef.current.tokenize(verificationDetails);
     if (result.status !== "OK" || !result.token) {
-      throw new Error(result.errors?.[0]?.message ?? "カード情報の取得に失敗しました");
+      // SDK のエラー文は英語のため表示しない
+      throw new Error("カード情報を確認できませんでした。入力内容をご確認のうえ、もう一度お試しください。");
     }
     return result.token;
   }

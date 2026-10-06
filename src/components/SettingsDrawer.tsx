@@ -9,7 +9,7 @@ import PasswordInput from "@/components/PasswordInput";
 import { validatePasswordFormat } from "@/lib/passwordPolicy";
 import { passwordUpdateErrorMessage } from "@/lib/passwordUpdateError";
 import { inputClass, labelClass } from "@/lib/authStyles";
-import { useSquareCard } from "@/lib/useSquareCard";
+import { useSquareCard, STORE_VERIFICATION } from "@/lib/useSquareCard";
 
 type SavedCard = { brand: string | null; last4: string | null; expMonth: number | null; expYear: number | null } | null;
 
@@ -129,7 +129,7 @@ export default function SettingsDrawer({ nickname, savedCard = null }: Props) {
     setSavingCard(true);
 
     try {
-      const sourceId = await tokenizeCard();
+      const sourceId = await tokenizeCard(STORE_VERIFICATION);
       const res = await fetch("/api/payment-methods/square", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

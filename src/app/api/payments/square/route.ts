@@ -8,8 +8,11 @@ import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
 import { getOrCreateCustomerId, saveCard, disableCard, persistSavedCard } from "@/lib/squareCards";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
+import { squareErrorCodes, squareErrorMessage } from "@/lib/squareErrors";
+import * as Sentry from "@sentry/nextjs";
 
 const squareClient = getSquareClient();
+const PAYMENT_FALLBACK_MESSAGE = "決済を完了できませんでした。時間をおいて再度お試しください。";
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -163,27 +166,30 @@ export async function POST(req: NextRequest) {
   const existingCustomerId: string | null = cardProfile?.square_customer_id ?? null;
   const existingCardId: string | null = cardProfile?.square_card_id ?? null;
 
-  // 決済前に新規保存したカード（決済が失敗した場合はロールバックで無効化する）
-  let newlyCreatedCard: Awaited<ReturnType<typeof saveCard>> | null = null;
   let chargeSourceId: string;
   let chargeCustomerId: string;
 
-  try {
-    if (useSavedCard) {
-      if (!existingCardId || !existingCustomerId) {
-        return NextResponse.json({ error: "保存されたカードがありません" }, { status: 400 });
-      }
-      chargeSourceId = existingCardId;
-      chargeCustomerId = existingCustomerId;
-    } else {
-      chargeCustomerId = await getOrCreateCustomerId(supabase, user.id, existingCustomerId, user.email ?? null);
-      newlyCreatedCard = await saveCard(chargeCustomerId, sourceId);
-      chargeSourceId = newlyCreatedCard.cardId;
+  if (useSavedCard) {
+    if (!existingCardId || !existingCustomerId) {
+      if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
+      return NextResponse.json({ error: "保存されたカードがありません" }, { status: 400 });
     }
-  } catch (err) {
-    if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
-    const message = err instanceof Error ? err.message : "カードの処理に失敗しました";
-    return NextResponse.json({ error: message }, { status: 500 });
+    chargeSourceId = existingCardId;
+    chargeCustomerId = existingCustomerId;
+  } else {
+    try {
+      chargeCustomerId = await getOrCreateCustomerId(supabase, user.id, existingCustomerId, user.email ?? null);
+    } catch (err) {
+      Sentry.captureException(err, {
+        tags: { area: "square_payment", step: "customer" },
+        extra: { squareErrorCodes: squareErrorCodes(err) },
+      });
+      if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
+      return NextResponse.json({ error: PAYMENT_FALLBACK_MESSAGE }, { status: 500 });
+    }
+    // Square 公式の charge-and-store の順序：まずノンスで課金し、成功した決済からカードを保存する。
+    // 保存できないカードでも支払い自体は成立させるため、保存は決済成功後に行う
+    chargeSourceId = sourceId;
   }
 
   // Square 決済実行
@@ -201,7 +207,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (payment?.status !== "COMPLETED") {
-      if (newlyCreatedCard) await disableCard(newlyCreatedCard.cardId);
+      Sentry.captureMessage("Square payment not completed", {
+        level: "warning",
+        tags: { area: "square_payment", step: "charge" },
+        extra: { paymentStatus: payment?.status ?? null },
+      });
       if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
       return NextResponse.json({ error: "決済に失敗しました" }, { status: 400 });
     }
@@ -229,20 +239,21 @@ export async function POST(req: NextRequest) {
           amountMoney: { amount: BigInt(amountToCharge), currency: "JPY" },
           reason: "予約作成失敗による自動返金",
         });
-      } catch {
+      } catch (refundErr) {
+        Sentry.captureException(refundErr, {
+          tags: { area: "square_payment", step: "auto_refund" },
+          extra: { bookingId, squareErrorCodes: squareErrorCodes(refundErr) },
+        });
         return NextResponse.json({ error: "予約の作成に失敗し、返金処理にも失敗しました。サポートまでお問い合わせください。" }, { status: 500 });
       }
       if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
       return NextResponse.json({ error: "予約の作成に失敗したため、決済を取り消しました" }, { status: 500 });
     }
 
-    // 決済に成功したカードだけを「保存されたカード」として確定する（新しいカードを使った場合のみ）
-    if (newlyCreatedCard) {
-      await persistSavedCard(supabase, user.id, newlyCreatedCard);
-      if (existingCardId && existingCardId !== newlyCreatedCard.cardId) {
-        await disableCard(existingCardId);
-      }
-    }
+    // 新しいカードで支払った場合のみ、成功した決済からカードを保存する。保存に失敗しても予約は確定済みのため成功として返す
+    const cardSaved = useSavedCard
+      ? null
+      : await saveCardFromPayment(supabase, user.id, chargeCustomerId, payment.id!, existingCardId);
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({
@@ -259,11 +270,43 @@ export async function POST(req: NextRequest) {
       pointsUsed: requestedPoints,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(cardSaved === null ? { success: true } : { success: true, cardSaved });
   } catch (err) {
-    if (newlyCreatedCard) await disableCard(newlyCreatedCard.cardId);
+    const codes = squareErrorCodes(err);
+    Sentry.captureException(err, {
+      level: codes.length > 0 ? "warning" : "error",
+      tags: { area: "square_payment", step: "charge" },
+      extra: { squareErrorCodes: codes, useSavedCard: !!useSavedCard },
+    });
     if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
-    const message = err instanceof Error ? err.message : "決済処理中にエラーが発生しました";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: squareErrorMessage(err, PAYMENT_FALLBACK_MESSAGE) },
+      { status: codes.length > 0 ? 400 : 500 }
+    );
+  }
+}
+
+// 成功した決済（paymentId）からカードを保存し、古い保存カードを差し替える。失敗は Sentry に記録して false を返す
+async function saveCardFromPayment(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  customerId: string,
+  paymentId: string,
+  existingCardId: string | null
+): Promise<boolean> {
+  try {
+    const card = await saveCard(customerId, paymentId);
+    await persistSavedCard(supabase, userId, card);
+    if (existingCardId && existingCardId !== card.cardId) {
+      await disableCard(existingCardId);
+    }
+    return true;
+  } catch (err) {
+    Sentry.captureException(err, {
+      level: "warning",
+      tags: { area: "square_card_save", step: "after_payment" },
+      extra: { squareErrorCodes: squareErrorCodes(err) },
+    });
+    return false;
   }
 }

@@ -16,6 +16,13 @@ const mocks = vi.hoisted(() => ({
   refundUsedPoints: vi.fn().mockResolvedValue(undefined),
   createServerClient: vi.fn(),
   createServiceClient: vi.fn(),
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: mocks.captureException,
+  captureMessage: mocks.captureMessage,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -268,7 +275,7 @@ describe("POST /api/payments/square", () => {
     );
   });
 
-  it("決済が完了しなかった場合は400を返し、充当済みポイントを払い戻し、新しく保存したカードもロールバック（無効化）する", async () => {
+  it("決済が完了しなかった場合は400を返し、充当済みポイントを払い戻し、カードは保存しない", async () => {
     mocks.paymentsCreate.mockResolvedValueOnce({ payment: { id: "sq-pay-2", status: "FAILED" } });
     mocks.spendPointsForBooking.mockResolvedValueOnce(true);
     const { persistCardSpy } = setupSupabase({ event: makeEvent({ price: 3000 }), withCardCharge: true });
@@ -279,13 +286,13 @@ describe("POST /api/payments/square", () => {
     expect(res.status).toBe(400);
     expect(body.error).toContain("決済に失敗");
     expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String));
-    // 決済前に保存した新しいカード（sq-card-1、デフォルトのモック）は、決済失敗のため無効化される
-    expect(mocks.cardsDisable).toHaveBeenCalledWith({ cardId: "sq-card-1" });
-    // profiles にはカード情報を書き込まない（決済に成功したカードだけを保存する方針）
+    // 課金してから保存する順序のため、失敗した決済のカードは Square にも profiles にも保存されない
+    expect(mocks.cardsCreate).not.toHaveBeenCalled();
+    expect(mocks.cardsDisable).not.toHaveBeenCalled();
     expect(persistCardSpy).not.toHaveBeenCalled();
   });
 
-  it("新しいカードで決済に成功した場合、決済成功後にカードを保存し、既存の保存カードがあれば無効化する", async () => {
+  it("新しいカードの場合、ノンスで課金してから、成功した決済のIDでカードを保存し、既存の保存カードを無効化する", async () => {
     mocks.paymentsCreate.mockResolvedValueOnce({ payment: { id: "sq-pay-5", status: "COMPLETED" } });
     const { insertSpy, persistCardSpy } = setupSupabase({
       event: makeEvent({ price: 3000 }),
@@ -298,22 +305,73 @@ describe("POST /api/payments/square", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
+    expect(body).toEqual({ success: true, cardSaved: true });
     // 既存の customer をそのまま使う（新規作成しない）
     expect(mocks.customersCreate).not.toHaveBeenCalled();
-    expect(mocks.cardsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceId: "src-new", card: { customerId: "sq-customer-old" } })
-    );
-    // 決済は「保存した新カードのID」を sourceId として使う（ノンスは使い回さない）
+    // 課金はノンスで行う（Square 公式の charge-and-store の順序）
     expect(mocks.paymentsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceId: "sq-card-1", customerId: "sq-customer-old" })
+      expect.objectContaining({ sourceId: "src-new", customerId: "sq-customer-old" })
     );
+    // カードの保存は、成功した決済の ID を sourceId にする
+    expect(mocks.cardsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceId: "sq-pay-5", card: { customerId: "sq-customer-old" } })
+    );
+    expect(mocks.paymentsCreate.mock.invocationCallOrder[0]).toBeLessThan(mocks.cardsCreate.mock.invocationCallOrder[0]);
     expect(insertSpy).toHaveBeenCalledWith(expect.objectContaining({ payment_id: "sq-pay-5" }));
     // 新しいカード情報を保存し、古いカードは無効化する
     expect(persistCardSpy).toHaveBeenCalledWith(
       expect.objectContaining({ square_card_id: "sq-card-1", card_brand: "VISA", card_last4: "4242" })
     );
     expect(mocks.cardsDisable).toHaveBeenCalledWith({ cardId: "sq-card-old" });
+  });
+
+  it("決済成功後のカード保存に失敗しても、予約は確定し成功を返す（古いカードは残し、Sentry に記録する）", async () => {
+    mocks.paymentsCreate.mockResolvedValueOnce({ payment: { id: "sq-pay-7", status: "COMPLETED" } });
+    mocks.cardsCreate.mockRejectedValueOnce(
+      Object.assign(new Error("Status code: 400"), { errors: [{ category: "INVALID_REQUEST_ERROR", code: "INVALID_CARD_DATA" }] })
+    );
+    const { insertSpy, persistCardSpy } = setupSupabase({
+      event: makeEvent({ price: 3000 }),
+      withCardCharge: true,
+      cardProfile: { square_customer_id: "sq-customer-old", square_card_id: "sq-card-old" },
+    });
+
+    const res = await POST(makeRequest({ eventId: "event-1", sourceId: "src-jcb" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body).toEqual({ success: true, cardSaved: false });
+    expect(insertSpy).toHaveBeenCalledWith(expect.objectContaining({ payment_id: "sq-pay-7", payment_status: "paid" }));
+    expect(mocks.refundPayment).not.toHaveBeenCalled();
+    expect(persistCardSpy).not.toHaveBeenCalled();
+    expect(mocks.cardsDisable).not.toHaveBeenCalled();
+    expect(mocks.sendBookingConfirmation).toHaveBeenCalled();
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        tags: expect.objectContaining({ area: "square_card_save" }),
+        extra: { squareErrorCodes: ["INVALID_CARD_DATA"] },
+      })
+    );
+  });
+
+  it("カードが拒否された場合は400で日本語の案内を返し、Square のエラー本文は返さない", async () => {
+    mocks.paymentsCreate.mockRejectedValueOnce(
+      Object.assign(new Error('Status code: 402 Body: {"errors":[{"code":"GENERIC_DECLINE"}]}'), {
+        errors: [{ category: "PAYMENT_METHOD_ERROR", code: "GENERIC_DECLINE", detail: "Authorization error" }],
+      })
+    );
+    mocks.spendPointsForBooking.mockResolvedValueOnce(true);
+    setupSupabase({ event: makeEvent({ price: 3000 }), withCardCharge: true });
+
+    const res = await POST(makeRequest({ eventId: "event-1", sourceId: "src-1", pointsToUse: 500 }));
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toContain("カードがご利用いただけませんでした");
+    expect(body.error).not.toContain("Status code");
+    expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String));
+    expect(mocks.cardsCreate).not.toHaveBeenCalled();
   });
 
   it("useSavedCard:true の場合、保存済みカードでそのまま課金し、カードの新規保存は行わない", async () => {
@@ -340,15 +398,17 @@ describe("POST /api/payments/square", () => {
     expect(mocks.cardsDisable).not.toHaveBeenCalled();
   });
 
-  it("useSavedCard:true だが保存済みカードが無い場合は400を返す", async () => {
+  it("useSavedCard:true だが保存済みカードが無い場合は400を返し、充当済みポイントを払い戻す", async () => {
+    mocks.spendPointsForBooking.mockResolvedValueOnce(true);
     setupSupabase({ event: makeEvent({ price: 3000 }), withCardCharge: true });
 
-    const res = await POST(makeRequest({ eventId: "event-1", useSavedCard: true }));
+    const res = await POST(makeRequest({ eventId: "event-1", useSavedCard: true, pointsToUse: 500 }));
     const body = await res.json();
 
     expect(res.status).toBe(400);
     expect(body.error).toContain("保存されたカードがありません");
     expect(mocks.paymentsCreate).not.toHaveBeenCalled();
+    expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String));
   });
 
   it("決済成功後に予約作成が失敗した場合、自動返金しポイントも払い戻す", async () => {
@@ -380,7 +440,7 @@ describe("POST /api/payments/square", () => {
     expect(body.error).toContain("返金処理にも失敗しました");
   });
 
-  it("決済APIが例外を投げた場合は500を返しポイントを払い戻す", async () => {
+  it("決済APIが例外を投げた場合は500で汎用の案内を返し、ポイントを払い戻す", async () => {
     mocks.paymentsCreate.mockRejectedValueOnce(new Error("network error"));
     mocks.spendPointsForBooking.mockResolvedValueOnce(true);
     setupSupabase({ event: makeEvent({ price: 3000 }), withCardCharge: true });
@@ -389,7 +449,8 @@ describe("POST /api/payments/square", () => {
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body.error).toBe("network error");
+    expect(body.error).toContain("決済を完了できませんでした");
+    expect(mocks.captureException).toHaveBeenCalled();
     expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String));
   });
 });

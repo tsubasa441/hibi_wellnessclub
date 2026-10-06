@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useSquareCard } from "@/lib/useSquareCard";
+import { useSquareCard, chargeAndStoreVerification } from "@/lib/useSquareCard";
 
 type Event = { id: string; title: string; price: number };
 type PaymentMethod = "square" | "paypay";
@@ -55,7 +55,7 @@ export default function CheckoutForm({
       let sourceId = "FREE";
 
       if (needsCardInput) {
-        sourceId = await tokenize();
+        sourceId = await tokenize(chargeAndStoreVerification(discountedAmount));
       }
 
       const res = await fetch(`/api/payments/${method}`, {

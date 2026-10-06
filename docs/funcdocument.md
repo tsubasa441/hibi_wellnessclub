@@ -230,12 +230,15 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 
 生のカード番号・CVV は Square Web Payments SDK がブラウザ上でトークン化した時点で Square 側に渡り、Hibi のサーバーには一切届かない。Hibi が保存するのは Square の識別子（`square_customer_id`・`square_card_id`）と、表示用の非機微情報（ブランド・下4桁・有効期限）のみで、PCI DSS 上も暗号化対象の機微情報ではない（`docs/codingstandards.md` の氏名等の暗号化ルールの対象外、nickname と同じ扱い）。
 
-**カードを保存する順序**：Web Payments SDK の `tokenize()` が返すノンスは一度きりしか使えないため、「保存してから課金する」順序で実装している（Square 公式の案内どおり）。
+**カードを保存する順序**（2026-10-07 変更）：Square 公式の charge-and-store の手順どおり、「課金してから、成功した決済からカードを保存する」順序で実装している。
 
-1. ノンスで `Cards.CreateCard`（`customerId` に紐付け）→ `card.id` を得る（＝カードの保存）
-2. その `card.id` を `sourceId` に、`customerId` を添えて `Payments.CreatePayment`（＝課金）
+1. ブラウザで `tokenize()` に本人認証（3-D セキュア）用の `verificationDetails`（`intent: "CHARGE_AND_STORE"`・金額・`currencyCode: "JPY"`・`billingContact: { countryCode: "JP" }`）を渡してノンスを得る。カード会社が求める場合は Square の認証画面が表示される
+2. ノンスを `sourceId` に、`customerId` を添えて `Payments.CreatePayment`（＝課金）
+3. 課金に成功したら、その **決済の ID** を `sourceId` にして `Cards.CreateCard`（＝カードの保存）→ `profiles` に書き込み、古い保存カードを `Cards.DisableCard` で無効化
 
-決済が失敗した場合は、直前に保存したカードを `Cards.DisableCard` で無効化し、`profiles` にも書き込まない（保存されるのは、実際に決済が成功したカードだけ）。共通ロジックは `src/lib/squareCards.ts` にまとめ、決済 API（`/api/payments/square`）と設定画面用 API（`/api/payment-methods/square`）の両方から呼ぶ。カード入力欄の読み込み・トークン化ロジックも `src/lib/useSquareCard.ts` に共通化し、`CheckoutForm.tsx`・`SettingsDrawer.tsx` の両方から使う。
+カードの保存に失敗しても、予約・決済は確定済みとして成功を返す（そのカードが保存されないだけ。失敗は Sentry に `area=square_card_save` で記録）。以前は「保存してから課金する」順序だったが、Square に保存できないカード（本番で JCB カードの `INVALID_CARD_DATA` を確認、2026-10-04）だと支払い自体ができなくなるため変更した。設定画面からの登録は `intent: "STORE"` でノンスを得て、ノンスをそのまま `Cards.CreateCard` に渡す。
+
+Square のエラー本文はユーザーに表示しない。`src/lib/squareErrors.ts` でエラーコードを日本語の案内（カードが利用できない・セキュリティコード・有効期限・残高不足など）に変換し、詳細は Sentry に記録する。共通ロジックは `src/lib/squareCards.ts` にまとめ、決済 API（`/api/payments/square`）と設定画面用 API（`/api/payment-methods/square`）の両方から呼ぶ。カード入力欄の読み込み・トークン化ロジックも `src/lib/useSquareCard.ts` に共通化し、`CheckoutForm.tsx`・`SettingsDrawer.tsx` の両方から使う。
 
 ---
 
