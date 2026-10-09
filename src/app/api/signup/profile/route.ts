@@ -5,6 +5,7 @@ import { encrypt } from "@/lib/encrypt";
 import { getJstParts } from "@/lib/date";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { validateName, validateNickname } from "@/lib/nameValidation";
+import * as Sentry from "@sentry/nextjs";
 
 // ローマ字変換（kuroshiro）は長音を ō 等のマクロン付き文字で返すため、
 // a-z の範囲だけでなく Unicode の文字全般（\p{L}）を許容する
@@ -66,7 +67,10 @@ export async function POST(req: NextRequest) {
   if (body.referralCode) updates.referral_code_used = encrypt(body.referralCode);
 
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    Sentry.captureException(error, { tags: { area: "signup_profile" } });
+    return NextResponse.json({ error: "プロフィールの保存に失敗しました" }, { status: 500 });
+  }
 
   // 紹介コードがある場合、referrals レコードを pending で作成する。
   // 200pt の付与は被紹介者が初回イベントにチェックインし、そのイベントが終了した後に

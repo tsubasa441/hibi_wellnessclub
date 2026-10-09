@@ -7,8 +7,10 @@ const mocks = vi.hoisted(() => ({
   createServerClient: vi.fn(),
   createServiceClient: vi.fn(),
   checkRateLimit: vi.fn().mockResolvedValue(true),
+  captureException: vi.fn(),
 }));
 
+vi.mock("@sentry/nextjs", () => ({ captureException: mocks.captureException }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@/lib/rateLimit", () => ({
@@ -173,6 +175,9 @@ describe("POST /api/signup/profile: 保存内容", () => {
     });
     const res = await POST(makeRequest(validBody({ referralCode: "ABC123" })));
     expect(res.status).toBe(500);
+    // DB のエラー内容は画面に返さない
+    expect((await res.json()).error).toBe("プロフィールの保存に失敗しました");
+    expect(mocks.captureException).toHaveBeenCalled();
     expect(referralInsertSpy).not.toHaveBeenCalled();
   });
 });
