@@ -36,10 +36,11 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     // 送信に失敗した理由（送信数の上限・SMTP の不具合等）を後から調べられるよう、個人情報を含まない情報だけ記録する
+    // （項目名に "auth" を含めると Sentry のデータ保護で値が [Filtered] になるため supabaseError* にしている）
     Sentry.captureMessage("Password reset email failed to send", {
       level: "error",
       tags: { area: "auth_recovery" },
-      extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name, authErrorText: error.message },
+      extra: { supabaseErrorCode: error.code, supabaseErrorStatus: error.status, supabaseErrorName: error.name, supabaseErrorText: error.message },
     });
     return NextResponse.json(
       { error: "メールの送信に失敗しました。しばらく経ってから再試行してください。" },

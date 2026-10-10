@@ -107,7 +107,7 @@ export default function SettingsDrawer({ nickname, savedCard = null }: Props) {
       Sentry.captureMessage("Password update failed in settings drawer", {
         level: "warning",
         tags: { area: "auth_settings" },
-        extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name },
+        extra: { supabaseErrorCode: error.code, supabaseErrorStatus: error.status, supabaseErrorName: error.name },
       });
       setPasswordError(passwordUpdateErrorMessage(error));
       return;

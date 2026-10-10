@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   Sentry.captureMessage("Recovery link verification failed", {
     level: "warning",
     tags: { area: "auth_recovery" },
-    extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name, authErrorText: error.message },
+    extra: { supabaseErrorCode: error.code, supabaseErrorStatus: error.status, supabaseErrorName: error.name, supabaseErrorText: error.message },
   });
   return invalid();
 }

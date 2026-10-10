@@ -102,7 +102,7 @@ describe("POST /auth/confirm（確認ページのボタンで検証する）", (
     await runPost({ token_hash: "secret-token-value", type: "recovery", next: "" });
     expect(mocks.captureMessage).toHaveBeenCalledWith(
       "Recovery link verification failed",
-      expect.objectContaining({ extra: expect.objectContaining({ authErrorCode: "otp_expired", authErrorStatus: 403 }) })
+      expect.objectContaining({ extra: expect.objectContaining({ supabaseErrorCode: "otp_expired", supabaseErrorStatus: 403 }) })
     );
     expect(JSON.stringify(mocks.captureMessage.mock.calls)).not.toContain("secret-token-value");
   });

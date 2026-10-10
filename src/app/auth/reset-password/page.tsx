@@ -109,7 +109,7 @@ export default function ResetPasswordPage() {
       Sentry.captureMessage("Password update failed on reset page", {
         level: "warning",
         tags: { area: "auth_recovery" },
-        extra: { authErrorCode: error.code, authErrorStatus: error.status, authErrorName: error.name },
+        extra: { supabaseErrorCode: error.code, supabaseErrorStatus: error.status, supabaseErrorName: error.name },
       });
       setError(passwordUpdateErrorMessage(error));
     } else {

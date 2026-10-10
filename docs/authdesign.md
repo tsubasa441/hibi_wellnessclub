@@ -77,8 +77,8 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
      ①確認ページのボタンは送信中に無効化（`VerifyForm`）、②POST の検証が失敗しても既にセッションが
      あればそのまま先へ進める（セッションがない使用済みトークンは従来どおり invalid_link）
    - 検証の失敗（`otp_expired` 等）と、再設定メールの送信失敗は、原因を後から調べられるよう
-     Sentry に記録する（`tags.area = auth_recovery`。`extra` は `authErrorCode`・`authErrorStatus`・
-     `authErrorName`・`authErrorText` のみで、メールアドレスやトークンは含めない）
+     Sentry に記録する（`tags.area = auth_recovery`。`extra` は `supabaseErrorCode`・`supabaseErrorStatus`・
+     `supabaseErrorName`・`supabaseErrorText` のみで、メールアドレスやトークンは含めない）
 5. 新パスワードを入力し supabase.auth.updateUser({ password }) を呼び出す
    - 失敗したときは、原因ごとの文言を表示する（`src/lib/passwordUpdateError.ts`）。
      `same_password`（今のパスワードと同じ）・`weak_password`・セッション切れ（リンクの期限切れ）・

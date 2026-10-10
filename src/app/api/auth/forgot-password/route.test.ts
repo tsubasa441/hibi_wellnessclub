@@ -81,7 +81,7 @@ describe("POST /api/auth/forgot-password", () => {
 
     expect(mocks.captureMessage).toHaveBeenCalledWith(
       "Password reset email failed to send",
-      expect.objectContaining({ extra: expect.objectContaining({ authErrorCode: "over_email_send_rate_limit", authErrorStatus: 429 }) })
+      expect.objectContaining({ extra: expect.objectContaining({ supabaseErrorCode: "over_email_send_rate_limit", supabaseErrorStatus: 429 }) })
     );
     expect(JSON.stringify(mocks.captureMessage.mock.calls)).not.toContain("friend-secret@example.com");
   });
