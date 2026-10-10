@@ -113,10 +113,16 @@ export function useSquareCard(containerId: string, active: boolean, locationId: 
 
   async function tokenize(verificationDetails: CardVerificationDetails): Promise<string> {
     if (!cardRef.current) throw new Error("カードフォームが準備できていません");
-    const result = await cardRef.current.tokenize(verificationDetails);
+    // SDK のエラー文は英語のため表示しない（本人認証の失敗等では status ではなく例外で返ることがある）
+    const message = "カード情報を確認できませんでした。入力内容をご確認のうえ、もう一度お試しください。";
+    let result: Awaited<ReturnType<SquareCard["tokenize"]>>;
+    try {
+      result = await cardRef.current.tokenize(verificationDetails);
+    } catch {
+      throw new Error(message);
+    }
     if (result.status !== "OK" || !result.token) {
-      // SDK のエラー文は英語のため表示しない
-      throw new Error("カード情報を確認できませんでした。入力内容をご確認のうえ、もう一度お試しください。");
+      throw new Error(message);
     }
     return result.token;
   }
