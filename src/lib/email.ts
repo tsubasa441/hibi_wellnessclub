@@ -1,9 +1,27 @@
 import { Resend } from "resend";
 import { getJstParts } from "@/lib/date";
+import * as Sentry from "@sentry/nextjs";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+
+// メール送信の失敗で予約・決済・キャンセルの結果を変えないよう、例外は投げずに Sentry へ記録する
+// （Resend は API エラーを例外ではなく戻り値の error で返す。宛先は個人情報のため記録しない）
+async function sendEmail(kind: string, payload: Parameters<typeof resend.emails.send>[0]): Promise<void> {
+  try {
+    const { error } = await resend.emails.send(payload);
+    if (error) {
+      Sentry.captureMessage("Email send failed", {
+        level: "error",
+        tags: { area: "email", kind },
+        extra: { errorName: error.name, errorMessage: error.message, from: FROM },
+      });
+    }
+  } catch (err) {
+    Sentry.captureException(err, { tags: { area: "email", kind } });
+  }
+}
 
 type BookingConfirmationParams = {
   to: string;
@@ -58,7 +76,7 @@ export async function sendCancellationNotification(params: CancellationNotificat
       : "キャンセルポリシーの適用対象外（イベント2日前を過ぎてのキャンセル）のため、返金はありません。"
     : `お支払い金額（${priceStr}）は自動的に返金処理されます${pointsText}。反映までに数日かかる場合があります。`;
 
-  await resend.emails.send({
+  await sendEmail("cancellation", {
     from: FROM,
     to,
     subject: `【Hibi】予約キャンセル：${eventTitle}`,
@@ -176,7 +194,7 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
               </table>`
     : "";
 
-  await resend.emails.send({
+  await sendEmail("booking_confirmation", {
     from: FROM,
     to,
     subject: `【Hibi】予約確定：${eventTitle}`,
