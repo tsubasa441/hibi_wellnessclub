@@ -56,9 +56,9 @@ export default async function HomePage({
       <section className="mx-auto max-w-2xl mt-14 sm:mt-20 text-center">
         <p className="inline-flex items-end gap-2">
           <span className="font-sans italic font-medium uppercase text-2xl sm:text-[31px] leading-none text-navy">Welcome to</span>
-          <span className="font-outfit font-medium text-[34px] sm:text-[42px] leading-[0.8] tracking-wide text-ink-700">Hibi</span>
+          <span className="font-sans italic font-medium uppercase text-2xl sm:text-[31px] leading-none text-navy">Hibi</span>
         </p>
-        <h2 className="font-yugothic text-2xl sm:text-4xl font-bold text-ink-700 leading-snug tracking-wide mt-4">
+        <h2 className="font-yugothic text-lg sm:text-2xl font-bold text-ink-700 leading-snug tracking-wide mt-4">
           なんでもない日々が輝きだす
         </h2>
         <p lang="en" className="font-outfit text-sm sm:text-base text-ink-400 tracking-wide mt-2">
