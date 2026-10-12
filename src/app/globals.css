@@ -52,6 +52,8 @@ input::-ms-clear {
   /* ナビゲーション背景（Header・BottomNav 専用）。ニューモーフィズムの光/影は
      この背景色自体から派生させた色調にする（他のnm-*要素が --nm-bg から
      --nm-light/--nm-dark を派生させているのと同じ考え方） */
+  /* トップページの「WELCOME TO」専用のネイビー（2026-10-12、依頼者が比較のうえ選択） */
+  --color-navy: #374C5C;
   --color-nav-bg:    #FAFAEC;
   --color-nav-light: #FFFFFA;
   --color-nav-dark:  #C7C7B4;
@@ -69,6 +71,8 @@ input::-ms-clear {
   --font-dm: 'DM Sans', sans-serif;
   --font-didot: 'Didot', 'GFS Didot', 'Bodoni MT', 'Playfair Display', serif;
   --font-maru: 'M PLUS Rounded 1c', sans-serif;
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-zenkaku: 'Zen Kaku Gothic New', sans-serif;
   --font-yugothic: 'Yu Gothic', 'YuGothic', 'Yu Gothic UI', sans-serif;}
 
 @keyframes fade-up {

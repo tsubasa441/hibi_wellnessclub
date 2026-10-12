@@ -23,16 +23,17 @@ const TYPE_LABELS: Record<string, string> = {
   pilates: "ピラティス",
 };
 
-export default function EventTypeIcon({ type, label }: { type: string; label?: string }) {
+export default function EventTypeIcon({ type, label, size = "md" }: { type: string; label?: string; size?: "md" | "lg" }) {
   const path = ICON_PATH[type];
+  const large = size === "lg";
 
   return (
     <span
       role="img"
       aria-label={label ?? TYPE_LABELS[type] ?? type}
-      className={`shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white ${ICON_BG[type] ?? "bg-ink-300"}`}
+      className={`shrink-0 ${large ? "w-20 h-20" : "w-14 h-14"} rounded-full flex items-center justify-center text-white ${ICON_BG[type] ?? "bg-ink-300"}`}
     >
-      <svg width="36" height="36" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
+      <svg width={large ? 52 : 36} height={large ? 52 : 36} viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
         {path ? <path d={path} /> : <circle cx="480" cy="-480" r="160" />}
       </svg>
     </span>

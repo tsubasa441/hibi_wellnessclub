@@ -16,13 +16,13 @@
 |-------------|------|------|
 | Header | `src/components/Header.tsx` | ロゴ・歯車アイコン（`SettingsDrawer`を開く）。管理者には「管理画面」リンクも表示 |
 | SettingsDrawer | `src/components/SettingsDrawer.tsx` | ヘッダーの歯車アイコンで開く、右からスライドインするドロワー。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供 |
-| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。トップ・法定ページ（特商法・プライバシー・利用規約）に設置。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。法定ページ（特商法・プライバシー・利用規約）に設置（トップページからは 2026-10-12 に撤去）。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
 | AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
-| EventTypeIcon | `src/components/EventTypeIcon.tsx` | イベント種別（yoga / running / boxing / training / pilates）の円形ピクトグラム。円の色は `globals.css` の `--color-event-*` トークン、図柄は Google Material Symbols（Rounded / Fill、Apache License 2.0）の白い塗りつぶしアイコン（`currentColor`）。ヨガ=`self_improvement`、ランニング=`directions_run`、ボクシング=`sports_mma`、トレーニング=`fitness_center`、ピラティス=`sports_gymnastics`。イベント一覧（`/events`）のカード左側に表示する。Server Component |
+| EventTypeIcon | `src/components/EventTypeIcon.tsx` | イベント種別（yoga / running / boxing / training / pilates）の円形ピクトグラム。円の色は `globals.css` の `--color-event-*` トークン、図柄は Google Material Symbols（Rounded / Fill、Apache License 2.0）の白い塗りつぶしアイコン（`currentColor`）。ヨガ=`self_improvement`、ランニング=`directions_run`、ボクシング=`sports_mma`、トレーニング=`fitness_center`、ピラティス=`sports_gymnastics`。イベント一覧（`/events`）のカード左側に表示する。`size="lg"`（80px）はトップページの Program のカード用。Server Component |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
-| Footer | `src/components/Footer.tsx` | Instagram・TikTok のアイコンリンク（上段）と、利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク（下段）を表示する共通フッター。トップ・法定ページに設置（固定 BottomNav のある認証後画面には未設置）。SNS アイコンは SVG アウトライン（`currentColor`）で、外部リンクは新しいタブで開く。見た目は Header/BottomNav と同じ `.nm-nav-bottom`（nav-bg背景）。**`/login`・`/register-complete`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
+| Footer | `src/components/Footer.tsx` | トップ・法定ページ共通のフッター（固定 BottomNav のある認証後画面には未設置）。2026-10-12 に参考サイトに合わせて作り直し：背景 `bg-ink-700`・白文字。左に「Hibi / wellness club」と一言（「なんでもない日々が輝きだす」＋英訳）、右に「Stay Updated With Us」と連絡先（Instagram・TikTok・Email。`CONTACT_LINKS` で管理、SVG アウトラインのアイコン付き、SNS は新しいタブ、Email は `mailto:`）。最下段は `bg-ink-800` の帯に「© 2026 Hibi Wellness Club. All Rights Reserved.」と利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク。住所・電話番号は特商法ページで「請求があれば開示」としているため載せない。sm 以上は左右2列。**`/login`・`/register-complete`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
 
 ボタン・カードは共通コンポーネント化せず、下記バリエーションのユーティリティクラスをその都度使用する。
 
@@ -32,6 +32,7 @@
 
 | コンポーネント | パス | 説明 | Client? |
 |-------------|------|------|---------|
+| ProgramCarousel | `app/ProgramCarousel.tsx` | トップページの Program（5クラスのカードを自動送り・スワイプ・矢印で切り替えるスライド） | ✅ |
 | LoginForm | `app/login/LoginForm.tsx` | ログイン・新規登録・パスワード再設定リクエストフォーム | ✅ |
 | BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム。保存済みクレジットカードがある場合はカード入力欄の代わりに「登録済みのカードで支払う」表示（「別のカードを使う」で入力欄に切り替え可能）。新しいカードで支払うと決済成功後に自動保存される（クレジットカード保存機能） | ✅ |
@@ -98,25 +99,21 @@
 
 ## トップページ（`/`）
 
+2026-10-12 に、画面全体に動画を敷く構成から、「余白のある角丸のヒーローカード」＋「紹介文ブロック」の縦に並ぶ構成へ変更（依頼者が参考サイトのレイアウトを指定）。同日、依頼者の指定でヘッダーを撤去し、ページ背景をヘッダー・フッターと同じ `nav-bg` にした。
+
 ### レイアウト構成
 
 | エリア | 内容 |
 |--------|------|
-| ヘッダー | `Header.tsx` と同じ `.nm-nav-top`（nav-bg背景）バー。中身は「Hibi」ロゴのみ（未ログインのためログアウト等のリンクはなし）。`page.tsx` 内に直接実装、ヒーローより前に通常フローで配置（オーバーレイではない） |
-| 背景 | `HeroBackground`（Client Component）が写真・動画のスライドを一定間隔（7秒）でクロスフェード切り替え。黒オーバーレイ bg-black/20 は固定。スライドは `page.tsx` の `HERO_SLIDES` 配列で管理し、現状は `public/videos/hibi-top.mp4`（ループ再生）1本のみ。複数件になると自動でクロスフェード切り替えが有効になる |
-| 中央上部 | 「Hibi」テキスト（font-outfit / text-5xl / white） |
-| Hibi直下 | 「Wellness Club」（font-outfit / uppercase / text-xs / white/90 / tracking-[0.3em]。ログイン画面と統一） |
-| 中央 | コンセプトコピー2行 |
-| 下部 | 「イベントご参加の方はこちら」ボタン → `/login` へ遷移 |
-| フッター | 共通 `Footer.tsx`。`.nm-nav-bottom`（nav-bg背景）バーに統一（2026-09、ヘッダーと合わせて変更。中身の法定表記リンクは変更なし） |
-
-### 表示内容
-
-- **Hibi**: テキストで表示（画像ロゴは使用しない）
-- **Wellness Club**: Hibi直下にサブテキストとして表示
-- **コンセプトコピー1行目**: 「なんでもない日々が、輝きだす。」（font-dm / text-sm / white）
-- **コンセプトコピー2行目**: 「からだを動かし、気の合う仲間と出会い、毎日に新しい彩りが生まれる。運動からはじまる、大人のウェルネスコミュニティ。」（font-cormorant / text-[10px] / white/80）
-- **ボタン**: 「イベントご参加の方はこちら」（bg-white/90 / text-brown-600 / rounded-full）→ `/login` へ遷移
+| ヘッダー | なし（トップページのみ。法定ページ等は従来どおり `PublicHeader`） |
+| ページ背景 | `bg-nav-bg`（ヘッダー・フッターと同じ色。`nav-bg` を Header/BottomNav 以外で使う例外。依頼者の指定）。左右 16px（sm 以上 24px）の余白 |
+| ロゴ（カードの上） | 中央揃えで「Hibi」（`h1`・font-outfit / text-4xl〜5xl / ink-700）と「wellness club」（小文字・font-outfit / tracking-[0.3em] / ink-500）。動画の外、ページ背景の上に置く（参考サイトの配置に合わせた） |
+| ヒーローカード | 最大幅 `max-w-5xl`・`rounded-2xl`・高さは画面の約3割（`30svh`、sm 以上 `38svh`、220〜380px。2026-10-12 に依頼者の指摘で4回短くし、あわせて見出し・ボタンも小さくした）。最初の画面にはロゴ・カード・紹介文が入る。`main` に `min-h-[calc(100svh+1.5rem)]` を付け、ページが短くてもフッター（影を含む）は最初の画面に出さず、スクロールした最後に表示する。中に `HeroBackground`（Client Component、`HERO_SLIDES` の写真・動画を7秒ごとにクロスフェード。現状は `public/videos/hibi-top.mp4` 1本でループ再生）と黒の重ね `bg-black/30` |
+| カード内（中央） | 見出し「THE CITY IS YOUR STUDIO.」（`font-bebas`＝Bebas Neue / 大文字 / 30px・sm 以上 52px / white / 1行。依頼者が4案を実際の写真の上で比較して選択）、その下にクラス種別のキャッチ「RUN · TRAINING · BOXING · YOGA · PILATES」（font-outfit / 10px・sm 以上 text-xs / 1行に収める）と、「イベントご参加の方はこちら」ボタン（白の小さめのピル型・text-xs → `/login`） |
+| 紹介文ブロック | カードの下、中央揃え・最大幅 `max-w-2xl`。「WELCOME TO Hibi」（参考サイトの見出しに合わせ、「WELCOME TO」は端末標準のゴシック体（`font-sans`）・斜体・大文字・500・`text-navy`、右に並べる「Hibi」はロゴと同じ font-outfit・ink-700。依頼者がセージグリーンとネイビーを比較してネイビーを選択）、見出し「なんでもない日々が輝きだす」（読点・句点なし・1行。font-yugothic / bold / ink-700）、本文「からだを動かし、気の合う仲間と出会い、毎日に新しい彩りが生まれる。運動からはじまる、大人のウェルネスコミュニティ。」（`font-zenkaku`＝Zen Kaku Gothic New / ink-500 / 3行。依頼者が比較のうえ選択）。見出し・本文それぞれの下に英訳（`lang="en"`）を添える：見出し「Ordinary days begin to shine.」（font-outfit / ink-400）、本文「Move your body, meet people you click with, / and find new color in every day. / A wellness community for grown-ups, beginning with movement.」（font-dm / text-xs〜sm / ink-300。スマホでは最後の文を2行に分ける） |
+| Program | 紹介文の下。見出し「PROGRAM」（参考サイトのセクション見出しに合わせ、端末標準のゴシック体（`font-sans`）・太字・大文字・28〜31px・`text-navy`）と、`ProgramCarousel`（5クラスのカード：Run・Training・Boxing・Yoga・Pilates。各カードは種別アイコン（`EventTypeIcon` の `size="lg"`）・英名（font-bebas）・日本語名・説明文（各運動の特徴・効果。font-zenkaku）・その英訳（`lang="en"`・font-dm・ink-300）。説明文はイベントごとに変わる日時・場所・料金を含めない。日本語の説明文は文節ごとの配列で持ち、各文節を `inline-block` にして単語の途中で改行されないようにする）。スマホは1枚＋次のカードが少し見える幅、sm 以上は3枚並び。4.5秒ごとに自動で次へ送り、最後の次は先頭へ戻る。スマホは横スワイプ、sm 以上は左右の矢印、下の点でも切り替え可。マウスを乗せている間は止まり、指・矢印・点で操作したあとは8秒間止まる。`prefers-reduced-motion` のときは自動送りしない（2026-10-12 追加） |
+| 退会直後のお知らせ | `?accountDeleted=1` のとき、ヒーローカードの上に白いお知らせ（rounded-2xl）を表示 |
+| フッター | 共通 `Footer.tsx`（固定ではなく、ページの最後に表示） |
 
 ---
 

@@ -54,6 +54,7 @@ src/
 │   ├── globals.css             # カラー変数・グローバルスタイル・.app-bg
 │   ├── page.tsx                # トップページ（/）
 │   ├── HeroBackground.tsx      # トップページ背景の写真/動画クロスフェード切替（Client Component）
+│   ├── ProgramCarousel.tsx     # トップページの Program（5クラスのカードのスライド。自動送り・スワイプ・矢印。Client Component）
 │   ├── login/
 │   │   ├── page.tsx            # 認証チェック（認証済みなら /home へリダイレクト）
 │   │   └── LoginForm.tsx       # ログイン・新規登録フォーム（タブ切り替え・紹介コード対応）
@@ -120,9 +121,9 @@ src/
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + 設定ドロワーを開く歯車アイコン）
 │   ├── SettingsDrawer.tsx      # ヘッダーの歯車アイコンで開く設定ドロワー（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除）
-│   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
+│   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。法定ページに設置。トップは 2026-10-12 に撤去。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
-│   └── Footer.tsx              # SNS アイコン（Instagram・TikTok）・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
+│   └── Footer.tsx              # 濃色のフッター：ロゴ・一言・連絡先（Instagram・TikTok・Email）・コピーライト・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── EventTypeIcon.tsx       # イベント種別の円形ピクトグラム（イベント一覧のカード左側）
 │   ├── AuthPhotoPanel.tsx      # /login・/register-complete・/auth/verify・/auth/reset-password 共通の写真パネル（Server Component）
 ├── lib/
@@ -183,7 +184,7 @@ docs/                           # ドキュメント一式
 
 管理者（`profiles.is_admin = true`）は `/admin/events` から独立してイベント管理・参加者管理を行う。一般ユーザー導線とは接続しない（URLを直接開く運用）。管理者以外が `/admin/*` にアクセスした場合は `/home` へリダイレクトする。
 
-`/` と法定ページの下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/terms`（利用規約）・`/legal/privacy`（プライバシーポリシー）・`/legal/tokushoho`（特定商取引法に基づく表記）へ遷移できる。この3画面は認証不要。フッター上部には Instagram・TikTok の公式アカウントへのアイコンリンク（新しいタブで開く）を並べる。SNS の URL は `src/components/Footer.tsx` の `SOCIAL_LINKS` で管理する。`/login`・`/register-complete` は2026-09-25のリデザインで独自レイアウト（写真パネル＋フォーム）になったため `PublicHeader`・`Footer` とも設置しない（利用規約・プライバシーポリシーへのリンクは新規登録フォーム内の同意文言から遷移できる）。
+`/` と法定ページの下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/terms`（利用規約）・`/legal/privacy`（プライバシーポリシー）・`/legal/tokushoho`（特定商取引法に基づく表記）へ遷移できる。この3画面は認証不要。フッターには Instagram・TikTok の公式アカウント（新しいタブで開く）とメールアドレスを並べる。URL・アドレスは `src/components/Footer.tsx` の `CONTACT_LINKS` で管理する。`/login`・`/register-complete` は2026-09-25のリデザインで独自レイアウト（写真パネル＋フォーム）になったため `PublicHeader`・`Footer` とも設置しない（利用規約・プライバシーポリシーへのリンクは新規登録フォーム内の同意文言から遷移できる）。
 
 ### BottomNav 構成（全認証済み画面共通）
 
