@@ -54,6 +54,7 @@ src/
 │   ├── globals.css             # カラー変数・グローバルスタイル・.app-bg
 │   ├── page.tsx                # トップページ（/）
 │   ├── HeroBackground.tsx      # トップページ背景の写真/動画クロスフェード切替（Client Component）
+│   ├── AccountDeletedToast.tsx # 退会直後のトップに一度だけ出すお知らせ（Toast を約4秒表示し、URL の ?accountDeleted=1 を消す。Client Component）
 │   ├── ProgramCarousel.tsx     # トップページの Program（5クラスのカードのスライド。自動送り・スワイプ・矢印。Client Component）
 │   ├── login/
 │   │   ├── page.tsx            # 認証チェック（認証済みなら /home へリダイレクト）

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Footer from "@/components/Footer";
 import HeroBackground, { type HeroSlide } from "./HeroBackground";
 import ProgramCarousel from "./ProgramCarousel";
+import AccountDeletedToast from "./AccountDeletedToast";
 
 // 動画・写真を追加すると自動でクロスフェード表示される
 // （例: { type: "video", src: "/videos/yoga.mp4" }）。1件のみの場合は
@@ -21,11 +22,7 @@ export default async function HomePage({
     // 背景はヘッダー・フッターと同じ nav-bg（依頼者の指定、2026-10-12）
     <div className="bg-nav-bg min-h-svh">
     <main className="min-h-[calc(100svh+1.5rem)] px-4 sm:px-6 pb-16">
-      {accountDeleted && (
-        <p className="mx-auto mt-4 max-w-5xl font-dm text-xs text-ink-500 bg-white border border-base-200 rounded-2xl px-4 py-2 text-center">
-          アカウントを削除しました。ご利用ありがとうございました。
-        </p>
-      )}
+      {accountDeleted && <AccountDeletedToast />}
 
       <div className="text-center pt-6 pb-6 sm:pt-8 sm:pb-8 animate-fade-up">
         <h1 className="font-outfit text-4xl sm:text-5xl font-medium text-ink-700 tracking-wide">Hibi</h1>
