@@ -9,8 +9,8 @@ const PROGRAMS: { type: string; name: string; label: string; description: string
     type: "running",
     name: "Run",
     label: "ランニング",
-    description: ["仲間と街を走り、", "ゴールのあとは", "ご褒美のおいしいもので", "ひと休み。"],
-    descriptionEn: "Run the city with friends, then treat yourself to something tasty.",
+    description: ["仲間と街を", "駆け抜け、", "走ることで得られる", "爽快感と", "終わった後の", "ご褒美を楽しむ。"],
+    descriptionEn: "Race through the city with friends and enjoy the rush of the run and the reward that follows.",
   },
   {
     type: "training",
