@@ -45,20 +45,16 @@ export default async function HomePage({
           </p>
           <Link
             href="/login"
-            className="mt-1 inline-flex items-center gap-1.5 whitespace-nowrap bg-white/95 text-ink-700 font-outfit font-semibold text-xs px-5 py-2.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
+            className="mt-1 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-outfit font-semibold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
           >
             イベントご参加の方はこちら
-            <span aria-hidden="true" className="text-sm leading-none font-normal -mr-0.5">→</span>
+            <span aria-hidden="true" className="text-xl leading-none font-normal -mr-1">→</span>
           </Link>
         </div>
       </section>
 
       <section className="mx-auto max-w-2xl mt-14 sm:mt-20 text-center">
-        <p className="inline-flex items-end gap-2">
-          <span className="font-sans italic font-medium uppercase text-2xl sm:text-[31px] leading-none text-navy">Welcome to</span>
-          <span className="font-sans italic font-medium uppercase text-2xl sm:text-[31px] leading-none text-navy">Hibi</span>
-        </p>
-        <h2 className="font-yugothic text-lg sm:text-2xl font-bold text-ink-700 leading-snug tracking-wide mt-4">
+        <h2 className="font-zenkaku text-lg sm:text-2xl font-normal text-ink-700 leading-snug tracking-wide">
           なんでもない日々が輝きだす
         </h2>
         <p lang="en" className="font-outfit text-sm sm:text-base text-ink-400 tracking-wide mt-2">

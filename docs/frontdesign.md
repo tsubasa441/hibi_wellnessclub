@@ -72,7 +72,7 @@
 | ボーダー | `--color-base-200` | #DCDFDD |
 | ナビゲーション背景（Header・BottomNav） | `--color-nav-bg` | #FAFAEC |
 | ナビゲーション内テキスト | `--color-ink-700` | #1C221F（可読性優先で全テキスト黒系に統一） |
-| トップページの「WELCOME TO」 | `--color-navy` | #374C5C（この見出し専用。2026-10-12 追加） |
+| トップページのセクション見出し（「PROGRAM」） | `--color-navy` | #374C5C（トップページ専用。2026-10-12 追加） |
 
 ---
 
@@ -85,7 +85,7 @@
 | **Outfit** | UI全般・ボタン・ラベル | 400, 500, 600 |
 | **Cormorant Garamond** | タイトル・見出し（ブランド感） | 500, 600 |
 | **DM Sans** | 本文・説明文 | 400, 500 |
-| **Zen Kaku Gothic New** | トップページの紹介文（日本語の本文）専用。`font-zenkaku`（2026-10-12 追加。日本語は unicode-range で必要な分だけ読み込む） | 400 |
+| **Zen Kaku Gothic New** | トップページの日本語（紹介文の見出し・本文、Program の説明文、フッターの一言）。`font-zenkaku`（2026-10-12 追加。日本語は unicode-range で必要な分だけ読み込む） | 400 |
 | **Bebas Neue** | トップページのヒーロー見出し（「THE CITY IS YOUR STUDIO.」）専用。`font-bebas`（2026-10-12 追加） | 400 |
 
 ### 使い分けルール
