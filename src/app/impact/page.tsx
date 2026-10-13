@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
-import { decrypt } from "@/lib/encrypt";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import ProfileCard from "@/components/ProfileCard";
@@ -82,7 +81,6 @@ export default async function ImpactPage() {
     { data: userBadges },
     { data: allBadges },
     { data: referrals },
-    { data: referredNames },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
@@ -101,15 +99,7 @@ export default async function ImpactPage() {
       .select("*")
       .eq("referrer_id", user.id)
       .order("created_at", { ascending: false }),
-    supabase.rpc("get_my_referred_names"),
   ]);
-
-  const referredNameMap = new Map<string, { nickname: string; name: string }>(
-    (referredNames ?? []).map((r: { referee_id: string; nickname: string; name: string }) => [
-      r.referee_id,
-      { nickname: r.nickname, name: r.name },
-    ])
-  );
 
   // チェックイン済みの予約のみを「参加」としてカウントする
   const checkedInBookings = (bookings ?? []).filter(
@@ -377,40 +367,6 @@ export default async function ImpactPage() {
         <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
           <p className="font-outfit text-xl font-bold text-ink-700">{rewardedReferralCount}</p>
           <p className="font-dm text-xs text-ink-300 mt-0.5">紹介したお友達</p>
-        </div>
-
-        {/* 紹介履歴 */}
-        <div className="bg-white border border-base-200 rounded-2xl p-6">
-          <h2 className="font-outfit font-semibold text-lg text-ink-700 mb-4">紹介履歴</h2>
-          {(referrals ?? []).length > 0 ? (
-            <div className="space-y-3">
-              {(referrals ?? []).map((r: { id: string; referee_id: string; created_at: string; status: string }) => {
-                const referred = referredNameMap.get(r.referee_id);
-                const refName = referred?.nickname || (referred?.name ? decrypt(referred.name) : null);
-                return (
-                  <div key={r.id} className="bg-white border border-base-200 rounded-2xl flex items-center justify-between p-3">
-                    <div>
-                      <p className="font-outfit font-medium text-sm text-ink-700">{refName ?? "ユーザー"}</p>
-                      <p className="font-dm text-xs text-ink-300">
-                        {new Date(r.created_at).toLocaleDateString("ja-JP", { month: "short", day: "numeric", timeZone: "Asia/Tokyo" })} 登録
-                      </p>
-                    </div>
-                    <span className={`font-outfit text-xs font-medium px-3 py-1 rounded-full ${
-                      r.status === "rewarded"
-                        ? "bg-base-100 text-ink-700"
-                        : "bg-base-100 text-ink-300"
-                    }`}>
-                      {r.status === "rewarded" ? "完了 +200pt" : "参加待ち"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="font-dm text-sm text-ink-300 text-center py-6">
-              まだ紹介した友達はいません
-            </p>
-          )}
         </div>
 
       </div>
