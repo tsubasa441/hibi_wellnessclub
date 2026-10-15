@@ -113,7 +113,7 @@ export default async function ImpactPage() {
   const countToNext = nextRank ? nextRank.minCount - totalCount : null;
 
   // ---- 紹介 ----
-  // 「紹介したお友達」の数値は、被紹介者が初回イベントにチェックインし、
+  // 「あなたから広がった幸せの数」の数値は、被紹介者が初回イベントにチェックインし、
   // そのイベント終了後にポイントが確定した（rewarded）分のみをカウントする。
   // pending（登録済みだが未参加）の段階ではまだカウントしない
   const rewardedReferralCount = (referrals ?? []).filter(
@@ -366,7 +366,7 @@ export default async function ImpactPage() {
         {/* 紹介実績 */}
         <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
           <p className="font-outfit text-xl font-bold text-ink-700">{rewardedReferralCount}</p>
-          <p className="font-dm text-xs text-ink-300 mt-0.5">紹介したお友達</p>
+          <p className="font-dm text-xs text-ink-300 mt-0.5">あなたから広がった幸せの数</p>
         </div>
 
       </div>
