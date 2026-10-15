@@ -339,7 +339,7 @@ export default async function ImpactPage() {
 
         {/* 紹介セクション */}
         <div className="bg-sage-300 text-white rounded-2xl px-4 py-4 animate-fade-up">
-          <p className="font-outfit font-semibold text-base mb-2">友達を紹介してポイントをゲット</p>
+          <p className="font-outfit font-semibold text-base mb-2">大切な人を、新しい日常へ招待しよう</p>
           <div className="space-y-1.5 font-dm text-xs text-white/70">
             <div className="flex items-center gap-2">
               <span className="bg-white text-ink-700 font-outfit font-bold rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0">1</span>
