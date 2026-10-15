@@ -14,11 +14,12 @@
 
 | コンポーネント | パス | 説明 |
 |-------------|------|------|
-| Header | `src/components/Header.tsx` | ロゴ・歯車アイコン（`SettingsDrawer`を開く）。管理者には「管理画面」リンクも表示 |
-| SettingsDrawer | `src/components/SettingsDrawer.tsx` | ヘッダーの歯車アイコンで開く、右からスライドインするドロワー。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供 |
-| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。法定ページ（特商法・プライバシー・利用規約）に設置（トップページからは 2026-10-12 に撤去）。ログイン後の画面は `Header`（設定ドロワー付き）を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
+| Header | `src/components/Header.tsx` | ロゴ。管理者には「管理画面」リンクも表示（歯車アイコンは 2026-10-16 に撤去） |
+| SettingsMenu | `src/components/SettingsMenu.tsx` | マイページのアカウント設定。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供（2026-10-16 に旧 `SettingsDrawer` から移設） |
+| ReserveTabs | `src/components/ReserveTabs.tsx` | 下ナビ「予約」内で、イベント一覧（`/events`）と予約済み一覧（`/bookings`）を切り替えるピル型の2択 |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。法定ページ（特商法・プライバシー・利用規約）に設置（トップページからは 2026-10-12 に撤去）。ログイン後の画面は `Header` を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
 | AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
-| BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（Home / Event / Impact） |
+| BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（ホーム / 予約 / チェックイン（中央の丸ボタン） / インパクト / マイページ。下記「下ナビ」参照） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | EventTypeIcon | `src/components/EventTypeIcon.tsx` | イベント種別（yoga / running / boxing / training / pilates）の円形ピクトグラム。円の色は `globals.css` の `--color-event-*` トークン、図柄は Google Material Symbols（Rounded / Fill、Apache License 2.0）の白い塗りつぶしアイコン（`currentColor`）。ヨガ=`self_improvement`、ランニング=`directions_run`、ボクシング=`sports_mma`、トレーニング=`fitness_center`、ピラティス=`sports_gymnastics`。イベント一覧（`/events`）のカード左側に表示する。`size="lg"`（80px）はトップページの Program のカード用。Server Component |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
@@ -38,7 +39,7 @@
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム。保存済みクレジットカードがある場合はカード入力欄の代わりに「登録済みのカードで支払う」表示（「別のカードを使う」で入力欄に切り替え可能）。新しいカードで支払うと決済成功後に自動保存される（クレジットカード保存機能） | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |
 | EventOptionFields | `app/events/[id]/EventOptionFields.tsx` | イベント選択項目の入力（単一=`<select>` / 複数=チェックボックスパネル型ドロップダウン） | ✅ |
-| CheckInButton | `app/bookings/CheckInButton.tsx` | 予約カードのチェックインボタン。現在時刻を30秒ごとに再評価し、イベント開始〜終了時刻のみ活性。チェックイン済みは「チェックイン済み」表示 | ✅ |
+| CheckInButton | `app/bookings/CheckInButton.tsx` | 予約カードのチェックインボタン。現在時刻を30秒ごとに再評価し、イベント開始〜終了時刻のみ活性。チェックイン済みは「チェックイン済み」表示。`size="lg"` はチェックイン画面（`/checkin`）用の横幅いっぱいのボタン | ✅ |
 | VerifyForm | `app/auth/verify/VerifyForm.tsx` | パスワード再設定の確認ページのフォーム。「パスワードを再設定する」ボタンで `POST /auth/confirm`。送信中はボタンを無効化して二重押しを防ぐ | ✅ |
 | AdminNav | `app/admin/AdminNav.tsx` | 管理画面用ナビ（ログアウト・ユーザー画面への導線） | ✅ |
 | EventForm | `app/admin/events/EventForm.tsx` | イベント作成/編集共通フォーム | ✅ |
@@ -146,20 +147,52 @@
 
 ## ヘッダー構成
 
-背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。右端はログアウト等の個別ボタンではなく、歯車アイコン（`SettingsDrawer`）1つに集約する（2026-09-23）。
+背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。右端は管理者のみ「管理画面」リンク。歯車アイコン（設定ドロワー）は 2026-10-16 に撤去し、設定はマイページへ移した。
 
 ```tsx
 <header className="nm-nav-top px-5 py-4 sm:px-8 flex items-center justify-between">
   <Link href="/home" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
     Hibi
   </Link>
-  <SettingsDrawer nickname={nickname} />
+  {isAdmin && <Link href="/admin/events">管理画面</Link>}
 </header>
 ```
 
-### SettingsDrawer（設定ドロワー）
+---
 
-ヘッダーの歯車アイコンを押すと、画面右からスライドインするドロワー（`RankGuideModal`と同じ`createPortal`＋`fixed inset-0 bg-black/50`のオーバーレイパターンを踏襲、背景は白）が開き、以下を提供する。
+## 下ナビ（BottomNav）
+
+2026-10-16 に依頼者の指定（参考：会員制スタジオのマイページ）で5タブに変更。`grid-cols-5`、ラベルは日本語・`font-outfit` 10px、選択中は `sage-600`。
+
+| タブ | 遷移先 | 選択中になるパス |
+|------|--------|-----------------|
+| ホーム | `/home` | `/home` |
+| 予約 | `/events` | `/events`・`/bookings`（配下を含む） |
+| チェックイン | `/checkin` | `/checkin` |
+| インパクト | `/impact` | `/impact` |
+| マイページ | `/mypage` | `/mypage` |
+
+チェックインは中央に一段大きい丸ボタン（56px・`bg-ink-500`、選択中は `bg-sage-600`、`-mt-6` でナビから浮かせ、`ring-4 ring-nav-bg` で縁取り）。
+
+### ReserveTabs（予約タブ内の切り替え）
+
+`/events` と `/bookings` の上部に置くピル型の2択（「イベントを探す」「予約済み」）。選択中は `bg-sage-600` の白文字。Server Component で、`active` で選択中を受け取る。`/bookings` の「ホームへ戻る」矢印はこの切り替えに置き換えて撤去した。
+
+### チェックイン画面（`/checkin`）
+
+本人の確定予約のうち、終了前かつ開始日が今日（JST）のものをカードで並べ、`CheckInButton` の `size="lg"`（横幅いっぱい・高さのある緑のボタン）でチェックインする。活性条件（開始〜終了時刻）は `/bookings` と同じ。今日の予約が無い場合は「本日チェックインできるイベントはありません」と、次の予約（無ければ「イベントを探す」ボタン）を表示する。ロード時に PayPay の pending 予約を照会する（`/bookings` と同じ）。
+
+### マイページ（`/mypage`）
+
+上から順に：
+1. プロフィールカード：人のアイコン（丸）、ランク（`RankIcon`＋英名・和名のピル）、表示名（ニックネーム→ローマ字氏名→氏名の順にフォールバック）、メールアドレス、Member since
+2. ショートカット（3列のタイル）：予約済み（`/bookings`）・イベントを探す（`/events`）・友達を招待（`/impact`）
+3. アカウント設定（`SettingsMenu`、下記）
+4. その他：利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク
+
+### SettingsMenu（アカウント設定）
+
+マイページに置く設定メニュー（2026-10-16 に旧 `SettingsDrawer` の中身を移設。カードの見た目は白背景・`rounded-2xl`・行区切り）。以下を提供する。
 
 - **ニックネーム変更**：現在のニックネーム表示＋「変更する」でインライン編集。保存は`POST /api/profile/nickname`（サインアップ時と同じバリデーション、`src/lib/nameValidation.ts` の `validateNickname`：1〜20文字、漢字・ひらがな・カタカナ・英数字・スペースと文字間の「ー」「・」のみ。記号・絵文字は不可。全角英数字・半角カナは NFKC で揃えてから判定・保存）
 - **パスワード変更**：現在のパスワード・新しいパスワード・確認の3つを入力。`signInWithPassword`で現在のパスワードを確認してから`updateUser`で変更する（本人以外がログイン中の端末を操作しただけで変更できてしまわないようにするため）。バリデーション（`src/lib/passwordPolicy.ts`）・失敗時の文言（`src/lib/passwordUpdateError.ts`）は再設定画面（`/auth/reset-password`）と共通
@@ -167,4 +200,4 @@
 - **ログアウト**
 - **アカウントを削除する**：確認ダイアログ→`POST /api/account/delete`（旧`DeleteAccountButton`から移設。`/impact`画面からは撤去済み）
 
-オーバーレイクリック・×ボタンで閉じる。ドロワーのスライドインは`globals.css`の`.animate-slide-in-right`（0.25s ease-out）を使用。
+ログアウト・退会は、アカウント設定とは別のカードに分けて置く。現在のパスワードの確認に使うメールアドレスは、マイページ（Server Component）から渡す。

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventTypeIcon from "@/components/EventTypeIcon";
+import ReserveTabs from "@/components/ReserveTabs";
 import { getJstParts } from "@/lib/date";
 
 const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -44,7 +45,10 @@ export default async function EventsPage() {
     <main className="relative min-h-screen app-bg pb-24">
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 sm:px-6 sm:py-10">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6">
+          <ReserveTabs active="events" />
+        </div>
         <h1 className="font-yugothic text-2xl sm:text-3xl font-bold text-ink-700 mb-6 tracking-wide animate-fade-up animate-delay-100">Events</h1>
 
         {events && events.length > 0 ? (

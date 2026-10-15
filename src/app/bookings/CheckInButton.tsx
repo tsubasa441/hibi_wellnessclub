@@ -13,12 +13,16 @@ export default function CheckInButton({
   startAt,
   endAt,
   checkedInAt,
+  size = "md",
 }: {
   bookingId: string;
   startAt: string;
   endAt: string | null;
   checkedInAt: string | null;
+  // "lg" はチェックイン画面（/checkin）用の横幅いっぱいの大きなボタン
+  size?: "md" | "lg";
 }) {
+  const lg = size === "lg";
   const router = useRouter();
   const [now, setNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(false);
@@ -31,11 +35,11 @@ export default function CheckInButton({
 
   if (checkedInAt) {
     return (
-      <div className="flex items-center gap-1.5 text-sage-600">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <div className={`flex items-center gap-1.5 text-sage-600 ${lg ? "justify-center py-4" : ""}`}>
+        <svg width={lg ? 22 : 16} height={lg ? 22 : 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
-        <span className="font-outfit text-xs font-medium">チェックイン済み</span>
+        <span className={`font-outfit font-medium ${lg ? "text-base" : "text-xs"}`}>チェックイン済み</span>
       </div>
     );
   }
@@ -60,18 +64,18 @@ export default function CheckInButton({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className={lg ? "space-y-2 text-center" : "space-y-1.5"}>
       {error && (
         <p className="font-dm text-xs text-red-500">{error}</p>
       )}
       <button
         onClick={handleCheckIn}
         disabled={!active || loading}
-        className={
+        className={`font-outfit font-medium rounded-full ${lg ? "w-full text-base py-4" : "text-xs px-5 py-2"} ${
           active
-            ? "font-outfit text-xs font-medium text-white bg-sage-500 px-5 py-2 rounded-full hover:bg-sage-600 transition disabled:opacity-60"
-            : "font-outfit text-xs font-medium text-ink-300 bg-base-200 px-5 py-2 rounded-full cursor-not-allowed"
-        }
+            ? "text-white bg-sage-500 hover:bg-sage-600 transition disabled:opacity-60"
+            : "text-ink-300 bg-base-200 cursor-not-allowed"
+        }`}
       >
         {loading ? "処理中..." : afterEnd ? "受付終了" : "チェックイン"}
       </button>

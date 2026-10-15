@@ -169,13 +169,13 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | メソッド | エンドポイント | 説明 | 認証 |
 |---------|--------------|------|------|
 | POST | `/api/payments/square` | Square 決済処理（予約作成込み）。`useSavedCard:true` で保存済みカードに直接課金。新しいカードで支払った場合は決済成功後に自動でカードを保存する（クレジットカード保存機能、5-2参照） | 必要 |
-| POST | `/api/payment-methods/square` | クレジットカードの登録・変更（決済を伴わない。設定画面の設定ドロワーから） | 必要（本人のみ） |
+| POST | `/api/payment-methods/square` | クレジットカードの登録・変更（決済を伴わない。マイページから） | 必要（本人のみ） |
 | DELETE | `/api/payment-methods/square` | 登録済みクレジットカードの削除 | 必要（本人のみ） |
 | POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み。確定はコールバックまたは `/bookings`・`/events/[id]` ロード時の照会で行う。`docs/architecture.md` の決済フロー参照） | 必要 |
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
-| POST | `/api/profile/nickname` | ニックネーム変更（ヘッダーの設定ドロワーから） | 必要（本人のみ） |
+| POST | `/api/profile/nickname` | ニックネーム変更（マイページから） | 必要（本人のみ） |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/auth/forgot-password` | パスワード再設定メール送信 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/account/delete` | アカウント削除（`profiles`の個人情報を匿名化・`auth.users`をban_durationで無効化。予約等の履歴は保持） | 必要（本人のみ、管理者は不可） |
@@ -237,7 +237,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 
 ## 5-2. クレジットカード保存機能（2026-09-29 追加）
 
-決済画面でカードを入力して支払うと、決済成功後に自動でカードが保存され（保存の要否をユーザーに選ばせるチェックボックス等は設けない）、2回目以降の決済ではカード入力を省略してその保存済みカードで支払える。設定画面（ヘッダーの歯車アイコン→設定ドロワー）からも、決済とは無関係にカードを事前登録・変更できる。1ユーザーにつき保存できるカードは1枚（新しいカードを保存すると古いカードは無効化して差し替える）。PayPay は対象外。
+決済画面でカードを入力して支払うと、決済成功後に自動でカードが保存され（保存の要否をユーザーに選ばせるチェックボックス等は設けない）、2回目以降の決済ではカード入力を省略してその保存済みカードで支払える。マイページ（`/mypage`）からも、決済とは無関係にカードを事前登録・変更できる。1ユーザーにつき保存できるカードは1枚（新しいカードを保存すると古いカードは無効化して差し替える）。PayPay は対象外。
 
 生のカード番号・CVV は Square Web Payments SDK がブラウザ上でトークン化した時点で Square 側に渡り、Hibi のサーバーには一切届かない。Hibi が保存するのは Square の識別子（`square_customer_id`・`square_card_id`）と、表示用の非機微情報（ブランド・下4桁・有効期限）のみで、PCI DSS 上も暗号化対象の機微情報ではない（`docs/codingstandards.md` の氏名等の暗号化ルールの対象外、nickname と同じ扱い）。
 
@@ -249,7 +249,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 
 カードの保存に失敗しても、予約・決済は確定済みとして成功を返す（そのカードが保存されないだけ。失敗は Sentry に `area=square_card_save` で記録）。以前は「保存してから課金する」順序だったが、Square に保存できないカード（本番で JCB カードの `INVALID_CARD_DATA` を確認、2026-10-04）だと支払い自体ができなくなるため変更した。設定画面からの登録は `intent: "STORE"` でノンスを得て、ノンスをそのまま `Cards.CreateCard` に渡す。
 
-Square のエラー本文はユーザーに表示しない。`src/lib/squareErrors.ts` でエラーコードを日本語の案内（カードが利用できない・セキュリティコード・有効期限・残高不足など）に変換し、詳細は Sentry に記録する。共通ロジックは `src/lib/squareCards.ts` にまとめ、決済 API（`/api/payments/square`）と設定画面用 API（`/api/payment-methods/square`）の両方から呼ぶ。カード入力欄の読み込み・トークン化ロジックも `src/lib/useSquareCard.ts` に共通化し、`CheckoutForm.tsx`・`SettingsDrawer.tsx` の両方から使う。
+Square のエラー本文はユーザーに表示しない。`src/lib/squareErrors.ts` でエラーコードを日本語の案内（カードが利用できない・セキュリティコード・有効期限・残高不足など）に変換し、詳細は Sentry に記録する。共通ロジックは `src/lib/squareCards.ts` にまとめ、決済 API（`/api/payments/square`）と設定画面用 API（`/api/payment-methods/square`）の両方から呼ぶ。カード入力欄の読み込み・トークン化ロジックも `src/lib/useSquareCard.ts` に共通化し、`CheckoutForm.tsx`・`SettingsMenu.tsx` の両方から使う。
 
 ---
 

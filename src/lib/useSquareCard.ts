@@ -74,7 +74,7 @@ function loadSquareScript(): Promise<void> {
   });
 }
 
-// 決済画面（CheckoutForm）と設定画面（SettingsDrawer）で共通の、Square カード入力欄の
+// 決済画面（CheckoutForm）とマイページの設定（SettingsMenu）で共通の、Square カード入力欄の
 // 読み込み・アタッチ・トークン化ロジック。containerId の要素に描画する
 export function useSquareCard(containerId: string, active: boolean, locationId: string) {
   const cardRef = useRef<SquareCard | null>(null);

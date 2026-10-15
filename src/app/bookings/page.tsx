@@ -5,6 +5,7 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventTypeIcon from "@/components/EventTypeIcon";
+import ReserveTabs from "@/components/ReserveTabs";
 import CancelButton from "@/app/home/CancelButton";
 import CheckInButton from "./CheckInButton";
 import { getJstParts } from "@/lib/date";
@@ -72,14 +73,10 @@ export default async function BookingsPage() {
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex items-center gap-3 mb-5">
-          <Link href="/home" className="text-ink-300 hover:text-ink-600 transition">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </Link>
-          <h1 className="font-outfit text-lg font-semibold text-ink-700">予約済みイベント</h1>
+        <div className="mb-6">
+          <ReserveTabs active="bookings" />
         </div>
+        <h1 className="font-outfit text-lg font-semibold text-ink-700 mb-5">予約済みイベント</h1>
 
         {bookings.length === 0 ? (
           <div className="bg-white border border-base-200 rounded-2xl p-8 text-center">

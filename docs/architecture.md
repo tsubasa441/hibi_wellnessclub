@@ -41,7 +41,7 @@ Next.js 16 に関する実装上の注意（2026-09-21 に 14 から更新）：
 - **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する
 - **セキュリティヘッダー / CSP**: `next.config.mjs` の `headers()` で全ルートに `X-Frame-Options`・`X-Content-Type-Options`・`Referrer-Policy`・`Permissions-Policy`・`Strict-Transport-Security` を付与。`Content-Security-Policy` はまず `Content-Security-Policy-Report-Only` として段階導入し、Square決済iframe等を壊さないことを確認してから本適用に切り替える運用（環境変数 `CSP_REPORT_ONLY=false` で本適用。`NEXT_PUBLIC_SENTRY_DSN` 設定時は CSP 違反レポートを Sentry に送信）。Sentry の疎通確認は `GET /api/debug/sentry?token=<CRON_SECRET>`（`docs/deployment.md` 参照）
 - **エラー監視**: `@sentry/nextjs` を導入（`sentry.server.config.ts`・`sentry.edge.config.ts`・`src/instrumentation.ts`・`src/instrumentation-client.ts`・`src/app/global-error.tsx`）。`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN` が未設定の場合はSDKが何もしない安全なno-op状態になる
-- **アカウント削除**: ヘッダーの歯車アイコン（設定ドロワー）の「アカウントを削除する」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
+- **アカウント削除**: マイページ（`/mypage`）の「退会」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
 
 ---
 
@@ -72,7 +72,9 @@ src/
 │   │           └── CheckoutForm.tsx
 │   ├── bookings/
 │   │   ├── page.tsx            # 予約済みイベント一覧・キャンセル・チェックイン
-│   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。Client Component）
+│   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。size="lg" は /checkin 用の大きなボタン。Client Component）
+│   ├── checkin/page.tsx        # チェックイン（下ナビ中央。本日開催の予約を大きなボタンでチェックイン。無ければ次の予約を案内）
+│   ├── mypage/page.tsx         # マイページ（プロフィール・ショートカット・アカウント設定・法定ページへのリンク）
 │   ├── auth/
 │   │   ├── confirm/route.ts         # 再設定メールのリンク先。GET は検証せず /auth/verify へリダイレクト（リンクの先読みでトークンが消費されないように）。POST（確認ページのボタン）で token_hash を verifyOtp して /auth/reset-password へ 303
 │   │   ├── verify/page.tsx          # 再設定の確認ページ（「パスワードを再設定する」ボタンのみ。ボタンで POST /auth/confirm）
@@ -111,19 +113,20 @@ src/
 │       │   └── paypay/
 │       │       ├── route.ts
 │       │       └── callback/route.ts
-│       ├── payment-methods/square/route.ts  # POST クレジットカードの登録/変更 / DELETE 削除（決済を伴わない、設定ドロワーから）
+│       ├── payment-methods/square/route.ts  # POST クレジットカードの登録/変更 / DELETE 削除（決済を伴わない、マイページから）
 │       ├── signup/profile/route.ts        # サインアップ時プロフィール作成
-│       ├── profile/nickname/route.ts      # ニックネーム変更（設定ドロワーから）
+│       ├── profile/nickname/route.ts      # ニックネーム変更（マイページから）
 │       └── admin/events/
 │           ├── route.ts                    # POST イベント作成
 │           └── [id]/
 │               ├── route.ts                # PATCH 更新 / DELETE 論理削除
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
-│   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト + 設定ドロワーを開く歯車アイコン）
-│   ├── SettingsDrawer.tsx      # ヘッダーの歯車アイコンで開く設定ドロワー（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除）
+│   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト。管理者には「管理画面」リンク）
+│   ├── SettingsMenu.tsx        # マイページのアカウント設定（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除。2026-10-16 に設定ドロワーから移設）
+│   ├── ReserveTabs.tsx         # 下ナビ「予約」内の切り替え（イベントを探す /events ⇔ 予約済み /bookings）
 │   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。法定ページに設置。トップは 2026-10-12 に撤去。/login・/register-complete は独自レイアウトのため未設置）
-│   ├── BottomNav.tsx           # 共通フッターナビ（Home / Event / Impact）
+│   ├── BottomNav.tsx           # 共通フッターナビ（ホーム / 予約 / チェックイン（中央の丸ボタン） / インパクト / マイページ）
 │   └── Footer.tsx              # 濃色のフッター：ロゴ・一言・連絡先（Instagram・TikTok・Email）・コピーライト・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── EventTypeIcon.tsx       # イベント種別の円形ピクトグラム（イベント一覧のカード左側）
 │   ├── AuthPhotoPanel.tsx      # /login・/register-complete・/auth/verify・/auth/reset-password 共通の写真パネル（Server Component）
@@ -151,7 +154,7 @@ src/
 │   ├── squareClient.ts         # Square クライアントの共通生成（決済APIとカード保存ヘルパーで使い回す）
 │   ├── squareCards.ts          # クレジットカード保存機能: Customer/Card on File の作成・保存・無効化（/api/payments/square・/api/payment-methods/square から使用）
 │   ├── squareErrors.ts         # Square API のエラーコードをユーザー向けの日本語の案内に変換（Square のエラー本文は画面に出さない）
-│   ├── useSquareCard.ts        # Square カード入力欄（Web Payments SDK）の読み込み・トークン化の共通フック（CheckoutForm・SettingsDrawer から使用）。tokenize に 3-D セキュア用の verificationDetails を渡す
+│   ├── useSquareCard.ts        # Square カード入力欄（Web Payments SDK）の読み込み・トークン化の共通フック（CheckoutForm・SettingsMenu から使用）。tokenize に 3-D セキュア用の verificationDetails を渡す
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）
 ├── instrumentation.ts          # Sentry初期化フック（サーバー/Edge、Next.js標準の起動フック）
 └── instrumentation-client.ts   # Sentry初期化（ブラウザ側）
@@ -172,11 +175,13 @@ docs/                           # ドキュメント一式
   └─[ボタンタップ]→ /login ログイン・新規登録（SIGN IN / SIGN UP タブ）
                       └─[認証成功]→ /home ホーム
                                       ├─[「すべて見る」]→ /bookings 予約済みイベント一覧（キャンセル）
-                                      ├─[BottomNav: Event]→ /events イベント一覧
+                                      ├─[BottomNav: 予約]→ /events イベント一覧 ⇔（上部の切り替え）/bookings 予約済み
                                       │                         └─[タップ]→ /events/[id] 詳細
                                       │                                         └─[予約]→ /events/[id]/checkout 決済
-                                      └─[BottomNav: Impact]→ /impact
-                                                                （プロフィール・参加履歴・バッジ・紹介コード・シェア）
+                                      ├─[BottomNav: チェックイン]→ /checkin（本日の予約のチェックイン）
+                                      ├─[BottomNav: インパクト]→ /impact
+                                      │                         （プロフィール・参加履歴・バッジ・紹介コード・シェア）
+                                      └─[BottomNav: マイページ]→ /mypage（プロフィール・アカウント設定・ログアウト・退会）
 
 /login?ref=コード  ←── /impact の紹介リンク経由（SIGN UP タブが自動選択される）
 
@@ -191,9 +196,13 @@ docs/                           # ドキュメント一式
 
 | タブ | アイコン | リンク先 |
 |------|---------|---------|
-| Home | 家アイコン | `/home` |
-| Event | カレンダーアイコン | `/events` |
-| Impact | ハートアイコン | `/impact` |
+| ホーム | 家アイコン | `/home` |
+| 予約 | カレンダーアイコン | `/events`（`/bookings` でも選択中） |
+| チェックイン | 中央の大きな丸ボタン | `/checkin` |
+| インパクト | ハートアイコン | `/impact` |
+| マイページ | 人アイコン | `/mypage` |
+
+2026-10-16 に依頼者の指定で3タブ（Home / Event / Impact）から変更。ヘッダーの歯車アイコン（設定ドロワー）は撤去し、設定はマイページへ移した。
 
 ---
 
