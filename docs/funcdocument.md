@@ -150,6 +150,22 @@
 | note | text | 自由記述（任意） |
 | created_at | timestamptz | |
 
+### support_messages（2026-10-17 追加、`031_support_messages.sql`）
+
+ユーザーと運営のお問い合わせチャット。ユーザー1人につき1本のスレッド（`user_id` で束ねる）。
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| user_id | uuid | FK → profiles.id（`on delete cascade`）。スレッドの持ち主 |
+| sender | text | user / admin |
+| body | text | 本文（1〜2000文字。DB の check 制約と `src/lib/support.ts` の `validateSupportBody` で検証） |
+| read_by_user_at | timestamptz | 運営からのメッセージをユーザーが読んだ日時（`/support` を開いた時点） |
+| read_by_admin_at | timestamptz | ユーザーからのメッセージを運営が読んだ日時（`/admin/support/[userId]` を開いた時点） |
+| created_at | timestamptz | |
+
+RLS は SELECT のみ（本人のスレッド、または管理者）。書き込みは API が本人確認・管理者確認のうえ service_role で行う。本文は暗号化しない（運営が読んで返信するための問い合わせ内容。氏名等の登録情報ではない）。
+
 ### rate_limits
 
 API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` の `checkRateLimit()` から `check_rate_limit` RPC（service_role専用）経由でのみ読み書きされる。ユーザーやadmin画面から直接参照することはない。
@@ -176,6 +192,8 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定 | 必要（本人のみ） |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
 | POST | `/api/profile/nickname` | ニックネーム変更（マイページから） | 必要（本人のみ） |
+| POST | `/api/support/messages` | お問い合わせの送信（運営へメールで通知。10回/60秒のレート制限） | 必要（本人のみ） |
+| POST | `/api/admin/support/[userId]/messages` | お問い合わせへの返信（ユーザーへメールで通知。退会済みには送らない） | 必要（管理者のみ） |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/auth/forgot-password` | パスワード再設定メール送信 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/account/delete` | アカウント削除（`profiles`の個人情報を匿名化・`auth.users`をban_durationで無効化。予約等の履歴は保持） | 必要（本人のみ、管理者は不可） |

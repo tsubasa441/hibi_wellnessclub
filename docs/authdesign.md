@@ -126,6 +126,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 | `/bookings` | `/login` にリダイレクト |
 | `/checkin` | `/login` にリダイレクト |
 | `/mypage` | `/login` にリダイレクト |
+| `/support` | `/login` にリダイレクト |
 | `/events/[id]` | `/login` にリダイレクト（イベント詳細も認証必須。一覧 `/events` 自体は未認証でも閲覧できる） |
 | `/events/[id]/checkout` | `/login` にリダイレクト |
 | `/admin/*` | 未認証は `/login` へ、認証済みでも `is_admin` でなければ `/home` へリダイレクト |
@@ -168,6 +169,7 @@ if (!user) redirect("/login");
 | bookings | 本人のみ／管理者は全件 | 本人のみ | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
 | badges | 全員 | 不可 | 不可 | 不可 |
 | user_badges | 本人のみ | サーバーのみ | 不可 | 不可 |
+| support_messages | 本人のスレッドのみ／管理者は全件 | 不可（API が service_role で書く） | 不可（既読化も API・ページが service_role で行う） | 不可 |
 | referrals | 本人のみ（Impact の「あなたから広がった幸せの数」の2代目分は、他人の行のため Server Component が service_role で件数だけを数える。個々の行・氏名は画面に返さない） | サーバーのみ | サーバーのみ | 不可 |
 
 ---

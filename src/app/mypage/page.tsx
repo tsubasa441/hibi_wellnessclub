@@ -44,13 +44,12 @@ const SHORTCUTS = [
     ),
   },
   {
-    href: "/impact",
-    label: "友達を招待",
+    href: "/support",
+    label: "お問い合わせ",
     icon: (
       <svg {...iconProps}>
-        <circle cx="9" cy="8" r="3.5" />
-        <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
-        <path d="M19 8v6M16 11h6" />
+        <path d="M21 12a8 8 0 01-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1121 12z" />
+        <path d="M8.5 12h.01M12 12h.01M15.5 12h.01" strokeWidth="2.2" />
       </svg>
     ),
   },
@@ -62,17 +61,25 @@ const LEGAL_LINKS = [
   { href: "/legal/tokushoho", label: "特定商取引法に基づく表記" },
 ];
 
-// 下ナビ「マイページ」。プロフィールと各種設定（2026-10-16 にヘッダーの設定ドロワーから移設）
+// 下ナビ「マイページ」。プロフィール・お問い合わせ・各種設定（設定は 2026-10-16 にヘッダーの設定ドロワーから移設）
 export default async function MyPage() {
   const supabase = createClient();
   const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nickname, name, name_roman, rank_level, created_at, card_brand, card_last4, card_exp_month, card_exp_year")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { count: unreadSupport }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("nickname, name, name_roman, rank_level, created_at, card_brand, card_last4, card_exp_month, card_exp_year")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("support_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("sender", "admin")
+      .is("read_by_user_at", null),
+  ]);
 
   const nickname = profile?.nickname ?? "";
   const displayName =
@@ -127,8 +134,14 @@ export default async function MyPage() {
             <Link
               key={s.href}
               href={s.href}
-              className="bg-white border border-base-200 rounded-2xl py-4 flex flex-col items-center gap-2 text-ink-500 hover:border-sage-300 hover:text-ink-700 transition"
+              className="relative bg-white border border-base-200 rounded-2xl py-4 flex flex-col items-center gap-2 text-ink-500 hover:border-sage-300 hover:text-ink-700 transition"
             >
+              {s.href === "/support" && (unreadSupport ?? 0) > 0 && (
+                <span
+                  aria-label="運営からの未読の返信があります"
+                  className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-red-500"
+                />
+              )}
               {s.icon}
               <span className="font-outfit text-xs font-medium text-ink-700">{s.label}</span>
             </Link>

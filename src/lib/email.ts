@@ -300,3 +300,108 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
     `.trim(),
   });
 }
+
+// ユーザーが入力した文章をメールの HTML に入れるときは、タグとして解釈されないように変換する
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+
+// お問い合わせの通知先（運営）。特商法・プライバシーポリシーに掲載している連絡先と同じ
+const SUPPORT_ADMIN_EMAIL = process.env.SUPPORT_ADMIN_EMAIL ?? "hibi.wellnessclub@gmail.com";
+
+function supportEmailLayout(content: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background-color:#FBFBFB;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FBFBFB;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #DCDFDD;">
+          <tr>
+            <td style="background-color:#1C221F;padding:32px 40px;text-align:center;">
+              <p style="margin:0;font-size:24px;font-weight:600;color:#ffffff;letter-spacing:4px;">Hibi</p>
+              <p style="margin:6px 0 0;font-size:12px;color:#919694;letter-spacing:2px;">Wellness Club</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              ${content}
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#F2F3F3;padding:20px 40px;text-align:center;">
+              <p style="margin:0;font-size:11px;color:#919694;">Hibi Wellness Club</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+}
+
+function supportButton(href: string, label: string): string {
+  return `<a href="${href}" style="display:inline-block;background-color:#2F6A51;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:9999px;">${label}</a>`;
+}
+
+// ユーザーからのお問い合わせを運営へ通知する（本文と、管理画面の該当スレッドへのリンク）
+export async function sendSupportInquiryToAdmin(params: { userId: string; userName: string; body: string }) {
+  const { userId, userName, body } = params;
+  const threadUrl = `${SITE_URL}/admin/support/${userId}`;
+
+  await sendEmail("support_inquiry", {
+    from: FROM,
+    to: SUPPORT_ADMIN_EMAIL,
+    subject: `【Hibi】お問い合わせ：${userName} さん`,
+    html: supportEmailLayout(`
+              <p style="margin:0 0 24px;font-size:22px;font-weight:600;color:#1C221F;line-height:1.4;">
+                新しいお問い合わせがあります
+              </p>
+              <p style="margin:0 0 8px;font-size:13px;color:#919694;">${escapeHtml(userName)} さん</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F3F3;border-radius:12px;margin-bottom:32px;">
+                <tr>
+                  <td style="padding:20px 24px;font-size:14px;color:#1C221F;line-height:1.7;white-space:pre-wrap;">${escapeHtml(body)}</td>
+                </tr>
+              </table>
+              <p style="margin:0 0 24px;text-align:center;">${supportButton(threadUrl, "管理画面で返信する")}</p>
+              <p style="margin:0;font-size:12px;color:#919694;line-height:1.7;">
+                このメールに返信しても、ユーザーには届きません。返信は管理画面から行ってください。
+              </p>`),
+  });
+}
+
+// 運営が返信したことをユーザーへ知らせる（本文はメールに載せず、アプリで読んでもらう）
+export async function sendSupportReplyToUser(params: { to: string; userName: string }) {
+  const { to, userName } = params;
+
+  await sendEmail("support_reply", {
+    from: FROM,
+    to,
+    subject: "【Hibi】お問い合わせへの返信があります",
+    html: supportEmailLayout(`
+              <p style="margin:0 0 8px;font-size:14px;color:#2C3531;">${escapeHtml(userName)} さん</p>
+              <p style="margin:0 0 24px;font-size:22px;font-weight:600;color:#1C221F;line-height:1.4;">
+                お問い合わせへの返信があります
+              </p>
+              <p style="margin:0 0 32px;font-size:14px;color:#2C3531;line-height:1.7;">
+                Hibi 運営からメッセージが届きました。アプリでご確認ください。
+              </p>
+              <p style="margin:0 0 32px;text-align:center;">${supportButton(`${SITE_URL}/support`, "メッセージを見る")}</p>
+              <p style="margin:0;font-size:12px;color:#919694;line-height:1.7;">
+                このメールへの返信はお受けできません。お問い合わせはアプリからお願いいたします。
+              </p>`),
+  });
+}

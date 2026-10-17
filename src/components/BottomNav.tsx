@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 type NavItem = {
   href: string;
@@ -62,7 +64,8 @@ const RIGHT_ITEMS: NavItem[] = [
   {
     href: "/mypage",
     label: "マイページ",
-    matches: ["/mypage"],
+    // お問い合わせ（/support）はマイページから開くため、マイページを選択中にする
+    matches: ["/mypage", "/support"],
     icon: () => (
       <svg {...svgProps}>
         <circle cx="12" cy="8" r="4" />
@@ -76,14 +79,19 @@ function isActive(pathname: string, item: NavItem) {
   return item.matches.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 }
 
-function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
+function NavLink({ item, pathname, dot = false }: { item: NavItem; pathname: string; dot?: boolean }) {
   const active = isActive(pathname, item);
   return (
     <Link
       href={item.href}
       className={`flex flex-col items-center gap-1 py-2 transition ${active ? "text-sage-600" : "text-ink-300 hover:text-ink-500"}`}
     >
-      {item.icon(active)}
+      <span className="relative">
+        {item.icon(active)}
+        {dot && (
+          <span aria-label="未読があります" className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-nav-bg" />
+        )}
+      </span>
       <span className={`font-outfit text-[10px] whitespace-nowrap ${active ? "font-medium" : ""}`}>{item.label}</span>
     </Link>
   );
@@ -92,6 +100,28 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 export default function BottomNav() {
   const pathname = usePathname();
   const checkinActive = pathname === "/checkin";
+  const [hasUnreadSupport, setHasUnreadSupport] = useState(false);
+
+  // 運営からの未読の返信があれば「マイページ」に赤い点を付ける。画面を移るたびに確認する。
+  // getSession は Cookie を読むだけで通信しない。読み取りは RLS で本人の行のみ
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { count } = await supabase
+        .from("support_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .eq("sender", "admin")
+        .is("read_by_user_at", null);
+      if (!cancelled) setHasUnreadSupport((count ?? 0) > 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   return (
     <nav className="nm-nav-bottom fixed bottom-0 left-0 right-0 z-50">
@@ -118,7 +148,12 @@ export default function BottomNav() {
         </Link>
 
         {RIGHT_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} />
+          <NavLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            dot={item.href === "/mypage" && hasUnreadSupport && pathname !== "/support"}
+          />
         ))}
       </div>
     </nav>

@@ -21,6 +21,12 @@ export default function AdminNav() {
           Hibi Admin
         </Link>
         <div className="flex items-center gap-4">
+          <Link href="/admin/events" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
+            イベント
+          </Link>
+          <Link href="/admin/support" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
+            お問い合わせ
+          </Link>
           <Link href="/home" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
             ユーザー画面へ
           </Link>

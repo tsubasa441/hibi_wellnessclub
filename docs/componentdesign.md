@@ -16,6 +16,7 @@
 |-------------|------|------|
 | Header | `src/components/Header.tsx` | ロゴ。管理者には「管理画面」リンクも表示（歯車アイコンは 2026-10-16 に撤去） |
 | SettingsMenu | `src/components/SettingsMenu.tsx` | マイページのアカウント設定。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供（2026-10-16 に旧 `SettingsDrawer` から移設） |
+| SupportChat | `src/components/SupportChat.tsx` | お問い合わせのチャット（ユーザーの `/support`・管理画面の `/admin/support/[userId]` で共通）。自分の吹き出しは右・`bg-sage-600` 白文字、相手は左・`bg-base-100`（上に「Hibi 運営」等）。下に入力欄（2000文字・文字数表示）と送信ボタン。送信後と、開いている間の20秒ごとに `router.refresh()` で新着を取り直す |
 | ReserveTabs | `src/components/ReserveTabs.tsx` | 下ナビ「予約」内で、イベント一覧（`/events`）と予約済み一覧（`/bookings`）を切り替えるピル型の2択 |
 | PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。法定ページ（特商法・プライバシー・利用規約）に設置（トップページからは 2026-10-12 に撤去）。ログイン後の画面は `Header` を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
 | AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
@@ -172,7 +173,7 @@
 | インパクト | `/impact` | `/impact` |
 | マイページ | `/mypage` | `/mypage` |
 
-チェックインは中央に一段大きい丸ボタン（56px・`bg-ink-500`、選択中は `bg-sage-600`、`-mt-6` でナビから浮かせ、`ring-4 ring-nav-bg` で縁取り）。
+「マイページ」は `/support` でも選択中になり、運営からの未読の返信があるとアイコンの右上に赤い点を付ける（画面を移るたびに本人の未読数を確認。`/support` を開いている間は出さない）。チェックインは中央に一段大きい丸ボタン（56px・`bg-ink-500`、選択中は `bg-sage-600`、`-mt-6` でナビから浮かせ、`ring-4 ring-nav-bg` で縁取り）。
 
 ### ReserveTabs（予約タブ内の切り替え）
 
@@ -186,7 +187,7 @@
 
 上から順に：
 1. プロフィールカード：人のアイコン（丸）、ランク（`RankIcon`＋英名・和名のピル）、表示名（ニックネーム→ローマ字氏名→氏名の順にフォールバック）、メールアドレス、Member since
-2. ショートカット（3列のタイル）：予約済み（`/bookings`）・イベントを探す（`/events`）・友達を招待（`/impact`）
+2. ショートカット（3列のタイル）：予約済み（`/bookings`）・イベントを探す（`/events`）・お問い合わせ（`/support`。運営からの未読の返信があれば右上に赤い点。2026-10-17 に「友達を招待」から変更）
 3. アカウント設定（`SettingsMenu`、下記）
 4. その他：利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク
 

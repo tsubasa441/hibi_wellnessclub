@@ -75,6 +75,7 @@ src/
 │   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。size="lg" は /checkin 用の大きなボタン。Client Component）
 │   ├── checkin/page.tsx        # チェックイン（下ナビ中央。本日開催の予約を大きなボタンでチェックイン。無ければ次の予約を案内）
 │   ├── mypage/page.tsx         # マイページ（プロフィール・ショートカット・アカウント設定・法定ページへのリンク）
+│   ├── support/page.tsx        # お問い合わせ（運営とのチャット。開いた時点で運営からの返信を既読にする）
 │   ├── auth/
 │   │   ├── confirm/route.ts         # 再設定メールのリンク先。GET は検証せず /auth/verify へリダイレクト（リンクの先読みでトークンが消費されないように）。POST（確認ページのボタン）で token_hash を verifyOtp して /auth/reset-password へ 303
 │   │   ├── verify/page.tsx          # 再設定の確認ページ（「パスワードを再設定する」ボタンのみ。ボタンで POST /auth/confirm）
@@ -99,6 +100,9 @@ src/
 │   │           ├── page.tsx             # イベント編集
 │   │           ├── DeleteEventButton.tsx  # 論理削除ボタン（Client Component）
 │   │           └── participants/page.tsx  # 参加者一覧・CSVダウンロード導線
+│   │   └── support/
+│   │       ├── page.tsx          # お問い合わせ一覧（ユーザーごとのスレッド・未読数・未返信）
+│   │       └── [userId]/page.tsx # 1人とのやり取り・返信（開いた時点でユーザーからのメッセージを既読にする）
 │   ├── global-error.tsx         # ルートのエラーバウンダリ（Sentryへ送信）
 │   └── api/
 │       ├── account/delete/route.ts        # アカウント削除（個人情報の匿名化・auth.users無効化）
@@ -116,6 +120,8 @@ src/
 │       ├── payment-methods/square/route.ts  # POST クレジットカードの登録/変更 / DELETE 削除（決済を伴わない、マイページから）
 │       ├── signup/profile/route.ts        # サインアップ時プロフィール作成
 │       ├── profile/nickname/route.ts      # ニックネーム変更（マイページから）
+│       ├── support/messages/route.ts      # お問い合わせの送信（保存→運営へメール通知）
+│       ├── admin/support/[userId]/messages/route.ts  # お問い合わせへの返信（管理者のみ。保存→ユーザーへメール通知）
 │       └── admin/events/
 │           ├── route.ts                    # POST イベント作成
 │           └── [id]/
@@ -124,6 +130,7 @@ src/
 ├── components/
 │   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト。管理者には「管理画面」リンク）
 │   ├── SettingsMenu.tsx        # マイページのアカウント設定（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除。2026-10-16 に設定ドロワーから移設）
+│   ├── SupportChat.tsx         # お問い合わせのチャット（吹き出し・入力欄。20秒ごとに新着を取り直す。ユーザー画面・管理画面で共通。Client Component）
 │   ├── ReserveTabs.tsx         # 下ナビ「予約」内の切り替え（イベントを探す /events ⇔ 予約済み /bookings）
 │   ├── PublicHeader.tsx        # 未ログインで見られるページ用のヘッダー（Hibi ロゴのみ。法定ページに設置。トップは 2026-10-12 に撤去。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── BottomNav.tsx           # 共通フッターナビ（ホーム / 予約 / チェックイン（中央の丸ボタン） / インパクト / マイページ）
@@ -140,7 +147,8 @@ src/
 │   ├── csv.ts                  # CSV生成ヘルパー
 │   ├── authStyles.ts           # 認証系画面（ログイン・登録完了・パスワード再設定）共通の入力欄・ラベル・ボタン・見出しのクラス
 │   ├── date.ts                 # JST基準の日付・時刻ヘルパー（サーバーの実行タイムゾーンに依存しないための共通処理）
-│   ├── email.ts                # メール送信（Resend）
+│   ├── email.ts                # メール送信（Resend）。お問い合わせの通知（運営宛て・ユーザー宛て）を含む。ユーザーの入力は HTML エスケープして差し込む
+│   ├── support.ts              # お問い合わせ本文の検証（1〜2000文字）とメッセージの型
 │   ├── encrypt.ts              # 名前の暗号化・復号
 │   ├── eventValidation.ts      # イベント入力バリデーション（管理者API用）・選択項目の検証とスナップショット組み立て
 │   ├── nameValidation.ts       # 氏名・ニックネームの正規化（NFKC）と入力チェック（新規登録フォーム・登録 API・ニックネーム変更 API で共通）
