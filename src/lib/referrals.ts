@@ -51,3 +51,25 @@ export async function checkAndAwardReferralReward(
   // 5. 紹介者の月間紹介バッジ（Bridge Builder 等）を再判定
   await checkReferralBadges(service, referral.referrer_id);
 }
+
+// Impact 画面「あなたから広がった幸せの数」（2026-10-17、依頼者の指定）。
+// 自分が紹介した人（1代目）と、その人たちが紹介した人（2代目）のうち、
+// 初回イベントに参加して紹介が確定（rewarded）した人数の合計。3代目以降は数えない。
+// 2代目の referrals は他人の行で RLS（本人のみ）では読めないため service_role で数え、件数だけを返す
+export async function countReferralReach(service: SupabaseClient, userId: string): Promise<number> {
+  const { data: direct } = await service
+    .from("referrals")
+    .select("referee_id, status")
+    .eq("referrer_id", userId);
+  const directRows = (direct ?? []) as { referee_id: string; status: string }[];
+  const directCount = directRows.filter((r) => r.status === "rewarded").length;
+  if (directRows.length === 0) return 0;
+
+  const { count } = await service
+    .from("referrals")
+    .select("id", { count: "exact", head: true })
+    .in("referrer_id", directRows.map((r) => r.referee_id))
+    .eq("status", "rewarded");
+
+  return directCount + (count ?? 0);
+}

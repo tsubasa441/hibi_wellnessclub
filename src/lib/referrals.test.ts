@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/points", () => ({ awardPoints: mocks.awardPoints }));
 vi.mock("@/lib/badges", () => ({ checkReferralBadges: mocks.checkReferralBadges }));
 
-const { checkAndAwardReferralReward } = await import("./referrals");
+const { checkAndAwardReferralReward, countReferralReach } = await import("./referrals");
 
 // システム時刻: 2026-07-20T05:00:00Z
 const NOW = "2026-07-20T05:00:00Z";
@@ -95,5 +95,43 @@ describe("checkAndAwardReferralReward", () => {
 
     expect(mocks.awardPoints).toHaveBeenCalledTimes(2);
     expect(updateSpy).toHaveBeenCalled();
+  });
+});
+
+describe("countReferralReach", () => {
+  it("紹介した人がいなければ 0（2代目は数えに行かない）", async () => {
+    const { supabase, from } = createSupabaseMock();
+    from.mockReturnValueOnce(chainable({ data: [] }));
+
+    expect(await countReferralReach(supabase, "me")).toBe(0);
+    expect(from).toHaveBeenCalledTimes(1);
+  });
+
+  it("1代目の rewarded と、1代目全員が紹介した2代目の rewarded を合計する", async () => {
+    const { supabase, from } = createSupabaseMock();
+    const inSpy = vi.fn();
+    const eqSpy = vi.fn();
+    from.mockReturnValueOnce(
+      chainable({
+        data: [
+          { referee_id: "a", status: "rewarded" },
+          { referee_id: "b", status: "pending" },
+        ],
+      })
+    );
+    from.mockReturnValueOnce(chainable({ count: 3 }, { in: inSpy, eq: eqSpy }));
+
+    expect(await countReferralReach(supabase, "me")).toBe(1 + 3);
+    // 未参加（pending）の1代目が紹介した人も、2代目として数える対象に含める
+    expect(inSpy).toHaveBeenCalledWith("referrer_id", ["a", "b"]);
+    expect(eqSpy).toHaveBeenCalledWith("status", "rewarded");
+  });
+
+  it("2代目の件数が取れなければ 1代目のみ", async () => {
+    const { supabase, from } = createSupabaseMock();
+    from.mockReturnValueOnce(chainable({ data: [{ referee_id: "a", status: "rewarded" }] }));
+    from.mockReturnValueOnce(chainable({ count: null }));
+
+    expect(await countReferralReach(supabase, "me")).toBe(1);
   });
 });

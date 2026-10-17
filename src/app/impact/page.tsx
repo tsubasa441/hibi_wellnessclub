@@ -6,6 +6,8 @@ import Header from "@/components/Header";
 import ProfileCard from "@/components/ProfileCard";
 import ReferralShare from "@/app/impact/ReferralShare";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
+import { countReferralReach } from "@/lib/referrals";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getYearMonthJst, getJstMonthBounds, getJstParts } from "@/lib/date";
 
 // ---- バッジ型定義 ----
@@ -81,6 +83,7 @@ export default async function ImpactPage() {
     { data: userBadges },
     { data: allBadges },
     { data: referrals },
+    referralReach,
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
@@ -99,6 +102,7 @@ export default async function ImpactPage() {
       .select("*")
       .eq("referrer_id", user.id)
       .order("created_at", { ascending: false }),
+    countReferralReach(createServiceClient(), user.id),
   ]);
 
   // チェックイン済みの予約のみを「参加」としてカウントする
@@ -113,12 +117,6 @@ export default async function ImpactPage() {
   const countToNext = nextRank ? nextRank.minCount - totalCount : null;
 
   // ---- 紹介 ----
-  // 「あなたから広がった幸せの数」の数値は、被紹介者が初回イベントにチェックインし、
-  // そのイベント終了後にポイントが確定した（rewarded）分のみをカウントする。
-  // pending（登録済みだが未参加）の段階ではまだカウントしない
-  const rewardedReferralCount = (referrals ?? []).filter(
-    (r: { status: string }) => r.status === "rewarded"
-  ).length;
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
@@ -365,7 +363,7 @@ export default async function ImpactPage() {
 
         {/* 紹介実績 */}
         <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
-          <p className="font-outfit text-xl font-bold text-ink-700">{rewardedReferralCount}</p>
+          <p className="font-outfit text-xl font-bold text-ink-700">{referralReach}</p>
           <p className="font-dm text-xs text-ink-300 mt-0.5">あなたから広がった幸せの数</p>
         </div>
 
