@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
 import { decrypt } from "@/lib/encrypt";
@@ -110,12 +111,7 @@ export default async function MyPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
         {/* プロフィール */}
         <section className="bg-white border border-base-200 rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-base-100 border border-base-200 flex items-center justify-center text-ink-300 shrink-0">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-            </svg>
-          </div>
+          <Image src="/images/default-avatar.png" alt="" width={52} height={64} className="w-[52px] h-16 shrink-0" />
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1 text-sage-600 border border-sage-200 rounded-full px-2.5 py-0.5">
               <RankIcon level={rank.level} size={13} />

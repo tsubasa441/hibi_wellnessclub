@@ -77,26 +77,26 @@ export default function BookingButton({
     return (
       <div className="space-y-3">
         <div className="bg-sage-100 border border-sage-200 rounded-xl p-4 text-center">
-          <p className="font-maru font-semibold text-ink-700">予約済みです</p>
-          <p className="font-maru text-sm text-ink-500 mt-1">このイベントへの参加が確定しています。</p>
+          <p className="font-noto font-semibold text-ink-700">予約済みです</p>
+          <p className="font-noto text-sm text-ink-500 mt-1">このイベントへの参加が確定しています。</p>
         </div>
         {answered.length > 0 && (
           <div className="bg-base-100 rounded-xl p-4">
-            <p className="font-maru text-xs text-ink-400 mb-1">選択内容</p>
+            <p className="font-noto text-xs text-ink-400 mb-1">選択内容</p>
             {answered.map((s) => (
-              <p key={s.option_id} className="font-maru text-sm font-medium text-ink-700">
+              <p key={s.option_id} className="font-noto text-sm font-medium text-ink-700">
                 {s.label}：{s.values.join("、")}
               </p>
             ))}
           </div>
         )}
         {cancelError && (
-          <div className="bg-red-50 text-red-600 font-maru text-sm rounded-lg px-4 py-3">{cancelError}</div>
+          <div className="bg-red-50 text-red-600 font-noto text-sm rounded-lg px-4 py-3">{cancelError}</div>
         )}
         <button
           onClick={handleCancel}
           disabled={cancelLoading}
-          className="w-full border border-ink-300 text-ink-500 font-maru font-medium py-3 rounded-full hover:bg-base-100 transition disabled:opacity-60"
+          className="w-full border border-ink-300 text-ink-500 font-noto font-medium py-3 rounded-full hover:bg-base-100 transition disabled:opacity-60"
         >
           {cancelLoading ? "キャンセル中..." : "予約をキャンセルする"}
         </button>
@@ -106,7 +106,7 @@ export default function BookingButton({
 
   if (isSoldOut) {
     return (
-      <button disabled className="w-full bg-base-200 text-ink-300 font-maru font-medium py-3 rounded-full cursor-not-allowed">
+      <button disabled className="w-full bg-base-200 text-ink-300 font-noto font-medium py-3 rounded-full cursor-not-allowed">
         満席
       </button>
     );
@@ -154,20 +154,20 @@ export default function BookingButton({
         <EventOptionFields options={options} value={selections} onChange={setSelections} />
       )}
       {error && (
-        <div className="bg-red-50 text-red-600 font-maru text-sm rounded-lg px-4 py-3">{error}</div>
+        <div className="bg-red-50 text-red-600 font-noto text-sm rounded-lg px-4 py-3">{error}</div>
       )}
       {event.price === 0 ? (
         <button
           onClick={handleFreeBooking}
           disabled={loading}
-          className="w-full bg-sage-500 text-white font-maru font-medium py-3 rounded-full hover:bg-sage-600 transition disabled:opacity-60"
+          className="w-full bg-sage-500 text-white font-noto font-medium py-3 rounded-full hover:bg-sage-600 transition disabled:opacity-60"
         >
           {loading ? "予約中..." : "予約する"}
         </button>
       ) : (
         <button
           onClick={handleGoToCheckout}
-          className="w-full text-center bg-sage-500 text-white font-maru font-medium py-3 rounded-full hover:bg-sage-600 transition"
+          className="w-full text-center bg-sage-500 text-white font-noto font-medium py-3 rounded-full hover:bg-sage-600 transition"
         >
           予約する
         </button>

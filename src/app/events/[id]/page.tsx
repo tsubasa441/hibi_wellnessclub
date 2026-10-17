@@ -91,33 +91,33 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(44,53,49,0.08)] overflow-hidden animate-fade-up animate-delay-100">
           {/* Hero */}
           <div className="bg-gradient-to-br from-sage-500 via-sage-400 to-sage-300 px-6 py-5 text-white">
-            <span className={`inline-flex items-center text-xs font-maru font-medium px-3 py-1 rounded-full mb-4 ${type.color}`}>
+            <span className={`inline-flex items-center text-xs font-noto font-medium px-3 py-1 rounded-full mb-4 ${type.color}`}>
               {type.label}
             </span>
-            <h1 className="font-maru text-2xl font-semibold leading-snug">{event.title}</h1>
+            <h1 className="font-noto text-2xl font-semibold leading-snug">{event.title}</h1>
           </div>
 
           {/* Details */}
           <div className="px-6 py-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-base-100 rounded-xl p-4">
-                <p className="font-maru text-xs text-ink-400 mb-1">日時</p>
-                <p className="font-maru text-sm font-medium text-ink-700">{formatDate(event.start_at, event.end_at).date}</p>
-                <p className="font-maru text-sm font-medium text-ink-700">{formatDate(event.start_at, event.end_at).time}</p>
+                <p className="font-noto text-xs text-ink-400 mb-1">日時</p>
+                <p className="font-noto text-sm font-medium text-ink-700">{formatDate(event.start_at, event.end_at).date}</p>
+                <p className="font-noto text-sm font-medium text-ink-700">{formatDate(event.start_at, event.end_at).time}</p>
               </div>
               <div className="bg-base-100 rounded-xl p-4">
-                <p className="font-maru text-xs text-ink-400 mb-1">場所</p>
-                <p className="font-maru text-sm font-medium text-ink-700">{event.location}</p>
+                <p className="font-noto text-xs text-ink-400 mb-1">場所</p>
+                <p className="font-noto text-sm font-medium text-ink-700">{event.location}</p>
               </div>
               <div className="bg-base-100 rounded-xl p-4">
-                <p className="font-maru text-xs text-ink-400 mb-1">参加費</p>
-                <p className="font-maru text-lg font-bold text-ink-700">
+                <p className="font-noto text-xs text-ink-400 mb-1">参加費</p>
+                <p className="font-noto text-lg font-bold text-ink-700">
                   {event.price === 0 ? "無料" : `¥${event.price.toLocaleString()}`}
                 </p>
               </div>
               <div className="bg-base-100 rounded-xl p-4">
-                <p className="font-maru text-xs text-ink-400 mb-1">予約状況</p>
-                <p className={`font-maru text-lg font-bold ${isSoldOut ? "text-red-500" : remaining <= 3 ? "text-amber-600" : "text-ink-700"}`}>
+                <p className="font-noto text-xs text-ink-400 mb-1">予約状況</p>
+                <p className={`font-noto text-lg font-bold ${isSoldOut ? "text-red-500" : remaining <= 3 ? "text-amber-600" : "text-ink-700"}`}>
                   {isSoldOut ? "満席" : `${bookedCount ?? 0} / ${event.capacity} 名`}
                 </p>
               </div>
@@ -125,35 +125,35 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
             {event.meeting_place && (
               <div className="bg-base-100 rounded-xl p-4">
-                <p className="font-maru text-xs text-ink-400 mb-1">集合場所</p>
-                <p className="font-maru text-sm font-medium text-ink-700">{event.meeting_place}</p>
+                <p className="font-noto text-xs text-ink-400 mb-1">集合場所</p>
+                <p className="font-noto text-sm font-medium text-ink-700">{event.meeting_place}</p>
               </div>
             )}
 
             {event.description && (
               <div>
-                <p className="font-maru text-xs text-ink-400 mb-2">イベント詳細</p>
-                <p className="font-maru text-sm text-ink-500 leading-relaxed">{event.description}</p>
+                <p className="font-noto text-xs text-ink-400 mb-2">イベント詳細</p>
+                <p className="font-noto text-sm text-ink-500 leading-relaxed">{event.description}</p>
               </div>
             )}
 
             {event.belongings && (
               <div>
-                <p className="font-maru text-xs text-ink-400 mb-2">持ち物</p>
-                <p className="font-maru text-sm text-ink-500 leading-relaxed whitespace-pre-wrap">{event.belongings}</p>
+                <p className="font-noto text-xs text-ink-400 mb-2">持ち物</p>
+                <p className="font-noto text-sm text-ink-500 leading-relaxed whitespace-pre-wrap">{event.belongings}</p>
               </div>
             )}
 
             {event.remarks && (
               <div>
-                <p className="font-maru text-xs text-ink-400 mb-2">備考</p>
-                <p className="font-maru text-sm text-ink-500 leading-relaxed whitespace-pre-wrap">{event.remarks}</p>
+                <p className="font-noto text-xs text-ink-400 mb-2">備考</p>
+                <p className="font-noto text-sm text-ink-500 leading-relaxed whitespace-pre-wrap">{event.remarks}</p>
               </div>
             )}
 
             <div className="bg-base-100 border border-sage-200 rounded-xl p-4 text-sm text-ink-700">
-              <p className="font-maru font-semibold mb-1">キャンセルポリシー</p>
-              <ul className="font-maru space-y-0.5">
+              <p className="font-noto font-semibold mb-1">キャンセルポリシー</p>
+              <ul className="font-noto space-y-0.5">
                 <li>・イベント当日までキャンセル可能です</li>
                 <li>・2日前まで：全額返金</li>
                 <li>・前日・当日：返金対象外（キャンセル料100%）</li>

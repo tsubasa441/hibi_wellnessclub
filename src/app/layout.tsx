@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Cormorant_Garamond, DM_Sans, M_PLUS_Rounded_1c, Bebas_Neue, Zen_Kaku_Gothic_New } from "next/font/google";
+import { Outfit, Cormorant_Garamond, DM_Sans, Noto_Sans_JP, Bebas_Neue, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
@@ -10,11 +10,13 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
 });
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm", display: "swap" });
-const maru = M_PLUS_Rounded_1c({
+// イベント画面（一覧・詳細）用。2026-10-17、依頼者の指定で丸ゴシック（M PLUS Rounded 1c）から変更
+const noto = Noto_Sans_JP({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-maru",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-noto",
   display: "swap",
+  preload: false,
 });
 // トップページのヒーロー見出し専用（2026-10-12、依頼者が比較のうえ選択）
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--font-bebas", display: "swap" });
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <body className={`${outfit.variable} ${cormorant.variable} ${dmSans.variable} ${maru.variable} ${bebas.variable} ${zenKaku.variable} font-dm bg-base-100 text-ink-500 overflow-x-hidden`}>
+      <body className={`${outfit.variable} ${cormorant.variable} ${dmSans.variable} ${noto.variable} ${bebas.variable} ${zenKaku.variable} font-dm bg-base-100 text-ink-500 overflow-x-hidden`}>
         {children}
       </body>
     </html>

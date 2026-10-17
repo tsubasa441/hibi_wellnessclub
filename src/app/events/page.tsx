@@ -67,18 +67,18 @@ export default async function EventsPage() {
                   <div className="flex items-start gap-4">
                     <EventTypeIcon type={event.event_type} label={type.label} />
                     <div className="flex-1 min-w-0">
-                      <span className={`inline-flex items-center text-xs font-maru font-medium px-3 py-1 rounded-full mb-2 ${type.color}`}>
+                      <span className={`inline-flex items-center text-xs font-noto font-medium px-3 py-1 rounded-full mb-2 ${type.color}`}>
                         {type.label}
                       </span>
-                      <h2 className="font-maru font-semibold text-lg text-ink-700 leading-snug">{event.title}</h2>
-                      <p className="font-maru text-sm text-ink-300 mt-1">{formatDate(event.start_at)}</p>
-                      <p className="font-maru text-sm text-ink-300">{event.location}</p>
+                      <h2 className="font-noto font-semibold text-lg text-ink-700 leading-snug">{event.title}</h2>
+                      <p className="font-noto text-sm text-ink-300 mt-1">{formatDate(event.start_at)}</p>
+                      <p className="font-noto text-sm text-ink-300">{event.location}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-maru font-bold text-ink-700 text-lg">
+                      <p className="font-noto font-bold text-ink-700 text-lg">
                         {event.price === 0 ? "無料" : `¥${event.price.toLocaleString()}`}
                       </p>
-                      <p className="font-maru text-xs text-ink-300 mt-1">定員 {event.capacity}名</p>
+                      <p className="font-noto text-xs text-ink-300 mt-1">定員 {event.capacity}名</p>
                     </div>
                   </div>
                 </Link>
@@ -87,7 +87,7 @@ export default async function EventsPage() {
           </div>
         ) : (
           <div className="text-center py-20 text-ink-300">
-            <p className="font-maru">現在開催予定のイベントはありません</p>
+            <p className="font-noto">現在開催予定のイベントはありません</p>
           </div>
         )}
       </div>

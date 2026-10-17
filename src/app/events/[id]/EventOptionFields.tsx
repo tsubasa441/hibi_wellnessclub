@@ -36,7 +36,7 @@ function CheckboxDropdown({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 font-maru text-sm text-left"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 font-noto text-sm text-left"
       >
         <span className={selected.length > 0 ? "text-ink-700" : "text-ink-300"}>{summary}</span>
         <svg
@@ -56,7 +56,7 @@ function CheckboxDropdown({
           {option.choices.map((choice) => (
             <label
               key={choice}
-              className="flex items-center gap-2 px-3 py-2 font-maru text-sm text-ink-700 hover:bg-base-100 cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 font-noto text-sm text-ink-700 hover:bg-base-100 cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -94,7 +94,7 @@ export default function EventOptionFields({
         const selected = value[option.id] ?? [];
         return (
           <div key={option.id}>
-            <p className="font-maru text-xs text-ink-400 mb-1">
+            <p className="font-noto text-xs text-ink-400 mb-1">
               {option.label}
               {option.required && <span className="text-red-500">（必須）</span>}
             </p>
@@ -108,7 +108,7 @@ export default function EventOptionFields({
               <select
                 value={selected[0] ?? ""}
                 onChange={(e) => setOption(option.id, e.target.value ? [e.target.value] : [])}
-                className="w-full bg-white border border-base-200 rounded-lg px-3 py-2.5 font-maru text-sm text-ink-700"
+                className="w-full bg-white border border-base-200 rounded-lg px-3 py-2.5 font-noto text-sm text-ink-700"
               >
                 <option value="">選択してください</option>
                 {option.choices.map((choice) => (
