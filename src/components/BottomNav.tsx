@@ -131,10 +131,10 @@ export default function BottomNav() {
         ))}
 
         {/* チェックイン：画面中央の大きな丸ボタン */}
-        <Link href="/checkin" className="flex flex-col items-center gap-1 -mt-6">
+        <Link href="/checkin" className="group flex flex-col items-center gap-1 -mt-6 focus-visible:outline-none">
           <span
-            className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_4px_12px_rgba(44,53,49,0.25)] ring-4 ring-nav-bg transition ${
-              checkinActive ? "bg-sage-600" : "bg-ink-500 hover:bg-ink-600"
+            className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_4px_12px_rgba(44,53,49,0.25)] ring-4 ring-nav-bg transition-colors duration-200 group-focus-visible:ring-sage-300 ${
+              checkinActive ? "bg-sage-600 group-hover:bg-sage-500" : "bg-ink-500 group-hover:bg-sage-600"
             }`}
           >
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -142,7 +142,7 @@ export default function BottomNav() {
               <path d="M8.5 12.5l2.5 2.5 4.5-5" />
             </svg>
           </span>
-          <span className={`font-outfit text-[10px] whitespace-nowrap ${checkinActive ? "text-sage-600 font-medium" : "text-ink-500"}`}>
+          <span className={`font-outfit text-[10px] whitespace-nowrap transition-colors duration-200 ${checkinActive ? "text-sage-600 font-medium" : "text-ink-500 group-hover:text-sage-600"}`}>
             チェックイン
           </span>
         </Link>
