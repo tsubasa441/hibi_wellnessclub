@@ -24,7 +24,6 @@ export default async function EventsPage() {
         <div className="mb-6">
           <ReserveTabs active="events" />
         </div>
-        <h1 className="font-yugothic text-2xl sm:text-3xl font-bold text-ink-700 mb-6 tracking-wide animate-fade-up animate-delay-100">Events</h1>
 
         {events && events.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-up animate-delay-200">
