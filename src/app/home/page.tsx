@@ -43,10 +43,9 @@ export default async function HomePage() {
     supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(1),
     supabase
       .from("bookings")
-      .select("id, event_id, events(title, start_at, location, event_type)")
+      .select("id, event_id, events(title, start_at, end_at, location, event_type)")
       .eq("user_id", user.id)
-      .eq("status", "confirmed")
-      .order("created_at", { ascending: true }),
+      .eq("status", "confirmed"),
   ]);
 
   const profileRaw = profileRes.data ?? MOCK_PROFILE;
@@ -58,16 +57,18 @@ export default async function HomePage() {
   const sessionCount = sessionRes.count ?? 0;
   const nextEvent = eventsRes.data?.[0] ?? null;
 
+  type BookedEvent = { title: string; start_at: string; end_at: string | null; location: string; event_type: string };
   type BookingRaw = {
     id: string;
     event_id: string;
-    events: { title: string; start_at: string; location: string; event_type: string } | { title: string; start_at: string; location: string; event_type: string }[] | null;
+    events: BookedEvent | BookedEvent[] | null;
   };
   type Booking = {
     id: string;
     event_id: string;
-    events: { title: string; start_at: string; location: string; event_type: string };
+    events: BookedEvent;
   };
+  const nowMs = new Date().getTime();
   const upcomingBookings: Booking[] = ((bookingsRes.data ?? []) as unknown as BookingRaw[])
     .map((b) => {
       const ev = Array.isArray(b.events) ? b.events[0] : b.events;
@@ -75,10 +76,16 @@ export default async function HomePage() {
     })
     .filter((b): b is Booking => {
       if (!b) return false;
-      const endAt = new Date(b.events.start_at);
-      endAt.setHours(endAt.getHours() + 2);
-      return endAt > new Date();
-    });
+      const endMs = b.events.end_at
+        ? new Date(b.events.end_at).getTime()
+        : new Date(b.events.start_at).getTime() + 2 * 60 * 60 * 1000;
+      return endMs > nowMs;
+    })
+    .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
+  // ホームには近い順に一部だけ出し、残りは「詳細はこちら」から予約済み画面で見てもらう
+  const HOME_BOOKING_LIMIT = 2;
+  const shownBookings = upcomingBookings.slice(0, HOME_BOOKING_LIMIT);
+  const hiddenBookingCount = upcomingBookings.length - shownBookings.length;
 
   const memberSince = profile.created_at
     ? (() => {
@@ -116,14 +123,9 @@ export default async function HomePage() {
         {/* 予約済みイベント */}
         {upcomingBookings.length > 0 && (
           <div className="animate-fade-up animate-delay-200">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-outfit text-sm font-semibold text-ink-500 tracking-wide">予約済みイベント</h2>
-              <Link href="/bookings" className="font-outfit text-xs text-ink-500 font-medium">
-                すべて見る →
-              </Link>
-            </div>
+            <h2 className="font-outfit text-sm font-semibold text-ink-500 tracking-wide mb-3">予約済みイベント</h2>
             <div className="space-y-3">
-              {upcomingBookings.map((booking) => (
+              {shownBookings.map((booking) => (
                 <Link
                   key={booking.id}
                   href={`/events/${booking.event_id}`}
@@ -139,6 +141,17 @@ export default async function HomePage() {
                   <span className="font-outfit text-xs text-ink-700 font-medium bg-sage-200 px-2 py-1 rounded-full shrink-0">予約済み</span>
                 </Link>
               ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <p className="font-dm text-xs text-ink-400">
+                {hiddenBookingCount > 0 ? `ほか${hiddenBookingCount}件の予約があります` : ""}
+              </p>
+              <Link
+                href="/bookings"
+                className="font-outfit text-sm font-medium text-white bg-sage-600 rounded-full px-5 py-2.5 min-h-11 flex items-center hover:bg-ink-700 transition"
+              >
+                詳細はこちら
+              </Link>
             </div>
           </div>
         )}
