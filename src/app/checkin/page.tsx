@@ -57,7 +57,10 @@ export default async function CheckinPage() {
     .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
     .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
 
-  const todays = upcoming.filter((b) => getTodayJst(new Date(b.events.start_at)) === today);
+  // 日付をまたぐイベント（23時開始など）は、0時を過ぎても終了までは開催中としてチェックインできるようにする
+  const todays = upcoming.filter(
+    (b) => getTodayJst(new Date(b.events.start_at)) === today || new Date(b.events.start_at).getTime() <= nowMs
+  );
   const next = todays.length === 0 ? upcoming[0] ?? null : null;
 
   return (
@@ -79,7 +82,8 @@ export default async function CheckinPage() {
                   <div className="min-w-0">
                     <p className="font-outfit font-semibold text-base text-ink-700">{booking.events.title}</p>
                     <p className="font-dm text-sm text-ink-500 mt-1">
-                      本日 {formatTime(booking.events.start_at)}
+                      {getTodayJst(new Date(booking.events.start_at)) === today ? "本日" : formatDate(booking.events.start_at)}{" "}
+                      {formatTime(booking.events.start_at)}
                       {booking.events.end_at ? ` 〜 ${formatTime(booking.events.end_at)}` : " 開始"}
                     </p>
                     <p className="font-dm text-xs text-ink-300">{booking.events.location}</p>
