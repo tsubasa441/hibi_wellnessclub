@@ -16,11 +16,12 @@ export default function AdminNav() {
 
   return (
     <header className="nm-nav-top">
-      <div className="max-w-3xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
-        <Link href="/admin/events" className="font-outfit text-xl font-medium text-ink-700 tracking-wide">
+      {/* スマホ幅ではロゴの下にリンクを並べ、各リンクの途中で改行しない */}
+      <div className="max-w-3xl mx-auto px-5 py-4 sm:px-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <Link href="/admin/events" className="font-outfit text-xl font-medium text-ink-700 tracking-wide whitespace-nowrap">
           Hibi Admin
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 whitespace-nowrap">
           <Link href="/admin/events" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">
             イベント
           </Link>

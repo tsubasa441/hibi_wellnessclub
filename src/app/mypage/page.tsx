@@ -111,7 +111,7 @@ export default async function MyPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
         {/* プロフィール */}
         <section className="bg-white border border-base-200 rounded-2xl p-5 flex items-center gap-4">
-          <Image src="/images/default-avatar.png" alt="" width={52} height={64} className="w-[52px] h-16 shrink-0" />
+          <Image src="/images/default-avatar.svg" alt="" width={52} height={64} unoptimized className="w-[52px] h-16 shrink-0" />
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1 text-sage-600 border border-sage-200 rounded-full px-2.5 py-0.5">
               <RankIcon level={rank.level} size={13} />
