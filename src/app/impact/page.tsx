@@ -49,7 +49,7 @@ function MeterRow({
         <p className="font-outfit text-xs font-medium text-ink-700 leading-tight">{label}</p>
         <p className="font-dm text-xs text-ink-300 mt-0.5">{sublabel}</p>
       </div>
-      <div className="nm-inset flex-1 h-2 !rounded-full overflow-hidden">
+      <div className="flex-1 h-2 rounded-full bg-base-200 overflow-hidden">
         <div
           className="h-full rounded-full bg-sage-600 transition-all"
           style={{ width: `${pct}%` }}

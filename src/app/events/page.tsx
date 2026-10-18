@@ -1,35 +1,10 @@
 export const dynamic = "force-dynamic";
 
-import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
-import EventTypeIcon from "@/components/EventTypeIcon";
+import EventCard from "@/components/EventCard";
 import ReserveTabs from "@/components/ReserveTabs";
-import { getJstParts } from "@/lib/date";
-
-const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  yoga:     { label: "ヨガ",         color: "bg-sage-100 text-ink-700" },
-  training: { label: "トレーニング", color: "bg-sage-100 text-ink-700" },
-  running:  { label: "ランニング",   color: "bg-sage-100 text-ink-700" },
-  boxing:   { label: "ボクシング",   color: "bg-sage-100 text-ink-700" },
-  pilates:  { label: "ピラティス",   color: "bg-sage-100 text-ink-700" },
-};
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  const dateLabel = d.toLocaleDateString("ja-JP", {
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-    timeZone: "Asia/Tokyo",
-  });
-  const { hours: h, minutes } = getJstParts(d);
-  const mi = String(minutes).padStart(2, "0");
-  const timeLabel = `${h % 12 || 12}:${mi} ${h < 12 ? "AM" : "PM"}`;
-  return `${dateLabel} ${timeLabel}`;
-}
 
 export default async function EventsPage() {
   const supabase = createClient();
@@ -53,37 +28,9 @@ export default async function EventsPage() {
 
         {events && events.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-up animate-delay-200">
-            {events.map((event) => {
-              const type = EVENT_TYPE_LABELS[event.event_type] ?? {
-                label: event.event_type,
-                color: "bg-base-100 text-ink-500",
-              };
-              return (
-                <Link
-                  key={event.id}
-                  href={`/events/${event.id}`}
-                  className="block bg-white border border-base-200 rounded-2xl p-5 hover:border-sage-300 transition"
-                >
-                  <div className="flex items-start gap-4">
-                    <EventTypeIcon type={event.event_type} label={type.label} />
-                    <div className="flex-1 min-w-0">
-                      <span className={`inline-flex items-center text-xs font-noto font-medium px-3 py-1 rounded-full mb-2 ${type.color}`}>
-                        {type.label}
-                      </span>
-                      <h2 className="font-noto font-semibold text-lg text-ink-700 leading-snug">{event.title}</h2>
-                      <p className="font-noto text-sm text-ink-300 mt-1">{formatDate(event.start_at)}</p>
-                      <p className="font-noto text-sm text-ink-300">{event.location}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-noto font-bold text-ink-700 text-lg">
-                        {event.price === 0 ? "無料" : `¥${event.price.toLocaleString()}`}
-                      </p>
-                      <p className="font-noto text-xs text-ink-300 mt-1">定員 {event.capacity}名</p>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} href={`/events/${event.id}`} />
+            ))}
           </div>
         ) : (
           <div className="text-center py-20 text-ink-300">

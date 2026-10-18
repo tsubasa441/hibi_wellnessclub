@@ -23,6 +23,7 @@
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（ホーム / 予約 / チェックイン（中央の丸ボタン） / インパクト / マイページ。下記「下ナビ」参照） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | EventTypeIcon | `src/components/EventTypeIcon.tsx` | イベント種別（yoga / running / boxing / training / pilates）の円形ピクトグラム。円の色は `globals.css` の `--color-event-*` トークン、図柄は Google Material Symbols（Rounded / Fill、Apache License 2.0）の白い塗りつぶしアイコン（`currentColor`）。ヨガ=`self_improvement`、ランニング=`directions_run`、ボクシング=`sports_mma`、トレーニング=`fitness_center`、ピラティス=`sports_gymnastics`。イベント一覧（`/events`）のカード左側に表示する。`size="lg"`（80px）はトップページの Program のカード用。Server Component |
+| EventCard | `src/components/EventCard.tsx` | イベント一覧（`/events`）とホーム（予約済みイベント・次回のイベント）で共通のイベントカード。左に種別アイコン（`EventTypeIcon`）とその下に種別名のピル、右に日時（`2026/11/10(火) 16:00 - 17:00`、24時間表記・JST）・イベント名・開催場所（ピンのアイコン付き）。料金・定員は出さない（2026-10-18、依頼者の指定）。カード全体がイベント詳細へのリンク。Server Component |
 | PasswordInput | `src/components/PasswordInput.tsx` | 目のアイコンで表示/非表示を切り替えられるパスワード入力欄 |
 | Footer | `src/components/Footer.tsx` | トップ・法定ページ共通のフッター（固定 BottomNav のある認証後画面には未設置）。2026-10-12 に参考サイトに合わせて作り直し：背景 `bg-ink-700`・白文字。左に「Hibi / wellness club」と一言（「なんでもない日々が輝きだす」＋英訳）、右に「Stay Updated With Us」と連絡先（Instagram・TikTok・Email。`CONTACT_LINKS` で管理、SVG アウトラインのアイコン付き、SNS は新しいタブ、Email は `mailto:`）。最下段は `bg-ink-800` の帯に「© 2026 Hibi Wellness Club. All Rights Reserved.」と利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンク。住所・電話番号は特商法ページで「請求があれば開示」としているため載せない。sm 以上は左右2列。**`/login`・`/register-complete`には設置しない**（2026-09-25、新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替） |
 
@@ -148,7 +149,7 @@
 
 ## ヘッダー構成
 
-背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。右端は管理者のみ「管理画面」リンク。歯車アイコン（設定ドロワー）は 2026-10-16 に撤去し、設定はマイページへ移した。
+背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。2026-10-18 に依頼者の指定で影（ニューモーフィズム）をやめ、ヘッダーの下端・下ナビの上端を細い線で区切る平らな表現にした（Impact の進捗バーの凹み表現も撤去）。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。右端は管理者のみ「管理画面」リンク。歯車アイコン（設定ドロワー）は 2026-10-16 に撤去し、設定はマイページへ移した。
 
 ```tsx
 <header className="nm-nav-top px-5 py-4 sm:px-8 flex items-center justify-between">

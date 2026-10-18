@@ -147,27 +147,25 @@ input::-ms-clear {
 
 /* プライマリボタン（セージグリーン） */
 .nm-btn-primary {
-  background: #6A7E70;
+  background: var(--color-sage-600);
   border-radius: var(--nm-r-full);
-  box-shadow: 1px 1px 3px #3D483F, -1px -1px 2px #95AB9B;
-  transition: box-shadow 0.15s ease, transform 0.1s ease;
+  transition: transform 0.1s ease;
 }
 .nm-btn-primary:active {
-  box-shadow: inset 1px 1px 2px #3D483F, inset -1px -1px 2px #95AB9B;
   transform: scale(0.98);
 }
 
-/* ヘッダー・ナビ共通ベース */
+/* ヘッダー・ナビ共通ベース。2026-10-18 依頼者の指定で影（ニューモーフィズム）をやめ、細い線で区切る */
 .nm-nav-top {
   background: var(--color-nav-bg);
-  box-shadow: 0 4px 10px var(--color-nav-dark), 0 1px 3px var(--color-nav-light);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-nav-dark) 45%, var(--color-nav-bg));
 }
-/* 動画などの暗い背景の直上に置くヘッダー用。影が下端にグラデーションとして出るのを避ける */
+/* 動画などの暗い背景の直上に置くヘッダー用 */
 .nm-nav-top.nm-nav-flat {
-  box-shadow: none;
+  border-bottom: 0;
 }
 .nm-nav-bottom {
   background: var(--color-nav-bg);
-  box-shadow: 0 -4px 10px var(--color-nav-dark), 0 -1px 3px var(--color-nav-light);
+  border-top: 1px solid color-mix(in srgb, var(--color-nav-dark) 45%, var(--color-nav-bg));
 }
 
