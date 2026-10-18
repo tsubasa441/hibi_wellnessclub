@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventTypeIcon from "@/components/EventTypeIcon";
 import CheckInButton from "@/app/bookings/CheckInButton";
+import RefreshAt from "@/components/RefreshAt";
 import { getJstParts, getTodayJst } from "@/lib/date";
 import { reconcilePendingPayPayBookings } from "@/lib/paypayReconcile";
 
@@ -62,9 +63,11 @@ export default async function CheckinPage() {
     (b) => getTodayJst(new Date(b.events.start_at)) === today || new Date(b.events.start_at).getTime() <= nowMs
   );
   const next = todays.length === 0 ? upcoming[0] ?? null : null;
+  const nextEndMs = todays.length > 0 ? Math.min(...todays.map((b) => eventEndMs(b.events))) : null;
 
   return (
     <main className="relative min-h-screen app-bg pb-28">
+      <RefreshAt at={nextEndMs ? new Date(nextEndMs).toISOString() : null} />
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">

@@ -2,9 +2,9 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
 import { checkReferralBadges } from "@/lib/badges";
 
-// 被紹介者のホーム画面ロード時に service_role で呼ぶ（遅延評価）。
-// 被紹介者が初回イベントにチェックインし、そのイベントが終了済みなら
-// 紹介者・被紹介者の双方に 200pt を付与し referrals を rewarded にする。
+// 被紹介者が初めてイベントにチェックインした時点で、紹介者・被紹介者の双方に 200pt を付与し
+// referrals を rewarded にする（2026-10-18 依頼者の指定で「イベント終了後のホーム表示時」から変更）。
+// チェックイン API から呼ぶ。付与漏れの保険として、被紹介者のホーム画面ロード時にも呼ぶ（冪等）。
 // points_log の INSERT RLS は「本人のみ」のため、紹介者への付与には service_role が必須。
 export async function checkAndAwardReferralReward(
   service: SupabaseClient,
@@ -18,25 +18,14 @@ export async function checkAndAwardReferralReward(
     .maybeSingle();
   if (!referral || referral.status === "rewarded") return;
 
-  // 2. チェックイン済み かつ 終了済みのイベントに参加しているか
-  const { data: bookings } = await service
+  // 2. チェックイン済みの予約があるか
+  const { count } = await service
     .from("bookings")
-    .select("checked_in_at, events(start_at, end_at)")
+    .select("id", { count: "exact", head: true })
     .eq("user_id", refereeUserId)
     .eq("status", "confirmed")
     .not("checked_in_at", "is", null);
-
-  const now = new Date();
-  const attendedEndedEvent = (bookings ?? []).some((b) => {
-    const ev = Array.isArray(b.events) ? b.events[0] : b.events;
-    if (!ev) return false;
-    const e = ev as { start_at: string; end_at: string | null };
-    const end = e.end_at
-      ? new Date(e.end_at)
-      : new Date(new Date(e.start_at).getTime() + 2 * 60 * 60 * 1000);
-    return end <= now;
-  });
-  if (!attendedEndedEvent) return;
+  if (!count) return;
 
   // 3. 双方に 200pt（awardPoints は points_log unique 制約で冪等）
   await awardPoints(service, referral.referrer_id, 200, "referral_reward", referral.id);

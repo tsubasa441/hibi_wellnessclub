@@ -8,12 +8,14 @@ const mocks = vi.hoisted(() => ({
   createServiceClient: vi.fn(),
   checkEventBadges: vi.fn().mockResolvedValue(undefined),
   checkRankUp: vi.fn().mockResolvedValue(undefined),
+  checkAndAwardReferralReward: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@/lib/badges", () => ({ checkEventBadges: mocks.checkEventBadges }));
 vi.mock("@/lib/ranks", () => ({ checkRankUp: mocks.checkRankUp }));
+vi.mock("@/lib/referrals", () => ({ checkAndAwardReferralReward: mocks.checkAndAwardReferralReward }));
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: vi.fn().mockResolvedValue(true),
   RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
@@ -148,7 +150,7 @@ describe("POST /api/bookings/[id]/checkin", () => {
     expect(body.already).toBe(true);
   });
 
-  it("時間内の未チェックイン予約は checked_in_at を更新し、バッジ・ランクを再判定する", async () => {
+  it("時間内の未チェックイン予約は checked_in_at を更新し、バッジ・ランク・紹介報酬を判定する", async () => {
     const { updateSpy, isSpy } = setup({ booking: makeBooking() });
 
     const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
@@ -160,5 +162,14 @@ describe("POST /api/bookings/[id]/checkin", () => {
     expect(isSpy).toHaveBeenCalledWith("checked_in_at", null);
     expect(mocks.checkEventBadges).toHaveBeenCalledWith(expect.anything(), "user-1");
     expect(mocks.checkRankUp).toHaveBeenCalledWith(expect.anything(), "user-1");
+    expect(mocks.checkAndAwardReferralReward).toHaveBeenCalledWith(expect.anything(), "user-1");
+  });
+
+  it("既にチェックイン済みなら紹介報酬の判定は呼ばない", async () => {
+    setup({ booking: makeBooking({ checked_in_at: "2026-09-01T10:00:00Z" }) });
+
+    await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
+
+    expect(mocks.checkAndAwardReferralReward).not.toHaveBeenCalled();
   });
 });

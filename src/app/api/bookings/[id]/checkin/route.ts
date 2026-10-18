@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkEventBadges } from "@/lib/badges";
 import { checkRankUp } from "@/lib/ranks";
+import { checkAndAwardReferralReward } from "@/lib/referrals";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 
 // イベント終了時刻。end_at 未設定時は開始 + 2時間（既存コードの慣習に合わせる）。
@@ -86,10 +87,11 @@ export async function POST(
     return NextResponse.json({ error: "チェックインに失敗しました" }, { status: 500 });
   }
 
-  // チェックイン時点でクラスバッジ・ランク（累計参加回数）を再判定する。
-  // 参加ポイントは checkAndAwardPendingPoints がホームロード時にまとめて付与する。
+  // チェックイン時点でクラスバッジ・ランク（累計参加回数）を再判定し、紹介経由の初回参加なら
+  // 紹介報酬（双方 200pt）を付与する。参加ポイントは checkAndAwardPendingPoints がホームロード時にまとめて付与する。
   await checkEventBadges(service, user.id);
   await checkRankUp(service, user.id);
+  await checkAndAwardReferralReward(service, user.id);
 
   return NextResponse.json({ success: true });
 }

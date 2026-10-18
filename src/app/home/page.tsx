@@ -11,6 +11,7 @@ import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventCard from "@/components/EventCard";
 import ProfileCard from "@/components/ProfileCard";
+import RefreshAt from "@/components/RefreshAt";
 import RankUpModal from "./RankUpModal";
 import { getJstParts } from "@/lib/date";
 
@@ -60,19 +61,16 @@ export default async function HomePage() {
     events: BookedEvent;
   };
   const nowMs = new Date().getTime();
+  const eventEndMs = (ev: BookedEvent) =>
+    ev.end_at ? new Date(ev.end_at).getTime() : new Date(ev.start_at).getTime() + 2 * 60 * 60 * 1000;
   const upcomingBookings: Booking[] = ((bookingsRes.data ?? []) as unknown as BookingRaw[])
     .map((b) => {
       const ev = Array.isArray(b.events) ? b.events[0] : b.events;
       return ev ? { id: b.id, event_id: b.event_id, events: ev } : null;
     })
-    .filter((b): b is Booking => {
-      if (!b) return false;
-      const endMs = b.events.end_at
-        ? new Date(b.events.end_at).getTime()
-        : new Date(b.events.start_at).getTime() + 2 * 60 * 60 * 1000;
-      return endMs > nowMs;
-    })
+    .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
     .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
+  const nextEndMs = upcomingBookings.length > 0 ? Math.min(...upcomingBookings.map((b) => eventEndMs(b.events))) : null;
   // ホームには近い順に一部だけ出し、残りは「詳細はこちら」から予約済み画面で見てもらう
   const HOME_BOOKING_LIMIT = 2;
   const shownBookings = upcomingBookings.slice(0, HOME_BOOKING_LIMIT);
@@ -95,6 +93,7 @@ export default async function HomePage() {
   return (
     <main className="relative min-h-screen app-bg pb-24">
       {showRankUpModal && <RankUpModal rank={currentRank} />}
+      <RefreshAt at={nextEndMs ? new Date(nextEndMs).toISOString() : null} />
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">

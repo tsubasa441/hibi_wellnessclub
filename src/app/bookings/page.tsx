@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventTypeIcon from "@/components/EventTypeIcon";
 import ReserveTabs from "@/components/ReserveTabs";
+import RefreshAt from "@/components/RefreshAt";
 import CancelButton from "@/app/home/CancelButton";
 import CheckInButton from "./CheckInButton";
 import { getJstParts } from "@/lib/date";
@@ -44,8 +45,7 @@ export default async function BookingsPage() {
       .from("bookings")
       .select("id, event_id, checked_in_at, events(title, start_at, end_at, location, event_type)")
       .eq("user_id", user.id)
-      .eq("status", "confirmed")
-      .order("created_at", { ascending: true });
+      .eq("status", "confirmed");
 
   // 待ち時間を減らすため、PayPay 予約の照会と一覧の取得を同時に走らせる。
   // 照会で pending 予約の状態が変わりうる場合だけ、一覧を取り直す
@@ -55,21 +55,22 @@ export default async function BookingsPage() {
   ]);
   const data = reconciled > 0 ? (await fetchBookings()).data : firstRes.data;
 
-  const now = new Date();
+  // 終了時刻を過ぎたイベントは表示しない（end_at 未設定は開始 + 2時間を終了とみなす）
+  const eventEndMs = (ev: EventInfo) =>
+    ev.end_at ? new Date(ev.end_at).getTime() : new Date(ev.start_at).getTime() + 2 * 60 * 60 * 1000;
+  const nowMs = new Date().getTime();
   const bookings: Booking[] = ((data ?? []) as unknown as BookingRaw[])
     .map((b) => {
       const ev = Array.isArray(b.events) ? b.events[0] : b.events;
       return ev ? { id: b.id, event_id: b.event_id, checked_in_at: b.checked_in_at, events: ev } : null;
     })
-    .filter((b): b is Booking => {
-      if (!b) return false;
-      const endAt = new Date(b.events.start_at);
-      endAt.setHours(endAt.getHours() + 2);
-      return endAt > now;
-    });
+    .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
+    .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
+  const nextEndMs = bookings.length > 0 ? Math.min(...bookings.map((b) => eventEndMs(b.events))) : null;
 
   return (
     <main className="relative min-h-screen app-bg pb-24">
+      <RefreshAt at={nextEndMs ? new Date(nextEndMs).toISOString() : null} />
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">

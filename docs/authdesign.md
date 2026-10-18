@@ -195,7 +195,7 @@ if (!user) redirect("/login");
 1. `/login?ref=XXXX` のクエリパラメータを取得し、SIGN UP タブを自動選択・紹介コード欄に初期値としてセット
 2. サインアップ完了後、POST `/api/signup/profile` で紹介コードを送信
 3. サーバー側で紹介者を特定し `referrals` テーブルにレコードを `status: pending` で作成する（この時点では報酬なし）
-4. 被紹介者が**初回イベントにチェックインし、そのイベントの終了時刻を過ぎた後**、被紹介者のホーム画面ロード時に `checkAndAwardReferralReward`（`src/lib/referrals.ts`、service_role で実行）が：
+4. 被紹介者が**初めてイベントにチェックインした時点**で、チェックイン API（`POST /api/bookings/[id]/checkin`）から `checkAndAwardReferralReward`（`src/lib/referrals.ts`、service_role で実行）が次を行う（2026-10-18 に「イベント終了後のホーム画面ロード時」から変更。付与漏れの保険として被紹介者のホーム画面ロード時にも呼ぶ）：
    - 紹介者・被紹介者双方に 200pt を付与（`points_log` reason: `referral_reward` / `referral_joined`、unique 制約で冪等）
    - `referrals.status` を `rewarded`・`rewarded_at` をセット
    - 紹介者の月間紹介バッジ（Bridge Builder 等）を再判定
