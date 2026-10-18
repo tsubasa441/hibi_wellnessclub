@@ -26,7 +26,7 @@ export default function Header() {
   return (
     <header className="nm-nav-top">
       <div className="max-w-2xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
-        <Link href="/home" className="font-outfit text-2xl font-bold text-ink-700 tracking-wide">
+        <Link href="/home" className="font-outfit text-2xl font-medium text-ink-700 tracking-wide">
           Hibi
         </Link>
         {isAdmin && (
