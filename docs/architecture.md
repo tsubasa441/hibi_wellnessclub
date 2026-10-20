@@ -182,7 +182,7 @@ docs/                           # ドキュメント一式
 / トップページ
   └─[ボタンタップ]→ /login ログイン・新規登録（SIGN IN / SIGN UP タブ）
                       └─[認証成功]→ /home ホーム
-                                      ├─[予約済みイベント欄の「詳細はこちら」]→ /bookings 予約済みイベント一覧（キャンセル）
+                                      ├─[BottomNav: 予約 →「予約済み」]→ /bookings 予約済みイベント一覧（キャンセル）
                                       ├─[BottomNav: 予約]→ /events イベント一覧 ⇔（上部の切り替え）/bookings 予約済み
                                       │                         └─[タップ]→ /events/[id] 詳細
                                       │                                         └─[予約]→ /events/[id]/checkout 決済

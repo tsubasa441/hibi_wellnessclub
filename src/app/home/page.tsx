@@ -6,7 +6,6 @@ import { checkAndAwardPendingPoints } from "@/lib/points";
 import { checkAndAwardReferralReward } from "@/lib/referrals";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { decrypt } from "@/lib/encrypt";
-import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventCard from "@/components/EventCard";
@@ -71,10 +70,10 @@ export default async function HomePage() {
     .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
     .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
   const nextEndMs = upcomingBookings.length > 0 ? Math.min(...upcomingBookings.map((b) => eventEndMs(b.events))) : null;
-  // ホームには近い順に一部だけ出し、残りは「詳細はこちら」から予約済み画面で見てもらう
-  const HOME_BOOKING_LIMIT = 2;
+  // ホームには近い順に3件まで出し、4件目以降は「ほかn件の予約を見る」で開く
+  const HOME_BOOKING_LIMIT = 3;
   const shownBookings = upcomingBookings.slice(0, HOME_BOOKING_LIMIT);
-  const hiddenBookingCount = upcomingBookings.length - shownBookings.length;
+  const hiddenBookings = upcomingBookings.slice(HOME_BOOKING_LIMIT);
 
   const memberSince = profile.created_at
     ? (() => {
@@ -119,17 +118,23 @@ export default async function HomePage() {
                 <EventCard key={booking.id} event={booking.events} href={`/events/${booking.event_id}`} />
               ))}
             </div>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <p className="font-dm text-xs text-ink-400">
-                {hiddenBookingCount > 0 ? `ほか${hiddenBookingCount}件の予約があります` : ""}
-              </p>
-              <Link
-                href="/bookings"
-                className="font-outfit text-sm font-medium text-white bg-sage-600 rounded-full px-5 py-2.5 min-h-11 flex items-center hover:bg-ink-700 transition"
-              >
-                詳細はこちら
-              </Link>
-            </div>
+            {hiddenBookings.length > 0 && (
+              // 4件目以降はその場で開いて全件を見られるようにする（JS不要の details/summary）
+              <details className="group mt-3">
+                <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none flex items-center justify-center gap-1.5 min-h-11 rounded-full border border-base-300 bg-white font-outfit text-sm font-medium text-ink-700 hover:border-sage-300 transition">
+                  <span className="group-open:hidden">ほか{hiddenBookings.length}件の予約を見る</span>
+                  <span className="hidden group-open:inline">閉じる</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <div className="space-y-3 mt-3">
+                  {hiddenBookings.map((booking) => (
+                    <EventCard key={booking.id} event={booking.events} href={`/events/${booking.event_id}`} />
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         )}
 
