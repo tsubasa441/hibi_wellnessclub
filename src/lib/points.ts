@@ -11,6 +11,12 @@ function pointsRpc(fn: "increment_points" | "decrement_points" | "spend_points",
   return createServiceClient().rpc(fn, { uid, amount });
 }
 
+// points_log の読み書きも service_role で行う。本人に INSERT/DELETE を許すと、参加ポイントの記録を
+// 自分で消してホームを開き直すことで何度でも再付与させられるため、RLS では本人の SELECT のみ許可している（032_security_hardening.sql）
+function pointsLog() {
+  return createServiceClient().from("points_log");
+}
+
 export async function awardPoints(
   supabase: SupabaseClient,
   userId: string,
@@ -18,7 +24,7 @@ export async function awardPoints(
   reason: string,
   referenceId: string
 ): Promise<AwardResult> {
-  const { error } = await supabase.from("points_log").insert({
+  const { error } = await pointsLog().insert({
     user_id: userId,
     reason,
     reference_id: referenceId,
@@ -129,7 +135,7 @@ export async function spendPointsForBooking(
   const { data: ok } = await pointsRpc("spend_points", userId, points);
   if (!ok) return false;
 
-  const { error } = await supabase.from("points_log").insert({
+  const { error } = await pointsLog().insert({
     user_id: userId,
     reason: "booking_discount",
     reference_id: bookingId,
@@ -152,8 +158,7 @@ export async function refundUsedPoints(
   userId: string,
   bookingId: string
 ): Promise<void> {
-  const { data: log } = await supabase
-    .from("points_log")
+  const { data: log } = await pointsLog()
     .select("id, points")
     .eq("user_id", userId)
     .eq("reason", "booking_discount")
@@ -162,7 +167,7 @@ export async function refundUsedPoints(
 
   if (!log) return;
 
-  await supabase.from("points_log").delete().eq("id", log.id);
+  await pointsLog().delete().eq("id", log.id);
   await pointsRpc("increment_points", userId, Math.abs(log.points));
 }
 
@@ -172,8 +177,7 @@ export async function revokeEventPoints(
   userId: string,
   bookingId: string
 ): Promise<void> {
-  const { data: log } = await supabase
-    .from("points_log")
+  const { data: log } = await pointsLog()
     .select("id, points")
     .eq("user_id", userId)
     .eq("reason", "event_participation")
@@ -182,7 +186,7 @@ export async function revokeEventPoints(
 
   if (!log) return;
 
-  await supabase.from("points_log").delete().eq("id", log.id);
+  await pointsLog().delete().eq("id", log.id);
   await pointsRpc("decrement_points", userId, log.points);
 }
 

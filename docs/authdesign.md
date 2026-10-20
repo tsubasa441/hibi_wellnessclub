@@ -163,10 +163,12 @@ if (!user) redirect("/login");
 
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
 |---------|--------|--------|--------|--------|
-| profiles | 本人のみ | 不可（トリガー） | 本人のみ（`is_admin`・`points` 列は本人からの変更を無効化。`029_lock_points.sql`） | 不可 |
+| profiles | 本人のみ／管理者は全件（`032_security_hardening.sql`） | 不可（トリガー） | 本人のみ（`is_admin`・`points` 列は本人からの変更を無効化。`029_lock_points.sql`） | 不可 |
 | events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（アプリからは呼ばず論理削除で運用） |
 | event_options | 全員（親イベントが公開済みのもの）／管理者は全件 | 管理者のみ | 管理者のみ | 管理者のみ |
-| bookings | 本人のみ／管理者は全件 | 本人のみ | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
+| bookings | 本人のみ／管理者は全件 | 不可（予約の作成は決済 API が本人確認・残席・決済の上 service_role で行う。本人に許すと決済を通さず「支払い済み」の予約を作れてしまうため。`032_security_hardening.sql`） | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
+| points_log | 本人のみ | 不可（`src/lib/points.ts` が service_role で記録。本人に許すと参加ポイントの記録を消して再付与させられるため。`032`） | 不可 | 不可（取り消しも service_role） |
+| journals（機能停止中） | 本人のみ | 不可 | 不可 | 不可 |
 | badges | 全員 | 不可 | 不可 | 不可 |
 | user_badges | 本人のみ | サーバーのみ | 不可 | 不可 |
 | support_messages | 本人のスレッドのみ／管理者は全件 | 不可（API が service_role で書く） | 不可（既読化も API・ページが service_role で行う） | 不可 |
@@ -180,6 +182,8 @@ if (!user) redirect("/login");
 
 - `increment_points` / `decrement_points` / `spend_points`（いずれも SECURITY DEFINER）の実行権限は `service_role` のみ。アプリ側は `src/lib/points.ts` の `pointsRpc` が、呼び出し元のクライアントに関わらず `createServiceClient()` で実行する
 - `profiles.points` は、`authenticated` / `anon` からの UPDATE を `trg_prevent_points_self_update` トリガーで無効化する（`is_admin` と同じ方式）。service_role・Studio からの更新は対象外
+- `points_log` の記録・取り消しも、`src/lib/points.ts` が `createServiceClient()` で行う（本人は SELECT のみ。`032_security_hardening.sql`、2026-10-21）
+- レート制限の `check_rate_limit` も実行権限は `service_role` のみ（`032`。以前は未ログインでも呼べ、他人の枠を使い切らせることができた）
 - 新しい SECURITY DEFINER 関数を作るときは、`revoke execute ... from public, anon, authenticated` を必ず併記する（PostgreSQL の既定では PUBLIC に実行権限が付き、PostgREST の RPC から誰でも呼べてしまうため）
 
 ## クレジットカード情報の権限（`030_saved_square_card.sql`）

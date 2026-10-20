@@ -99,14 +99,11 @@ function setupSupabase({
   const { from } = createSupabaseMock();
   from.mockReturnValueOnce(chainable({ data: existing })); // 重複予約チェック
   from.mockReturnValueOnce(chainable({ data: event })); // イベント取得
-  // bookings には本人向けの UPDATE/DELETE の RLS ポリシーが無く、ユーザーのセッションでの
-  // update/delete は黙って無視される。ユーザー側クライアントで呼ばれていないことを検証する
+  // bookings には本人向けの INSERT/UPDATE/DELETE の RLS ポリシーが無いため、予約の作成・更新・削除は
+  // すべて service_role クライアント経由（下の serviceFrom）。ユーザー側クライアントでは bookings を書かない
   const insertSpy = vi.fn();
   const userUpdateSpy = vi.fn();
   const userDeleteSpy = vi.fn();
-  from.mockReturnValueOnce(
-    chainable(bookingInsertResult, { insert: insertSpy, update: userUpdateSpy, delete: userDeleteSpy })
-  ); // bookings insert
   from.mockReturnValueOnce(chainable({ data: { name: null } })); // profiles select
 
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
@@ -114,9 +111,19 @@ function setupSupabase({
   // 残席カウントと、作成後の bookings の更新・削除は service_role クライアント経由
   const updateSpy = vi.fn();
   const deleteSpy = vi.fn();
-  const serviceFrom = vi
-    .fn()
-    .mockReturnValue(chainable({ count }, { update: updateSpy, delete: deleteSpy }));
+  const serviceFrom = vi.fn().mockReturnValue(
+    chainable(
+      { count },
+      {
+        insert: (...args: unknown[]) => {
+          insertSpy(...args);
+          return chainable(bookingInsertResult);
+        },
+        update: updateSpy,
+        delete: deleteSpy,
+      }
+    )
+  );
   mocks.createServiceClient.mockReturnValue({ from: serviceFrom });
 
   return { from, insertSpy, updateSpy, deleteSpy, userUpdateSpy, userDeleteSpy, serviceFrom };

@@ -136,8 +136,8 @@ function setupSupabase({
     }
   }
 
+  // 予約の作成（bookings insert）は service_role クライアント経由（下の serviceFrom）
   const insertSpy = vi.fn();
-  from.mockReturnValueOnce(chainable({ error: insertError }, { insert: insertSpy })); // bookings insert
 
   // persistSavedCard（新しいカードでの決済に成功した場合のみ）は、確認メール用の
   // profiles select より先に呼ばれる
@@ -149,8 +149,10 @@ function setupSupabase({
 
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
 
-  // 残席カウントは service_role クライアント経由
-  const serviceFrom = vi.fn().mockReturnValue(chainable({ count }));
+  // 残席カウントと予約の作成は service_role クライアント経由
+  const serviceFrom = vi.fn().mockReturnValue(
+    chainable({ count }, { insert: (...args: unknown[]) => { insertSpy(...args); return chainable({ error: insertError }); } })
+  );
   mocks.createServiceClient.mockReturnValue({ from: serviceFrom });
 
   return { from, insertSpy, serviceFrom, persistCardSpy };

@@ -11,15 +11,20 @@ import { chainable, createSupabaseMock as createBaseMock } from "@/lib/testUtils
 
 // ポイント増減の RPC は service_role のクライアント（createServiceClient）経由で呼ばれる。
 // 既存テストの `rpc` をその呼び出し先に差し込み、渡されたユーザーのクライアントの rpc は別物（userRpc）にする
-const mocks = vi.hoisted(() => ({ serviceRpc: vi.fn() }));
+// points_log の読み書きも service_role 経由のため、service の from も同じ `from` に流して呼び出し順を検証する
+const mocks = vi.hoisted(() => ({ serviceRpc: vi.fn(), serviceFrom: vi.fn() }));
 vi.mock("@/lib/supabase/service", () => ({
-  createServiceClient: () => ({ rpc: (...args: unknown[]) => mocks.serviceRpc(...args) }),
+  createServiceClient: () => ({
+    rpc: (...args: unknown[]) => mocks.serviceRpc(...args),
+    from: (...args: unknown[]) => mocks.serviceFrom(...args),
+  }),
 }));
 
 function createSupabaseMock() {
   const base = createBaseMock();
   const userRpc = vi.fn();
   mocks.serviceRpc = base.rpc;
+  mocks.serviceFrom = base.from;
   return { supabase: { from: base.from, rpc: userRpc } as never, from: base.from, rpc: base.rpc, userRpc };
 }
 
@@ -33,6 +38,20 @@ describe("awardPoints", () => {
 
     expect(rpc).toHaveBeenCalledWith("increment_points", { uid: "user-1", amount: 30 });
     expect(userRpc).not.toHaveBeenCalled();
+  });
+
+  it("points_log への記録は渡されたユーザーのクライアントでは行わず、service_role で行う", async () => {
+    const { rpc } = createSupabaseMock();
+    const userFrom = vi.fn();
+    const serviceInsert = vi.fn().mockReturnValueOnce(Promise.resolve({ error: null }));
+    mocks.serviceFrom = vi.fn().mockReturnValueOnce(chainable(undefined, { insert: serviceInsert }));
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    await awardPoints({ from: userFrom, rpc: vi.fn() } as never, "user-1", 30, "event_participation", "booking-1");
+
+    expect(userFrom).not.toHaveBeenCalled();
+    expect(mocks.serviceFrom).toHaveBeenCalledWith("points_log");
+    expect(serviceInsert).toHaveBeenCalledWith(expect.objectContaining({ user_id: "user-1", reason: "event_participation" }));
   });
 
   it("付与に成功した場合 increment_points を呼び、awarded:true を返す", async () => {

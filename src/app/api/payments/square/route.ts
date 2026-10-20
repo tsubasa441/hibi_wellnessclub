@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   // 無料イベントはSquare決済不要
   if (event.price === 0) {
-    const { error } = await supabase.from("bookings").insert({
+    const { error } = await createServiceClient().from("bookings").insert({
       event_id: eventId,
       user_id: user.id,
       payment_method: "free",
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
 
   // ポイントのみで参加費全額を充当した場合はSquare決済不要
   if (amountToCharge === 0) {
-    const { error: bookingError } = await supabase.from("bookings").insert({
+    const { error: bookingError } = await createServiceClient().from("bookings").insert({
       id: bookingId,
       event_id: eventId,
       user_id: user.id,
@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 予約作成
-    const { error: bookingError } = await supabase.from("bookings").insert({
+    const { error: bookingError } = await createServiceClient().from("bookings").insert({
       id: bookingId,
       event_id: eventId,
       user_id: user.id,

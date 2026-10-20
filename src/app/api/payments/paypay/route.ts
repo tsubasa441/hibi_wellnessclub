@@ -98,8 +98,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // pending予約を作成
-  const { data: booking, error: bookingError } = await supabase
+  // pending予約を作成。予約の作成は service_role で行う（本人の INSERT は RLS で許可していない。032_security_hardening.sql）
+  const { data: booking, error: bookingError } = await createServiceClient()
     .from("bookings")
     .insert({
       id: bookingId,
