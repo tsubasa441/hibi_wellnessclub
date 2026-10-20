@@ -7,16 +7,18 @@ import RankIcon from "@/components/RankIcon";
 
 type Props = {
   currentLevel: number;
+  // 濃い背景の上に置くとき用（インパクト画面の年輪カード）
+  triggerClassName?: string;
 };
 
-export default function RankGuideModal({ currentLevel }: Props) {
+export default function RankGuideModal({ currentLevel, triggerClassName }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="font-dm text-xs text-sage-600 underline underline-offset-2 hover:text-sage-500 transition"
+        className={triggerClassName ?? "font-dm text-xs text-sage-600 underline underline-offset-2 hover:text-sage-500 transition"}
       >
         ランクについて
       </button>

@@ -41,6 +41,8 @@
 | BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム。保存済みクレジットカードがある場合はカード入力欄の代わりに「登録済みのカードで支払う」表示（「別のカードを使う」で入力欄に切り替え可能）。新しいカードで支払うと決済成功後に自動保存される（クレジットカード保存機能） | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |
+| GrowthRings | `app/impact/GrowthRings.tsx` | インパクト画面の「年輪」。8つのランク（種→大樹）を内側から8本の輪で描き、到達したランクは塗り（`sage-50`）、次のランクの輪は進み具合の分だけ白い弧、それより先は点線。中心に `RankIcon`。SVG | - |
+| ReachRipple | `app/impact/ReachRipple.tsx` | 「あなたから広がった幸せ」の波紋。中心があなた、広がった人を点で描く（12人まで）。SVG | - |
 | EventOptionFields | `app/events/[id]/EventOptionFields.tsx` | イベント選択項目の入力（単一=`<select>` / 複数=チェックボックスパネル型ドロップダウン） | ✅ |
 | CheckInButton | `app/bookings/CheckInButton.tsx` | 予約カードのチェックインボタン。現在時刻を30秒ごとに再評価し、イベント開始〜終了時刻のみ活性。チェックイン済みは「チェックイン済み」表示。`size="lg"` はチェックイン画面（`/checkin`）用の横幅いっぱいのボタン | ✅ |
 | VerifyForm | `app/auth/verify/VerifyForm.tsx` | パスワード再設定の確認ページのフォーム。「パスワードを再設定する」ボタンで `POST /auth/confirm`。送信中はボタンを無効化して二重押しを防ぐ | ✅ |
@@ -184,6 +186,15 @@
 ### チェックイン画面（`/checkin`）
 
 本人の確定予約のうち、終了前で、開始日が今日（JST）のもの、または開始済みのもの（23時開始など日付をまたぐイベントは、0時を過ぎても終了まで表示する。2026-10-18 修正）をカードで並べ、`CheckInButton` の `size="lg"`（横幅いっぱい・高さのある緑のボタン）でチェックインする。活性条件（開始〜終了時刻）は `/bookings` と同じ。今日の予約が無い場合は「本日チェックインできるイベントはありません」と、次の予約（無ければ「イベントを探す」ボタン）を表示する。ロード時に PayPay の pending 予約を照会する（`/bookings` と同じ）。
+
+### インパクト（`/impact`）
+
+2026-10-20 に依頼者の指定（グラフィックで見せる）で作り直し。表示する情報は従来と同じ。上から3枚のカード：
+1. **年輪**（`bg-sage-600`・白文字）：`GrowthRings`、いまのランク（英名＋和名）、累計参加回数（`font-bebas` の大きな数字）、次のランクまでの回数、ポイント、「ランクについて」（`RankGuideModal` の `triggerClassName` で白文字）。スマホは縦並び、sm 以上は横並び
+2. **今月のバッジ**：10個のバッジを5列のスタンプで並べる（クラス初参加は種別の色、参加回数は `sage-600`、招待は `ink-500`。未取得は点線の輪）。下にバッジボーナスを9マスの目盛り（3・5・9個目に 300・500・1000）で表示
+3. **あなたから広がった幸せ**：`ReachRipple` と人数、招待の3ステップ、紹介コード、`ReferralShare`
+
+`ProfileCard` はホーム専用になった（インパクトでは使わない）。
 
 ### マイページ（`/mypage`）
 

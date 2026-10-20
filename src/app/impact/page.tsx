@@ -3,8 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
-import ProfileCard from "@/components/ProfileCard";
+import RankGuideModal from "@/components/RankGuideModal";
 import ReferralShare from "@/app/impact/ReferralShare";
+import GrowthRings from "@/app/impact/GrowthRings";
+import ReachRipple from "@/app/impact/ReachRipple";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { countReferralReach } from "@/lib/referrals";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -25,46 +27,23 @@ type UserBadgeRow = {
   badges: BadgeRow | BadgeRow[];
 };
 
-// ---- メーター行コンポーネント（Server Component） ----
-function MeterRow({
-  label,
-  current,
-  max,
-  badgeInitial,
-  earned,
-  sublabel,
-}: {
-  label: string;
-  current: number;
-  max: number;
-  badgeInitial: string;
-  earned: boolean;
-  sublabel: string;
-}) {
-  const pct = max > 0 ? Math.min((current / max) * 100, 100) : 0;
-
+// ---- バッジのスタンプ（Server Component） ----
+// 取得済みは塗り（クラス初参加は種別の色）、未取得は点線の輪
+function BadgeStamp({ mark, name, earned, earnedClass }: { mark: string; name: string; earned: boolean; earnedClass: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-20 flex-shrink-0">
-        <p className="font-outfit text-xs font-medium text-ink-700 leading-tight">{label}</p>
-        <p className="font-dm text-xs text-ink-300 mt-0.5">{sublabel}</p>
-      </div>
-      <div className="flex-1 h-2 rounded-full bg-base-200 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-sage-600 transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div
-        className={`w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center font-outfit font-bold text-xs transition ${
-          earned
-            ? "bg-sage-600 text-white shadow-sm"
-            : "bg-base-200 text-ink-300"
+    <li className="flex flex-col items-center gap-1.5 min-w-0">
+      <span
+        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-outfit font-semibold text-xs ${
+          earned ? `${earnedClass} text-white` : "border-[1.5px] border-dashed border-base-300 text-ink-400"
         }`}
       >
-        {badgeInitial}
-      </div>
-    </div>
+        {mark}
+      </span>
+      <span className={`font-outfit text-[10px] leading-tight text-center ${earned ? "text-ink-700 font-medium" : "text-ink-400"}`}>
+        {name}
+      </span>
+      <span className="sr-only">{earned ? "獲得済み" : "未獲得"}</span>
+    </li>
   );
 }
 
@@ -127,11 +106,6 @@ export default async function ImpactPage() {
       b.checked_in_at != null && b.checked_in_at >= monthStart && b.checked_in_at <= monthEnd
   );
   const monthlyEventCount = thisMonthBookings.length;
-  const monthlyEventTypes = new Set(
-    thisMonthBookings
-      .map((b: { events: { event_type: string } | null }) => b.events?.event_type)
-      .filter(Boolean)
-  );
 
   // 今月 rewarded の紹介数
   const monthlyReferralCount = (referrals ?? []).filter(
@@ -160,212 +134,168 @@ export default async function ImpactPage() {
     return b ? earnedThisMonthIds.has(b.id) : false;
   }
 
-  // ---- クラス種別バッジ ----
-  const eventTypeTracks = [
-    { label: "Running", conditionType: "monthly_first_running", hasType: monthlyEventTypes.has("running") },
-    { label: "Yoga",    conditionType: "monthly_first_yoga",    hasType: monthlyEventTypes.has("yoga") },
-    { label: "Training",conditionType: "monthly_first_training",hasType: monthlyEventTypes.has("training") },
-    { label: "Boxing",  conditionType: "monthly_first_boxing",  hasType: monthlyEventTypes.has("boxing") },
-    { label: "Pilates", conditionType: "monthly_first_pilates", hasType: monthlyEventTypes.has("pilates") },
+  // ---- スタンプカード（10個） ----
+  const STAMPS = [
+    { conditionType: "monthly_first_running",  value: 1, mark: "Run",  name: "Running",  earnedClass: "bg-event-running" },
+    { conditionType: "monthly_first_yoga",     value: 1, mark: "Yoga", name: "Yoga",     earnedClass: "bg-event-yoga" },
+    { conditionType: "monthly_first_training", value: 1, mark: "Trn",  name: "Training", earnedClass: "bg-event-training" },
+    { conditionType: "monthly_first_boxing",   value: 1, mark: "Box",  name: "Boxing",   earnedClass: "bg-event-boxing" },
+    { conditionType: "monthly_first_pilates",  value: 1, mark: "Pil",  name: "Pilates",  earnedClass: "bg-event-pilates" },
+    { conditionType: "monthly_event_count",    value: 3, mark: "×3",   name: "3回参加",  earnedClass: "bg-sage-600" },
+    { conditionType: "monthly_event_count",    value: 5, mark: "×5",   name: "5回参加",  earnedClass: "bg-sage-600" },
+    { conditionType: "monthly_referral_count", value: 1, mark: "1人",  name: "1人招待",  earnedClass: "bg-ink-500" },
+    { conditionType: "monthly_referral_count", value: 3, mark: "3人",  name: "3人招待",  earnedClass: "bg-ink-500" },
+    { conditionType: "monthly_referral_count", value: 5, mark: "5人",  name: "5人招待",  earnedClass: "bg-ink-500" },
   ];
 
-  // ---- 参加回数バッジ（3 → 5） ----
-  const earned3 = isEarned("monthly_event_count", 3);
-  const earned5 = isEarned("monthly_event_count", 5);
-  // 次のターゲット: 3未達なら3, 3達成なら5, 5達成なら5（満了）
-  const countTarget = earned5 ? 5 : earned3 ? 5 : 3;
-  const countTargetBadge = findBadge("monthly_event_count", countTarget);
-
-  // ---- リファラルバッジ（1 → 3 → 5） ----
-  const earnedRef1 = isEarned("monthly_referral_count", 1);
-  const earnedRef3 = isEarned("monthly_referral_count", 3);
-  const earnedRef5 = isEarned("monthly_referral_count", 5);
-  const refTarget = earnedRef5 ? 5 : earnedRef3 ? 5 : earnedRef1 ? 3 : 1;
-  const refTargetBadge = findBadge("monthly_referral_count", refTarget);
-
-  // ---- 今月獲得バッジ一覧（アイコン表示用） ----
-  const earnedThisMonthBadges = (userBadges ?? [])
-    .filter((ub) => (ub as unknown as UserBadgeRow).period === thisMonth)
-    .map((ub) => {
-      const row = (ub as unknown as UserBadgeRow).badges;
-      return Array.isArray(row) ? row[0] : row;
-    })
-    .filter((b): b is BadgeRow => Boolean(b));
-
-  // ---- バッジ獲得数ボーナス進捗（3個:300pt / 5個:500pt / 9個:1000pt、最高ティアのみ翌月1日に付与） ----
+  // ---- 今月獲得したバッジの数とボーナス（3個:300pt / 5個:500pt / 9個:1000pt、最高ティアのみ翌月1日に付与） ----
+  const earnedBadgeCount = (userBadges ?? []).filter(
+    (ub) => (ub as unknown as UserBadgeRow).period === thisMonth
+  ).length;
   const BADGE_BONUS_TIERS = [
     { count: 3, points: 300 },
     { count: 5, points: 500 },
     { count: 9, points: 1000 },
   ];
-  const earnedBadgeCount = earnedThisMonthBadges.length;
+  const BONUS_SLOTS = 9;
   const nextBonusTier = BADGE_BONUS_TIERS.find((t) => earnedBadgeCount < t.count) ?? null;
   const achievedBonusTier = [...BADGE_BONUS_TIERS].reverse().find((t) => earnedBadgeCount >= t.count) ?? null;
+  const bonusSlots = Array.from({ length: BONUS_SLOTS }, (_, i) => ({
+    filled: i < earnedBadgeCount,
+    tier: BADGE_BONUS_TIERS.find((t) => t.count === i + 1) ?? null,
+  }));
 
-  // バッジ初文字マップ
-  const BADGE_INITIALS: Record<string, string> = {
-    monthly_first_running:  "Run",
-    monthly_first_yoga:     "Yog",
-    monthly_first_training: "Trn",
-    monthly_first_boxing:   "Box",
-    monthly_first_pilates:  "Pil",
-    monthly_event_count:    "",    // value で上書き
-    monthly_referral_count: "",
-  };
-
-  function badgeInitial(b: BadgeRow): string {
-    if (b.condition_type === "monthly_event_count") return `×${b.condition_value}`;
-    if (b.condition_type === "monthly_referral_count") return `${b.condition_value}人`;
-    return BADGE_INITIALS[b.condition_type] ?? b.name.charAt(0);
-  }
+  // ---- 年輪：次のランクへの進み具合 ----
+  const rankProgress = nextRank
+    ? (totalCount - currentRank.minCount) / Math.max(nextRank.minCount - currentRank.minCount, 1)
+    : 1;
+  const month = getJstParts(now).month;
 
   return (
     <main className="relative min-h-screen app-bg pb-24">
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 sm:px-6 sm:py-10 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
 
-        {/* プロフィールカード（Home と共通コンポーネント。ヘッダー部分のみ variant で切替） */}
-        <ProfileCard
-          variant="impact"
-          className="animate-fade-up animate-delay-100"
-          sessionCount={totalCount}
-          points={profile?.points ?? 0}
-          currentRank={currentRank}
-          nextRank={nextRank}
-          countToNext={countToNext}
-        />
-
-        {/* 月間バッジ */}
-        <div className="bg-white border border-base-200 rounded-2xl px-4 py-4 sm:px-6 sm:py-5 animate-fade-up animate-delay-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-outfit font-semibold text-base text-ink-700">月間バッジ</h2>
-            <p className="font-dm text-xs text-ink-300">{getJstParts(now).month}月</p>
-          </div>
-
-          {/* クラス初参加 */}
-          <span className="inline-block font-outfit text-xs font-semibold text-white uppercase tracking-wider bg-sage-300 rounded-full px-3 py-1 mb-2">クラス初参加</span>
-          <div className="space-y-2 mb-6">
-            {eventTypeTracks.map((track) => {
-              const b = findBadge(track.conditionType, 1);
-              const earned = b ? earnedThisMonthIds.has(b.id) : false;
-              const initial = BADGE_INITIALS[track.conditionType] ?? track.label.slice(0, 3);
-              return (
-                <MeterRow
-                  key={track.conditionType}
-                  label={track.label}
-                  current={track.hasType ? 1 : 0}
-                  max={1}
-                  badgeInitial={initial}
-                  earned={earned}
-                  sublabel={track.hasType ? "達成" : "0 / 1回"}
-                />
-              );
-            })}
-          </div>
-
-          {/* 参加回数 */}
-          <span className="inline-block font-outfit text-xs font-semibold text-white uppercase tracking-wider bg-sage-300 rounded-full px-3 py-1 mb-2">参加回数</span>
-          <div className="mb-6">
-            {countTargetBadge && (
-              <MeterRow
-                label="クラス参加"
-                current={monthlyEventCount}
-                max={countTarget}
-                badgeInitial={`×${countTarget}`}
-                earned={earned5}
-                sublabel={`${monthlyEventCount} / ${countTarget}回`}
-              />
-            )}
-          </div>
-
-          {/* 友人紹介 */}
-          <span className="inline-block font-outfit text-xs font-semibold text-white uppercase tracking-wider bg-sage-300 rounded-full px-3 py-1 mb-2">友人紹介</span>
-          <div className="mb-6">
-            {refTargetBadge && (
-              <MeterRow
-                label="友人紹介"
-                current={monthlyReferralCount}
-                max={refTarget}
-                badgeInitial={`${refTarget}人`}
-                earned={earnedRef5}
-                sublabel={`${monthlyReferralCount} / ${refTarget}人`}
-              />
-            )}
-          </div>
-
-          {/* 獲得バッジ */}
-          <div className="border-t border-base-200 pt-3">
-            <p className="font-outfit text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">獲得バッジ</p>
-            {earnedThisMonthBadges.length > 0 ? (
-              <div className="flex flex-wrap gap-x-3 gap-y-3">
-                {earnedThisMonthBadges.map((b: BadgeRow) => (
-                  <div key={b.id} className="flex flex-col items-center gap-1 w-16 shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-sage-600 text-white flex items-center justify-center font-outfit font-bold text-xs shadow-sm shrink-0">
-                      {badgeInitial(b)}
-                    </div>
-                    <p className="font-dm text-[10px] text-ink-300 text-center leading-tight break-words w-full">{b.name}</p>
-                  </div>
-                ))}
+        {/* 年輪：ランクと累計参加 */}
+        <section aria-label="あなたの年輪" className="bg-sage-600 text-white rounded-3xl px-5 py-6 sm:px-8 sm:py-7 overflow-hidden animate-fade-up animate-delay-100">
+          <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+            <GrowthRings level={currentRank.level} progress={rankProgress} />
+            <div className="w-full flex flex-col gap-3 text-center sm:text-left">
+              <div>
+                <p className="font-outfit text-xs text-white/80">いまのランク</p>
+                <p className="font-outfit text-2xl font-semibold leading-tight">
+                  {currentRank.nameEn}
+                  <span className="text-base font-normal text-white/80 ml-1.5">{currentRank.nameJa}</span>
+                </p>
               </div>
-            ) : (
-              <p className="font-dm text-xs text-ink-300">まだバッジを獲得していません</p>
-            )}
+              <div className="flex items-end justify-center sm:justify-start gap-2">
+                <span className="font-bebas text-7xl leading-[0.8]">{totalCount}</span>
+                <span className="font-outfit text-sm pb-1">回、体を動かしました</span>
+              </div>
+              <p className="font-dm text-sm text-white">
+                {nextRank && countToNext !== null && countToNext > 0
+                  ? `あと${countToNext}回で ${nextRank.nameEn}（${nextRank.nameJa}）`
+                  : "最高ランクに到達しています"}
+              </p>
+              <div className="flex items-center justify-center sm:justify-start gap-4 pt-1">
+                <span className="font-outfit text-sm bg-white/15 rounded-full px-3 py-1">
+                  <span className="font-semibold">{profile?.points ?? 0}</span> pt
+                </span>
+                <RankGuideModal
+                  currentLevel={currentRank.level}
+                  triggerClassName="font-dm text-xs text-white underline underline-offset-2 hover:text-sage-50 transition"
+                />
+              </div>
+            </div>
           </div>
+        </section>
 
-          {/* バッジ獲得数ボーナス */}
-          <div className="border-t border-base-200 pt-3 mt-3">
-            <p className="font-outfit text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">バッジボーナス</p>
-            <p className="font-dm text-xs text-ink-500 mb-1">
-              今月の獲得バッジ数：<span className="font-outfit font-bold text-ink-700">{earnedBadgeCount}個</span>
+        {/* 今月のバッジ：スタンプカード */}
+        <section aria-label={`${month}月のバッジ`} className="bg-white border border-base-200 rounded-3xl px-5 py-5 sm:px-7 animate-fade-up animate-delay-200">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="font-outfit font-semibold text-base text-ink-700">{month}月のバッジ</h2>
+            <p className="font-dm text-xs text-ink-400">
+              参加 {monthlyEventCount}回・招待 {monthlyReferralCount}人
             </p>
-            {nextBonusTier ? (
-              <p className="font-dm text-xs text-ink-300">
-                あと{nextBonusTier.count - earnedBadgeCount}個で
-                <span className="text-sage-600 font-semibold">{nextBonusTier.points}pt</span>
-                ボーナス（翌月1日に付与）
-              </p>
-            ) : (
-              <p className="font-dm text-xs text-ink-300">
-                最高ティア達成：
-                <span className="text-sage-600 font-semibold">{achievedBonusTier?.points}pt</span>
-                ボーナス確定（翌月1日に付与）
-              </p>
-            )}
           </div>
-        </div>
 
-        {/* 紹介セクション */}
-        <div className="bg-sage-300 text-white rounded-2xl px-4 py-4 animate-fade-up">
-          <p className="font-outfit font-semibold text-base mb-2">大切な人を、新しい日常へ招待しよう</p>
-          <div className="space-y-1.5 font-dm text-xs text-white/70">
-            <div className="flex items-center gap-2">
-              <span className="bg-white text-ink-700 font-outfit font-bold rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0">1</span>
-              <p>あなたの紹介リンクを友達にシェア</p>
+          <ul className="grid grid-cols-5 gap-x-2 gap-y-4">
+            {STAMPS.map((s) => (
+              <BadgeStamp
+                key={`${s.conditionType}-${s.value}`}
+                mark={s.mark}
+                name={s.name}
+                earned={isEarned(s.conditionType, s.value)}
+                earnedClass={s.earnedClass}
+              />
+            ))}
+          </ul>
+
+          {/* バッジボーナス：9マスの目盛り */}
+          <div className="mt-6 pt-5 border-t border-base-200">
+            <div className="flex items-baseline justify-between mb-2">
+              <p className="font-outfit text-sm font-medium text-ink-700">バッジボーナス</p>
+              <p className="font-dm text-xs text-ink-400">
+                {nextBonusTier
+                  ? `あと${nextBonusTier.count - earnedBadgeCount}個で${nextBonusTier.points}pt`
+                  : `${achievedBonusTier?.points}pt 確定`}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-white text-ink-700 font-outfit font-bold rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0">2</span>
-              <p>友達がリンクから登録し、初回イベントに参加</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-white text-ink-700 font-outfit font-bold rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0">3</span>
-              <p>あなたと友達に <strong className="text-white font-outfit">それぞれ200ポイント</strong> が付与されます</p>
+            <ol className="grid grid-cols-9 gap-1" aria-label={`今月の獲得バッジ ${earnedBadgeCount}個`}>
+              {bonusSlots.map((slot, i) => (
+                <li key={i} className="flex flex-col items-center gap-1">
+                  <span className={`h-2.5 w-full rounded-full ${slot.filled ? "bg-sage-600" : "bg-base-200"}`} />
+                  <span className={`font-outfit text-[10px] h-3 ${slot.tier ? (slot.filled ? "text-sage-600 font-semibold" : "text-ink-400") : "text-transparent"}`}>
+                    {slot.tier ? `${slot.tier.points}` : "-"}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="font-dm text-xs text-ink-400 mt-1">獲得したバッジの数に応じて、翌月1日にポイントが届きます</p>
+          </div>
+        </section>
+
+        {/* あなたから広がった幸せ・招待 */}
+        <section aria-label="あなたから広がった幸せ" className="bg-white border border-base-200 rounded-3xl px-5 py-5 sm:px-7 animate-fade-up">
+          <div className="flex items-center gap-4">
+            <ReachRipple count={referralReach} />
+            <div className="min-w-0">
+              <p className="font-bebas text-6xl leading-[0.85] text-sage-600">{referralReach}</p>
+              <p className="font-outfit text-sm font-medium text-ink-700 mt-1">
+                あなたから広がった<span className="inline-block">幸せの数</span>
+              </p>
+              <p className="font-dm text-xs text-ink-400 mt-1">
+                {referralReach > 0 ? "あなたが誘った人と、その先に広がった人です" : "最初の1人を誘ってみませんか"}
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* 紹介コード・シェアボタン */}
-        <div className="bg-white border border-base-200 rounded-2xl px-4 py-2.5">
-          <p className="font-outfit text-xs text-ink-300 mb-0.5">あなたの紹介コード</p>
-          <p className="font-outfit font-bold text-lg text-ink-700 tracking-widest mb-1.5">{profile?.referral_code}</p>
-          <ReferralShare referralUrl={referralUrl} code={profile?.referral_code ?? ""} />
-        </div>
-
-        {/* 紹介実績 */}
-        <div className="bg-white border border-base-200 rounded-2xl p-2.5 text-center">
-          <p className="font-outfit text-xl font-bold text-ink-700">{referralReach}</p>
-          <p className="font-dm text-xs text-ink-300 mt-0.5">あなたから広がった幸せの数</p>
-        </div>
+          <div className="mt-5 pt-5 border-t border-base-200">
+            <p className="font-outfit font-semibold text-base text-ink-700">大切な人を、新しい日常へ</p>
+            <ol className="mt-3 space-y-2">
+              {[
+                "あなたの紹介リンクを友達に送る",
+                "友達がリンクから登録し、初めてのイベントにチェックイン",
+                "あなたと友達に、それぞれ200ptが届く",
+              ].map((step, i) => (
+                <li key={step} className="flex items-start gap-2.5 font-dm text-sm text-ink-500">
+                  <span className="w-5 h-5 shrink-0 rounded-full bg-sage-100 text-ink-700 font-outfit text-xs font-semibold flex items-center justify-center mt-px">
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+            <div className="mt-4 flex items-center justify-between gap-3 bg-base-100 rounded-2xl px-4 py-3">
+              <span className="font-dm text-xs text-ink-400">あなたの紹介コード</span>
+              <span className="font-outfit font-semibold text-lg text-ink-700 tracking-widest">{profile?.referral_code}</span>
+            </div>
+            <div className="mt-3">
+              <ReferralShare referralUrl={referralUrl} code={profile?.referral_code ?? ""} />
+            </div>
+          </div>
+        </section>
 
       </div>
       <BottomNav />
