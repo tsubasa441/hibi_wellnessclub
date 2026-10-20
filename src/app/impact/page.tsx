@@ -10,7 +10,7 @@ import ReachRipple from "@/app/impact/ReachRipple";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { countReferralReach } from "@/lib/referrals";
 import { createServiceClient } from "@/lib/supabase/service";
-import { getYearMonthJst, getJstMonthBounds, getJstParts } from "@/lib/date";
+import { getYearMonthJst, getJstParts } from "@/lib/date";
 
 // ---- バッジ型定義 ----
 type BadgeRow = {
@@ -54,14 +54,12 @@ export default async function ImpactPage() {
 
   const now = new Date();
   const thisMonth = getYearMonthJst(now);
-  const { start: monthStart, end: monthEnd } = getJstMonthBounds(thisMonth);
 
   const [
     { data: profile },
     { data: bookings },
     { data: userBadges },
     { data: allBadges },
-    { data: referrals },
     referralReach,
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
@@ -76,11 +74,6 @@ export default async function ImpactPage() {
       .select("badge_id, period, badges(*)")
       .eq("user_id", user.id),
     supabase.from("badges").select("*"),
-    supabase
-      .from("referrals")
-      .select("*")
-      .eq("referrer_id", user.id)
-      .order("created_at", { ascending: false }),
     countReferralReach(createServiceClient(), user.id),
   ]);
 
@@ -100,19 +93,6 @@ export default async function ImpactPage() {
   const referralUrl = `${siteUrl}/login?ref=${profile?.referral_code}`;
 
   // ---- バッジ集計 ----
-  // 今月チェックインした予約（checked_in_at ベース。checkEventBadges と一致させる）
-  const thisMonthBookings = checkedInBookings.filter(
-    (b: { checked_in_at: string | null }) =>
-      b.checked_in_at != null && b.checked_in_at >= monthStart && b.checked_in_at <= monthEnd
-  );
-  const monthlyEventCount = thisMonthBookings.length;
-
-  // 今月 rewarded の紹介数
-  const monthlyReferralCount = (referrals ?? []).filter(
-    (r: { status: string; rewarded_at: string | null }) =>
-      r.status === "rewarded" && r.rewarded_at && r.rewarded_at >= monthStart
-  ).length;
-
   // 今月獲得済みバッジ ID
   const earnedThisMonthIds = new Set(
     (userBadges ?? [])
@@ -213,12 +193,7 @@ export default async function ImpactPage() {
 
         {/* 今月のバッジ：スタンプカード */}
         <section aria-label={`${month}月のバッジ`} className="bg-white border border-base-200 rounded-3xl px-5 py-5 sm:px-7 animate-fade-up animate-delay-200">
-          <div className="flex items-baseline justify-between mb-4">
-            <h2 className="font-outfit font-semibold text-base text-ink-700">{month}月のバッジ</h2>
-            <p className="font-dm text-xs text-ink-400">
-              参加 {monthlyEventCount}回・招待 {monthlyReferralCount}人
-            </p>
-          </div>
+          <h2 className="font-outfit font-semibold text-base text-ink-700 mb-4">{month}月のバッジ</h2>
 
           <ul className="grid grid-cols-5 gap-x-2 gap-y-4">
             {STAMPS.map((s) => (
