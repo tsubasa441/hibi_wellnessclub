@@ -37,8 +37,8 @@ export default async function HomePage({
           <p className="font-bebas text-[30px] sm:text-[52px] text-white leading-none tracking-[0.04em] uppercase drop-shadow-lg animate-fade-up animate-delay-200">
             The city is your studio.
           </p>
-          <p className="-mt-1 font-outfit text-[10px] sm:text-xs text-white/90 tracking-[0.1em] sm:tracking-[0.2em] whitespace-nowrap uppercase drop-shadow animate-fade-up animate-delay-300">
-            Run · Training · Boxing · Yoga · Pilates
+          <p className="-mt-1 font-zenkaku text-xs sm:text-sm text-white/90 tracking-[0.15em] whitespace-nowrap drop-shadow animate-fade-up animate-delay-300">
+            ～ この街ごと、スタジオに変える ～
           </p>
           <Link
             href="/login"
