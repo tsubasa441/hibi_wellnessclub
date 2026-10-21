@@ -53,12 +53,12 @@ export default function ProfileCard({
 
       <div className="flex items-center gap-6 mt-3">
         <div>
-          <p className="font-outfit text-2xl font-bold text-sage-600">{sessionCount}</p>
+          <p className="font-bebas text-4xl leading-none text-sage-600">{sessionCount}</p>
           <p className="font-dm text-xs text-ink-300 mt-0.5">累計参加数</p>
         </div>
         <div className="w-px h-8 bg-ink-200" />
         <div>
-          <p className="font-outfit text-2xl font-bold text-sage-600">{points}</p>
+          <p className="font-bebas text-4xl leading-none text-sage-600">{points}</p>
           <p className="font-dm text-xs text-ink-300 mt-0.5">Points</p>
         </div>
       </div>

@@ -90,7 +90,8 @@ export default async function HomePage() {
   const showRankUpModal = (profile.rank_level ?? 1) > rankNotifiedLevel && rankNotifiedLevel > 0;
 
   return (
-    <main className="relative min-h-screen app-bg pb-24">
+    // 背景はトップと同じ nav-bg（ログイン前の雰囲気に揃える。依頼者の指定、2026-10-21）
+    <main className="relative min-h-screen bg-nav-bg pb-24">
       {showRankUpModal && <RankUpModal rank={currentRank} />}
       <RefreshAt at={nextEndMs ? new Date(nextEndMs).toISOString() : null} />
       <Header />
@@ -112,7 +113,7 @@ export default async function HomePage() {
         {/* 予約済みイベント */}
         {upcomingBookings.length > 0 && (
           <div className="animate-fade-up animate-delay-200">
-            <h2 className="font-outfit text-sm font-semibold text-ink-500 tracking-wide mb-3">予約済みイベント</h2>
+            <h2 className="font-zenkaku text-base font-normal text-ink-700 tracking-wide mb-3">予約済みイベント</h2>
             <div className="space-y-3">
               {shownBookings.map((booking) => (
                 <EventCard key={booking.id} event={booking.events} href={`/events/${booking.event_id}`} />
@@ -140,7 +141,7 @@ export default async function HomePage() {
 
         {/* 次回イベント */}
         <div className="animate-fade-up animate-delay-200">
-          <h2 className="font-outfit text-sm font-semibold text-ink-500 mb-3 tracking-wide">次回のイベント</h2>
+          <h2 className="font-zenkaku text-base font-normal text-ink-700 tracking-wide mb-3">次回のイベント</h2>
           {nextEvent ? (
             <EventCard event={nextEvent} href={`/events/${nextEvent.id}`} />
           ) : (
