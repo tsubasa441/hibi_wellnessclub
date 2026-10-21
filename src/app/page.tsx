@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Footer from "@/components/Footer";
 import HeroBackground, { type HeroSlide } from "./HeroBackground";
 import ProgramCarousel from "./ProgramCarousel";
@@ -25,7 +26,10 @@ export default async function HomePage({
       {accountDeleted && <AccountDeletedToast />}
 
       <div className="text-center pt-6 pb-6 sm:pt-8 sm:pb-8 animate-fade-up">
-        <h1 className="font-outfit text-4xl sm:text-5xl font-medium text-ink-700 tracking-wide">Hibi</h1>
+        {/* ロゴ画像は public/images/hibi_logo.jpg から文字だけを透過 PNG に切り出したもの（2026-10-21、依頼者の指定） */}
+        <h1 className="flex justify-center">
+          <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} priority className="h-10 sm:h-12 w-auto" />
+        </h1>
         <p className="font-outfit text-xs sm:text-sm text-ink-500 tracking-[0.3em] mt-1">wellness club</p>
       </div>
 
