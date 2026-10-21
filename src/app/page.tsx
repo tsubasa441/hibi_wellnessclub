@@ -30,7 +30,7 @@ export default async function HomePage({
         <h1 className="flex justify-center">
           <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} priority className="h-10 sm:h-12 w-auto" />
         </h1>
-        <p className="font-outfit text-xs sm:text-sm text-ink-500 tracking-[0.3em] mt-1">wellness club</p>
+        <p className="font-dm text-xs sm:text-sm text-ink-500 tracking-[0.1em] mt-1">wellness club</p>
       </div>
 
       <section className="relative mx-auto max-w-5xl h-[30svh] sm:h-[38svh] min-h-[220px] max-h-[380px] rounded-2xl overflow-hidden">
@@ -61,7 +61,7 @@ export default async function HomePage({
         <h2 className="font-zenkaku text-lg sm:text-2xl font-bold text-ink-700 leading-snug tracking-wide">
           なんでもない日々が輝きだす
         </h2>
-        <p lang="en" className="font-outfit text-sm sm:text-base text-ink-400 tracking-wide mt-2">
+        <p lang="en" className="font-dm text-sm sm:text-base text-ink-400 tracking-wide mt-2">
           Ordinary days begin to shine.
         </p>
         <p className="font-zenkaku text-sm sm:text-base text-ink-500 leading-loose mt-8">
