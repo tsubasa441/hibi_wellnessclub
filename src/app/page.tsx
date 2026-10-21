@@ -28,7 +28,7 @@ export default async function HomePage({
       <div className="text-center pt-6 pb-6 sm:pt-8 sm:pb-8 animate-fade-up">
         {/* ロゴ画像は public/images/hibi_logo.jpg から文字だけを透過 PNG に切り出したもの（2026-10-21、依頼者の指定） */}
         <h1 className="flex justify-center">
-          <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} priority className="h-10 sm:h-12 w-auto" />
+          <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} priority className="h-8 sm:h-9 w-auto" />
         </h1>
         <p className="font-dm text-xs sm:text-sm text-ink-500 tracking-[0.1em] mt-1">wellness club</p>
       </div>
