@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const iconProps = {
   width: 16,
@@ -67,8 +68,8 @@ export default function Footer() {
     <footer className="w-full bg-ink-700 text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 grid gap-6 sm:grid-cols-2">
         <div>
-          <p className="font-outfit text-2xl font-medium tracking-wide leading-none">Hibi</p>
-          <p className="font-outfit text-xs text-white/80 tracking-[0.3em] mt-1">wellness club</p>
+          <Image src="/images/hibi-logo-white.png" alt="Hibi" width={540} height={236} className="h-6 w-auto" />
+          <p className="font-dm text-xs text-white/80 tracking-[0.1em] mt-1">wellness club</p>
           <p className="font-zenkaku text-xs text-white/80 mt-3">なんでもない日々が輝きだす</p>
           <p lang="en" className="font-dm text-[11px] text-white/60">Ordinary days begin to shine.</p>
         </div>

@@ -49,7 +49,7 @@ export default async function HomePage({
           </div>
           <Link
             href="/login"
-            className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-outfit font-semibold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
+            className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-dm font-semibold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
           >
             イベントご参加の方はこちら
             <span aria-hidden="true" className="text-xl leading-none font-normal -mr-1">→</span>
@@ -58,7 +58,7 @@ export default async function HomePage({
       </section>
 
       <section className="mx-auto max-w-2xl mt-14 sm:mt-20 text-center">
-        <h2 className="font-zenkaku text-lg sm:text-2xl font-bold text-ink-700 leading-snug tracking-wide">
+        <h2 className="font-zenkaku text-lg sm:text-2xl font-bold text-logo leading-snug tracking-wide">
           なんでもない日々が輝きだす
         </h2>
         <p lang="en" className="font-dm text-sm sm:text-base text-ink-400 tracking-wide mt-2">

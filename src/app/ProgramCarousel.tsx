@@ -122,7 +122,7 @@ export default function ProgramCarousel() {
             className="snap-start shrink-0 w-[78%] sm:w-[calc((100%-2rem)/3)] bg-white border border-base-200 rounded-2xl p-6 flex flex-col items-center text-center"
           >
             <EventTypeIcon type={p.type} size="lg" />
-            <h3 className="font-bebas text-3xl text-ink-700 tracking-[0.04em] mt-4">{p.name}</h3>
+            <h3 className="font-bebas text-3xl text-logo tracking-[0.04em] mt-4">{p.name}</h3>
             <p className="font-outfit text-xs text-ink-300 mt-0.5">{p.label}</p>
             <p className="font-zenkaku text-sm sm:text-base text-ink-500 leading-relaxed mt-3">
               {p.description.map((phrase) => (
