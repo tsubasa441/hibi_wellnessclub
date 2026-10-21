@@ -33,16 +33,19 @@ export default async function HomePage({
         <HeroBackground slides={HERO_SLIDES} />
         <div className="absolute inset-0 bg-black/30" />
 
-        <div className="relative z-10 h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="font-bebas text-[30px] sm:text-[52px] text-white leading-none tracking-[0.04em] uppercase drop-shadow-lg animate-fade-up animate-delay-200">
-            The city is your studio.
-          </p>
-          <p className="-mt-1 font-zenkaku text-xs sm:text-sm text-white/90 tracking-[0.15em] whitespace-nowrap drop-shadow animate-fade-up animate-delay-300">
-            ～ この街ごと、スタジオに変える ～
-          </p>
+        {/* 見出しは残りの高さの中央、ボタンは動画枠の下端から一定の位置に置く（依頼者の指定、2026-10-21） */}
+        <div className="relative z-10 h-full flex flex-col items-center px-6 pb-6 sm:pb-10 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <p className="font-bebas text-[30px] sm:text-[52px] text-white leading-none tracking-[0.04em] uppercase drop-shadow-lg animate-fade-up animate-delay-200">
+              The city is your studio.
+            </p>
+            <p className="-mt-1 font-zenkaku text-xs sm:text-sm text-white/90 tracking-[0.15em] whitespace-nowrap drop-shadow animate-fade-up animate-delay-300">
+              この街ごと、スタジオに変える
+            </p>
+          </div>
           <Link
             href="/login"
-            className="mt-1 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-outfit font-semibold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
+            className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-outfit font-semibold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
           >
             イベントご参加の方はこちら
             <span aria-hidden="true" className="text-xl leading-none font-normal -mr-1">→</span>
