@@ -82,7 +82,7 @@ export default async function HomePage({
       </section>
 
       <section className="mx-auto max-w-5xl mt-16 sm:mt-24">
-        <h2 className="text-center mb-8 font-sans font-bold uppercase text-[28px] sm:text-[31px] leading-tight text-navy">
+        <h2 className="text-center mb-8 font-bebas uppercase text-[34px] sm:text-[40px] leading-none tracking-[0.04em] text-logo">
           Program
         </h2>
         <ProgramCarousel />
