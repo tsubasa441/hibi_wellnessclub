@@ -21,7 +21,7 @@ const noto = Noto_Sans_JP({
 // トップページのヒーロー見出し専用（2026-10-12、依頼者が比較のうえ選択）
 const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--font-bebas", display: "swap" });
 // トップページの紹介文（日本語）用。日本語の文字は unicode-range で必要な分だけ読み込まれるため preload しない
-const zenKaku = Zen_Kaku_Gothic_New({ subsets: ["latin"], weight: "400", variable: "--font-zenkaku", display: "swap", preload: false });
+const zenKaku = Zen_Kaku_Gothic_New({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-zenkaku", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   title: "Hibi | フィットネスコミュニティ",

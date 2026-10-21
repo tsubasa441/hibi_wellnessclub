@@ -51,7 +51,7 @@ export default async function HomePage({
       </section>
 
       <section className="mx-auto max-w-2xl mt-14 sm:mt-20 text-center">
-        <h2 className="font-zenkaku text-lg sm:text-2xl font-normal text-ink-700 leading-snug tracking-wide">
+        <h2 className="font-zenkaku text-lg sm:text-2xl font-bold text-ink-700 leading-snug tracking-wide">
           なんでもない日々が輝きだす
         </h2>
         <p lang="en" className="font-outfit text-sm sm:text-base text-ink-400 tracking-wide mt-2">
