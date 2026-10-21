@@ -124,7 +124,7 @@ export default function ProgramCarousel() {
             <EventTypeIcon type={p.type} size="lg" />
             <h3 className="font-bebas text-3xl text-ink-700 tracking-[0.04em] mt-4">{p.name}</h3>
             <p className="font-outfit text-xs text-ink-300 mt-0.5">{p.label}</p>
-            <p className="font-zenkaku text-sm text-ink-500 leading-relaxed mt-3">
+            <p className="font-zenkaku text-sm sm:text-base text-ink-500 leading-relaxed mt-3">
               {p.description.map((phrase) => (
                 <span key={phrase} className="inline-block">{phrase}</span>
               ))}
