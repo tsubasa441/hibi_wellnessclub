@@ -49,7 +49,7 @@ export default async function HomePage({
           </div>
           <Link
             href="/login"
-            className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-dm font-semibold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
+            className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap bg-white/95 text-ink-700 font-zenkaku font-bold text-base min-h-14 px-9 py-3.5 rounded-full tracking-wide transition hover:bg-white hover:-translate-y-0.5 animate-fade-up animate-delay-500"
           >
             イベントご参加の方はこちら
             <span aria-hidden="true" className="text-xl leading-none font-normal -mr-1">→</span>
