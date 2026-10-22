@@ -18,8 +18,8 @@
 | SettingsMenu | `src/components/SettingsMenu.tsx` | マイページのアカウント設定。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供（2026-10-16 に旧 `SettingsDrawer` から移設） |
 | SupportChat | `src/components/SupportChat.tsx` | お問い合わせのチャット（ユーザーの `/support`・管理画面の `/admin/support/[userId]` で共通）。自分の吹き出しは右・`bg-sage-600` 白文字、相手は左・`bg-base-100`（上に「Hibi 運営」等）。下に入力欄（2000文字・文字数表示）と送信ボタン。送信後と、開いている間の20秒ごとに `router.refresh()` で新着を取り直す |
 | ReserveTabs | `src/components/ReserveTabs.tsx` | 下ナビ「予約」内で、イベント一覧（`/events`）と予約済み一覧（`/bookings`）を切り替えるピル型の2択 |
-| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。法定ページ（特商法・プライバシー・利用規約）に設置（トップページからは 2026-10-12 に撤去）。ログイン後の画面は `Header` を使う。**`/login`・`/register-complete`には設置しない**（2026-09-25のリデザインで写真パネル内の独自ロゴ表示に置き換え） |
-| AuthPhotoPanel | `src/components/AuthPhotoPanel.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の写真パネル（写真＋暗幕・「Hibi」ロゴ・「WELLNESS CLUB」・デスクトップのみタグライン）。Server Component |
+| PublicHeader | `src/components/PublicHeader.tsx` | 未ログインで見られるページ用の共通ヘッダー。`.nm-nav-top`（nav-bg背景）バーに「Hibi」ロゴ（`/` へのリンク）のみ。法定ページ（特商法・プライバシー・利用規約）に設置（トップページからは 2026-10-12 に撤去）。ログイン後の画面は `Header` を使う。**`/login`・`/register-complete`には設置しない**（`AuthShell` 内のロゴ表示で代替） |
+| AuthShell | `src/components/AuthShell.tsx` | ログイン・新規登録（`/login`）・登録完了（`/register-complete`）・パスワード再設定（`/auth/verify`・`/auth/reset-password`）で共通の外枠（`nav-bg` の背景・ロゴ・白いカード）。`above` でカードの上（ログインのタブ）を差し込める。2026-10-22 に写真パネルの `AuthPhotoPanel` から置き換え |
 | BottomNav | `src/components/BottomNav.tsx` | 下部ナビゲーション（ホーム / 予約 / チェックイン（中央の丸ボタン） / インパクト / マイページ。下記「下ナビ」参照） |
 | RankIcon | `src/components/RankIcon.tsx` | ランクアイコン表示 |
 | EventTypeIcon | `src/components/EventTypeIcon.tsx` | イベント種別（yoga / running / boxing / training / pilates）の円形ピクトグラム。円の色は `globals.css` の `--color-event-*` トークン、図柄は Google Material Symbols（Rounded / Fill、Apache License 2.0）の白い塗りつぶしアイコン（`currentColor`）。ヨガ=`self_improvement`、ランニング=`directions_run`、ボクシング=`sports_mma`、トレーニング=`fitness_center`、ピラティス=`sports_gymnastics`。イベント一覧（`/events`）のカード左側に表示する。`size="lg"`（80px）はトップページの Program のカード用。Server Component |
@@ -125,18 +125,21 @@
 
 ## ログイン・新規登録ページ（`/login`）
 
-2026-09-25にエディトリアル方向へ全面リデザイン。アプリ内の他画面（home・impact等）が使うニューモーフィズム（`nm-*`）とは意図的に異なるトーンで、写真を主役にした分割レイアウトにする。`PublicHeader`・`Footer`はこのページには設置しない。写真パネルは共通の `AuthPhotoPanel` を使い、登録完了画面（`/register-complete`）・パスワード再設定の2画面（`/auth/verify`・`/auth/reset-password`）も同じ分割レイアウト・見出し（`font-yugothic`）・下線入力欄・フラットなボタンで揃える。入力欄・ラベル・ボタン・見出しのクラスは `src/lib/authStyles.ts` に集約し、これらの画面で共用する（写真パネル内の「Hibi」ロゴ＋新規登録フォーム内の利用規約・プライバシーポリシーリンクで代替）。
+2026-10-22、依頼者の指定で、2026-09-25 の写真パネル＋分割レイアウト（`AuthPhotoPanel`。削除済み）をやめ、ホームと同じテイストにした。登録完了画面（`/register-complete`）・パスワード再設定の2画面（`/auth/verify`・`/auth/reset-password`）も同じ外枠 `AuthShell` とスタイルで揃える。`PublicHeader`・`Footer`はこれらの画面には設置しない（ロゴは `AuthShell` 内、利用規約・プライバシーポリシーへは新規登録フォーム内の同意文言から遷移できる）。
 
 ### レイアウト構成
 
 | エリア | 内容 |
 |--------|------|
-| 写真パネル | 画面左42%（モバイルは上部・高さ200px固定）。`public/images/hibi-top-poster.jpg`を`object-cover`、`bg-ink-800/40`の暗幕オーバーレイ。「Hibi」ロゴ（`font-outfit font-medium`・白。トップページと統一）＋「WELLNESS CLUB」（`font-outfit`）、下部にタグライン（デスクトップのみ表示） |
-| フォームパネル | 残り58%を中央揃え、最大幅`max-w-sm` |
-| タブ | 「ログイン」「新規登録」を下線式切り替え（アクティブ時`border-sage-600 text-ink-700`、非アクティブ`border-transparent text-ink-300`）。ピル型トグルは廃止 |
-| 見出し | `font-yugothic text-2xl font-bold`（游ゴシック。Windows・Mac 標準、Android では sans-serif で代替表示。ログイン「Hello!」・新規登録「Nice to meet you!」） |
-| 入力欄 | 下線のみ（`border-b border-base-200`、フォーカス時`border-ink-500`）。囲み枠・凹み表現（`nm-inset`）は使わない |
-| ボタン | フラットな`rounded-sm`・`bg-sage-600`（`nm-btn-primary`のシャドウ表現は使わない） |
+| 背景 | トップ・ホームと同じ `bg-nav-bg` |
+| ロゴ | 上部中央にトップと同じロゴ画像（`hibi-logo.png`）＋「wellness club」（font-dm）。`/` へのリンク |
+| タブ（`/login` のみ） | 「ログイン」「新規登録」をピル型の2択（`ReserveTabs` と同じ見た目、選択中 `bg-sage-600` 白文字） |
+| カード | 最大幅 `max-w-md`、白・`rounded-[20px]`・ホームの `ProfileCard` と同じ影。フォーム・案内文はこの中 |
+| 見出し | 英語（「Hello!」「Nice to meet you!」「Welcome to Hibi!」）は `font-bebas`（大文字・34px、`headingEnClass`）。日本語（「パスワードの再設定」等）は Bebas に字形が無いため `font-zenkaku` 太字（`headingClass`） |
+| 入力欄 | 囲み枠（`rounded-lg`・`bg-base-50`・フォーカス時 `border-sage-600`。`boxedInputClass`） |
+| ボタン | ピル型（`rounded-full`・`bg-sage-600`・`font-dm`・高さ48px。`primaryButtonClass`）。性別の選択もピル型 |
+
+クラスは `src/lib/authStyles.ts` に集約。`inputClass`・`labelClass`（下線の入力欄）はマイページの `SettingsMenu` 用として残している。
 
 ### 仕様
 

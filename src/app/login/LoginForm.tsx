@@ -5,20 +5,26 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
-import AuthPhotoPanel from "@/components/AuthPhotoPanel";
-import { inputClass, labelClass, primaryButtonClass } from "@/lib/authStyles";
+import AuthShell from "@/components/AuthShell";
+import {
+  boxedInputClass as inputClass,
+  boxedLabelClass as labelClass,
+  primaryButtonClass,
+  linkButtonClass,
+  headingEnClass as headingClass,
+} from "@/lib/authStyles";
 import { validateName, validateNickname } from "@/lib/nameValidation";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
 
 const toggleClass = (active: boolean) =>
-  `flex-1 py-2 font-outfit text-xs font-medium tracking-wide transition border rounded-sm ${
-    active ? "border-ink-500 bg-ink-500 text-white" : "border-base-200 text-ink-400"
+  `flex-1 py-2 font-dm text-xs font-medium tracking-wide transition border rounded-full ${
+    active ? "border-sage-600 bg-sage-600 text-white" : "border-base-200 bg-base-50 text-ink-400"
   }`;
 const tabClass = (active: boolean) =>
-  `font-outfit text-sm font-medium pb-2.5 border-b-2 transition ${
-    active ? "text-ink-700 border-sage-600" : "text-ink-300 border-transparent"
+  `text-center font-outfit text-sm py-2 rounded-full transition ${
+    active ? "bg-sage-600 text-white font-medium" : "text-ink-500 hover:text-ink-700"
   }`;
 
 function LoginFormInner() {
@@ -266,15 +272,11 @@ function LoginFormInner() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col sm:flex-row bg-base-100">
-      {/* 写真パネル */}
-      <AuthPhotoPanel />
-
-      {/* フォームパネル */}
-      <div className="flex-1 flex items-center justify-center px-5 py-10 sm:py-16">
-        <div ref={formTopRef} className="w-full max-w-sm">
-          {tab !== "forgot" ? (
-            <div className="flex gap-7 mb-8">
+    <AuthShell
+      topRef={formTopRef}
+      above={
+          tab !== "forgot" ? (
+            <div className="grid grid-cols-2 gap-1 bg-white border border-base-200 rounded-full p-1 mb-5 animate-fade-up animate-delay-100">
               <button onClick={() => { setTab("signin"); resetForm(); }} className={tabClass(tab === "signin")}>
                 ログイン
               </button>
@@ -283,15 +285,16 @@ function LoginFormInner() {
               </button>
             </div>
           ) : (
-            <p className="font-outfit text-sm font-medium text-ink-700 mb-8">パスワード再設定</p>
-          )}
-
+            <h2 className="font-zenkaku text-base font-normal text-ink-700 tracking-wide mb-3">パスワード再設定</h2>
+          )
+      }
+    >
           {error && <div className="text-red-500 text-xs font-dm mb-4">{error}</div>}
 
           {tab === "signin" ? (
             <>
-              <p className="font-yugothic text-2xl font-bold text-ink-700 mb-7">Hello!</p>
-              <form onSubmit={handleSignIn} noValidate className="space-y-6">
+              <p className={`${headingClass} mb-6`}>Hello!</p>
+              <form onSubmit={handleSignIn} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Email</p>
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
@@ -304,7 +307,7 @@ function LoginFormInner() {
                   <button
                     type="button"
                     onClick={() => { setTab("forgot"); resetForm(); }}
-                    className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
+                    className={linkButtonClass}
                   >
                     パスワードをお忘れの方
                   </button>
@@ -322,7 +325,7 @@ function LoginFormInner() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="m8 12 3 3 5-6" />
                 </svg>
                 <div>
-                  <p className="font-outfit text-sm font-medium text-ink-700">メールを送信しました</p>
+                  <p className="font-zenkaku text-base text-ink-700">メールを送信しました</p>
                   <p className="font-dm text-xs text-ink-300 leading-relaxed mt-2">
                     {email} 宛にパスワード再設定用のメールをお送りしました。メール内のリンクから新しいパスワードを設定してください。
                   </p>
@@ -351,7 +354,7 @@ function LoginFormInner() {
                   <button
                     type="button"
                     onClick={() => { setTab("signin"); resetForm(); }}
-                    className="font-dm text-xs text-ink-300 hover:text-ink-700 transition"
+                    className={linkButtonClass}
                   >
                     ログインに戻る
                   </button>
@@ -360,7 +363,7 @@ function LoginFormInner() {
             )
           ) : (
             <>
-              <p className="font-yugothic text-2xl font-bold text-ink-700 mb-6">Nice to meet you!</p>
+              <p className={`${headingClass} mb-6`}>Nice to meet you!</p>
               <form onSubmit={handleSignUp} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Name</p>
@@ -457,9 +460,7 @@ function LoginFormInner() {
               </form>
             </>
           )}
-        </div>
-      </div>
-    </main>
+    </AuthShell>
   );
 }
 

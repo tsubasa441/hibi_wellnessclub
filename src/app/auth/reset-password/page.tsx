@@ -7,8 +7,14 @@ import PasswordInput from "@/components/PasswordInput";
 import * as Sentry from "@sentry/nextjs";
 import { passwordUpdateErrorMessage } from "@/lib/passwordUpdateError";
 import { validatePasswordFormat } from "@/lib/passwordPolicy";
-import AuthPhotoPanel from "@/components/AuthPhotoPanel";
-import { inputClass, labelClass, primaryButtonClass, headingClass } from "@/lib/authStyles";
+import AuthShell from "@/components/AuthShell";
+import {
+  boxedInputClass as inputClass,
+  boxedLabelClass as labelClass,
+  primaryButtonClass,
+  headingClass,
+  bodyTextClass,
+} from "@/lib/authStyles";
 
 type LinkStatus = "checking" | "ready" | "invalid";
 
@@ -125,18 +131,14 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col sm:flex-row bg-base-100">
-      <AuthPhotoPanel />
-
-      <div className="flex-1 flex items-start sm:items-center justify-center px-5 py-10 sm:py-16">
-        <div className="w-full max-w-sm">
+    <AuthShell>
           {linkStatus === "checking" ? (
             <p className="font-dm text-sm text-ink-300">リンクを確認しています...</p>
           ) : linkStatus === "invalid" ? (
             <div className="space-y-6">
               <div className="space-y-3">
                 <p className={headingClass}>リンクが無効です</p>
-                <p className="font-dm text-sm text-ink-400 leading-relaxed">
+                <p className={bodyTextClass}>
                   このリンクの有効期限が切れているか、既に使用されています。メールを複数回送信した場合は、最後に届いたメールのリンクのみ有効です。お手数ですが、もう一度パスワード再設定をお試しください。
                 </p>
                 {invalidDetail && (
@@ -151,13 +153,13 @@ export default function ResetPasswordPage() {
             </div>
           ) : done ? (
             <div className="space-y-6">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sage-500">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sage-600">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8 12 3 3 5-6" />
               </svg>
               <div className="space-y-3">
                 <p className={headingClass}>完了しました</p>
-                <p className="font-dm text-sm text-ink-400 leading-relaxed">
+                <p className={bodyTextClass}>
                   パスワードの再設定が完了しました。
                 </p>
               </div>
@@ -171,7 +173,7 @@ export default function ResetPasswordPage() {
 
               {error && <div className="text-red-500 text-xs font-dm mb-4">{error}</div>}
 
-              <form onSubmit={handleSubmit} noValidate className="space-y-6">
+              <form onSubmit={handleSubmit} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>新しいパスワード</p>
                   <PasswordInput
@@ -200,8 +202,6 @@ export default function ResetPasswordPage() {
               </form>
             </>
           )}
-        </div>
-      </div>
-    </main>
+    </AuthShell>
   );
 }

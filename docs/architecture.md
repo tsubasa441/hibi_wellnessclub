@@ -136,7 +136,7 @@ src/
 │   ├── BottomNav.tsx           # 共通フッターナビ（ホーム / 予約 / チェックイン（中央の丸ボタン） / インパクト / マイページ）
 │   └── Footer.tsx              # 濃色のフッター：ロゴ・一言・連絡先（Instagram・TikTok・Email）・コピーライト・利用規約・プライバシーポリシー・特定商取引法表記へのリンク（トップ・法定ページに設置。/login・/register-complete は独自レイアウトのため未設置）
 │   ├── EventTypeIcon.tsx       # イベント種別の円形ピクトグラム（イベント一覧のカード左側）
-│   ├── AuthPhotoPanel.tsx      # /login・/register-complete・/auth/verify・/auth/reset-password 共通の写真パネル（Server Component）
+│   ├── AuthShell.tsx           # /login・/register-complete・/auth/verify・/auth/reset-password 共通の外枠（nav-bg 背景・ロゴ・白いカード）
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts           # ブラウザ用クライアント
@@ -198,7 +198,7 @@ docs/                           # ドキュメント一式
 
 管理者（`profiles.is_admin = true`）は `/admin/events` から独立してイベント管理・参加者管理を行う。一般ユーザー導線とは接続しない（URLを直接開く運用）。管理者以外が `/admin/*` にアクセスした場合は `/home` へリダイレクトする。
 
-`/` と法定ページの下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/terms`（利用規約）・`/legal/privacy`（プライバシーポリシー）・`/legal/tokushoho`（特定商取引法に基づく表記）へ遷移できる。この3画面は認証不要。フッターには Instagram・TikTok の公式アカウント（新しいタブで開く）とメールアドレスを並べる。URL・アドレスは `src/components/Footer.tsx` の `CONTACT_LINKS` で管理する。`/login`・`/register-complete` は2026-09-25のリデザインで独自レイアウト（写真パネル＋フォーム）になったため `PublicHeader`・`Footer` とも設置しない（利用規約・プライバシーポリシーへのリンクは新規登録フォーム内の同意文言から遷移できる）。
+`/` と法定ページの下部に共通 `Footer`（`src/components/Footer.tsx`）を設置し、`/legal/terms`（利用規約）・`/legal/privacy`（プライバシーポリシー）・`/legal/tokushoho`（特定商取引法に基づく表記）へ遷移できる。この3画面は認証不要。フッターには Instagram・TikTok の公式アカウント（新しいタブで開く）とメールアドレスを並べる。URL・アドレスは `src/components/Footer.tsx` の `CONTACT_LINKS` で管理する。`/login`・`/register-complete` は独自レイアウト（`AuthShell`：ロゴ＋カードのフォーム）のため `PublicHeader`・`Footer` とも設置しない（利用規約・プライバシーポリシーへのリンクは新規登録フォーム内の同意文言から遷移できる）。
 
 ### BottomNav 構成（全認証済み画面共通）
 
