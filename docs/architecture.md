@@ -128,7 +128,7 @@ src/
 │               ├── route.ts                # PATCH 更新 / DELETE 論理削除
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
-│   ├── Header.tsx              # 共通ヘッダー（Hibi テキスト。管理者には「管理画面」リンク）
+│   ├── Header.tsx              # 共通ヘッダー（トップと同じ Hibi のロゴ画像。管理者には「管理画面」リンク）
 │   ├── SettingsMenu.tsx        # マイページのアカウント設定（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除。2026-10-16 に設定ドロワーから移設）
 │   ├── SupportChat.tsx         # お問い合わせのチャット（吹き出し・入力欄。20秒ごとに新着を取り直す。ユーザー画面・管理画面で共通。Client Component）
 │   ├── ReserveTabs.tsx         # 下ナビ「予約」内の切り替え（イベントを探す /events ⇔ 予約済み /bookings）

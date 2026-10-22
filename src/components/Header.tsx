@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -26,8 +27,8 @@ export default function Header() {
   return (
     <header className="nm-nav-top">
       <div className="max-w-2xl mx-auto px-5 py-4 sm:px-8 flex items-center justify-between">
-        <Link href="/home" className="font-outfit text-2xl font-medium text-ink-700 tracking-wide">
-          Hibi
+        <Link href="/home" className="inline-flex">
+          <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} priority className="h-7 w-auto" />
         </Link>
         {isAdmin && (
           <Link href="/admin/events" className="font-outfit text-xs text-ink-700 hover:text-ink-800 transition">

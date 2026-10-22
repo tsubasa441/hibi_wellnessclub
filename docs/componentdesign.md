@@ -155,12 +155,12 @@
 
 ## ヘッダー構成
 
-背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。2026-10-18 に依頼者の指定で影（ニューモーフィズム）をやめ、ヘッダーの下端・下ナビの上端を細い線で区切る平らな表現にした（Impact の進捗バーの凹み表現も撤去）。テキストはすべて `ink-700` 系で視認性を優先し、ロゴは太字・大きめにする（2026-09、参考UIに合わせて変更）。右端は管理者のみ「管理画面」リンク。歯車アイコン（設定ドロワー）は 2026-10-16 に撤去し、設定はマイページへ移した。
+背景は `.nm-nav-top`（`--color-nav-bg` 適用）で `BottomNav`（`.nm-nav-bottom`）と共通。2026-10-18 に依頼者の指定で影（ニューモーフィズム）をやめ、ヘッダーの下端・下ナビの上端を細い線で区切る平らな表現にした（Impact の進捗バーの凹み表現も撤去）。テキストはすべて `ink-700` 系で視認性を優先する。ロゴはトップと同じロゴ画像（`public/images/hibi-logo.png`・高さ 28px。2026-10-23 に依頼者の指定で Outfit の文字から変更）。右端は管理者のみ「管理画面」リンク。歯車アイコン（設定ドロワー）は 2026-10-16 に撤去し、設定はマイページへ移した。
 
 ```tsx
 <header className="nm-nav-top px-5 py-4 sm:px-8 flex items-center justify-between">
-  <Link href="/home" className="font-outfit text-2xl font-medium text-ink-700 tracking-wide">
-    Hibi
+  <Link href="/home" className="inline-flex">
+    <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} priority className="h-7 w-auto" />
   </Link>
   {isAdmin && <Link href="/admin/events">管理画面</Link>}
 </header>
