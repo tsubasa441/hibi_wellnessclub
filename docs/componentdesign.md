@@ -14,6 +14,7 @@
 
 | コンポーネント | パス | 説明 |
 |-------------|------|------|
+| AppFooter | `src/components/AppFooter.tsx` | ログイン後の画面（ホーム・イベント一覧・インパクト・マイページ）の最下部に置くフッター（2026-10-24、依頼者の指定。参考：会員制スタジオのアプリ）。薄いグレー（`bg-base-200/60`）の帯に、左にロゴ画像（`hibi-logo.png`・高さ 32px）＋「wellness club」（font-dm）、右にお問い合わせ・利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンクを縦に並べる。親の `main` を `flex flex-col` にして `mt-auto` で画面の下端に寄せ、固定の下ナビに隠れないよう下に 112px の余白を取る。Server Component |
 | Header | `src/components/Header.tsx` | ロゴ。管理者には「管理画面」リンクも表示（歯車アイコンは 2026-10-16 に撤去） |
 | SettingsMenu | `src/components/SettingsMenu.tsx` | マイページのアカウント設定。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供（2026-10-16 に旧 `SettingsDrawer` から移設） |
 | SupportChat | `src/components/SupportChat.tsx` | お問い合わせのチャット（ユーザーの `/support`・管理画面の `/admin/support/[userId]` で共通）。自分の吹き出しは右・`bg-sage-600` 白文字、相手は左・`bg-base-100`（上に「Hibi 運営」等）。下に入力欄（2000文字・文字数表示）と送信ボタン。送信後と、開いている間の20秒ごとに `router.refresh()` で新着を取り直す |

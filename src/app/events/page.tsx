@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
+import AppFooter from "@/components/AppFooter";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventCard from "@/components/EventCard";
@@ -17,10 +18,10 @@ export default async function EventsPage() {
     .order("start_at", { ascending: true });
 
   return (
-    <main className="relative min-h-screen app-bg pb-24">
+    <main className="relative min-h-screen app-bg flex flex-col">
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-6">
           <ReserveTabs active="events" />
         </div>
@@ -37,6 +38,7 @@ export default async function EventsPage() {
           </div>
         )}
       </div>
+      <AppFooter />
       <BottomNav />
     </main>
   );

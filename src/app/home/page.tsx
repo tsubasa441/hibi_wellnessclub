@@ -6,6 +6,7 @@ import { checkAndAwardPendingPoints } from "@/lib/points";
 import { checkAndAwardReferralReward } from "@/lib/referrals";
 import { getRankByLevel, getNextRank } from "@/lib/ranks";
 import { decrypt } from "@/lib/encrypt";
+import AppFooter from "@/components/AppFooter";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import EventCard from "@/components/EventCard";
@@ -91,12 +92,12 @@ export default async function HomePage() {
 
   return (
     // 背景はトップと同じ nav-bg（ログイン前の雰囲気に揃える。依頼者の指定、2026-10-21）
-    <main className="relative min-h-screen bg-nav-bg pb-24">
+    <main className="relative min-h-screen bg-nav-bg flex flex-col">
       {showRankUpModal && <RankUpModal rank={currentRank} />}
       <RefreshAt at={nextEndMs ? new Date(nextEndMs).toISOString() : null} />
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
 
         {/* プロフィールカード */}
         <ProfileCard
@@ -153,6 +154,7 @@ export default async function HomePage() {
 
       </div>
 
+      <AppFooter />
       <BottomNav />
     </main>
   );

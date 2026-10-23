@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import { decrypt } from "@/lib/encrypt";
 import { getRankByLevel } from "@/lib/ranks";
 import { getJstParts } from "@/lib/date";
+import AppFooter from "@/components/AppFooter";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import RankIcon from "@/components/RankIcon";
@@ -105,10 +106,10 @@ export default async function MyPage() {
     : null;
 
   return (
-    <main className="relative min-h-screen app-bg pb-28">
+    <main className="relative min-h-screen app-bg flex flex-col">
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
         {/* プロフィール */}
         <section className="bg-white border border-base-200 rounded-2xl p-5 flex items-center gap-4">
           <Image src="/images/default-avatar.svg" alt="" width={52} height={64} unoptimized className="w-[52px] h-16 shrink-0" />
@@ -168,6 +169,7 @@ export default async function MyPage() {
         </section>
       </div>
 
+      <AppFooter />
       <BottomNav />
     </main>
   );

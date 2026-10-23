@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
+import AppFooter from "@/components/AppFooter";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import RankGuideModal from "@/components/RankGuideModal";
@@ -152,10 +153,10 @@ export default async function ImpactPage() {
   const month = getJstParts(now).month;
 
   return (
-    <main className="relative min-h-screen app-bg pb-24">
+    <main className="relative min-h-screen app-bg flex flex-col">
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
 
         {/* 年輪：ランクと累計参加 */}
         <section aria-label="あなたの年輪" className="bg-sage-600 text-white rounded-3xl px-5 py-6 sm:px-8 sm:py-7 overflow-hidden animate-fade-up animate-delay-100">
@@ -273,6 +274,7 @@ export default async function ImpactPage() {
         </section>
 
       </div>
+      <AppFooter />
       <BottomNav />
     </main>
   );
