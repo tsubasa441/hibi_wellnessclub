@@ -3,7 +3,6 @@ import Image from "next/image";
 
 const LINKS: { label: string; href: string }[] = [
   { label: "よくあるご質問", href: "/faq" },
-  { label: "お問い合わせ", href: "/support" },
   { label: "利用規約", href: "/legal/terms" },
   { label: "プライバシーポリシー", href: "/legal/privacy" },
   { label: "特定商取引法に基づく表記", href: "/legal/tokushoho" },
