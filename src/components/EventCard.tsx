@@ -52,8 +52,8 @@ export default function EventCard({ event, href }: { event: EventCardEvent; href
           </span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-noto font-bold text-sm text-ink-700">{formatDateRange(event.start_at, event.end_at)}</p>
-          <h3 className="font-noto font-bold text-lg text-ink-700 leading-snug mt-1">{event.title}</h3>
+          <p className="font-noto font-semibold text-sm text-ink-700">{formatDateRange(event.start_at, event.end_at)}</p>
+          <h3 className="font-noto font-semibold text-lg text-ink-700 leading-snug mt-1">{event.title}</h3>
           <p className="font-noto text-sm text-ink-500 mt-3 flex items-start gap-1.5">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-px text-ink-700" aria-hidden="true">
               <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
