@@ -14,6 +14,7 @@
 
 | コンポーネント | パス | 説明 |
 |-------------|------|------|
+| LoadingScreen | `src/components/LoadingScreen.tsx` | 画面遷移・処理待ちの間に全画面で出す読み込み画面（2026-10-24、依頼者の指定で読み込み中の枠 `PageSkeleton` から置き換え。参考：他サイトの遷移画面）。ぼかしたセージ・インク系の色の層（`blur-3xl`）がゆっくり流れる背景に、4つに区切った白い輪（6秒で1回転）と内側の点線の輪（逆回転）、中央に白いロゴ（`hibi-logo-white.png`）＋「wellness club」（ゆっくり明滅）。すぐ終わる遷移でちらつかないよう 0.15 秒遅れて現れる。`prefers-reduced-motion` のときは動かさない。下ナビより前面（`z-[60]`）。各画面の `loading.tsx`（ホーム・イベント一覧/詳細・予約済み・チェックイン・インパクト・マイページ・お問い合わせ）から使う。アニメーションは `globals.css` の `animate-loading-*`。Server Component |
 | AppFooter | `src/components/AppFooter.tsx` | ログイン後の画面（ホーム・イベント一覧・インパクト・マイページ）の最下部に置くフッター（2026-10-24、依頼者の指定。参考：会員制スタジオのアプリ）。色はトップ・法定ページの `Footer` と同じ（`bg-ink-700`・白文字。同日、依頼者の指定で薄いグレーから変更）。左にロゴ画像（白版の `hibi-logo-white.png`・高さ 28px）＋「wellness club」（font-dm・white/80）、右によくあるご質問（`/faq`）・利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンクを縦に並べる。親の `main` を `flex flex-col` にして `mt-auto` で画面の下端に寄せ、固定の下ナビに隠れないよう下に 88px の余白を取る（下ナビの上に見える帯の高さは約 150px。同日、高いとの指摘で詰めた）。Server Component |
 | Header | `src/components/Header.tsx` | ロゴ。管理者には「管理画面」リンクも表示（歯車アイコンは 2026-10-16 に撤去） |
 | SettingsMenu | `src/components/SettingsMenu.tsx` | マイページのアカウント設定。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供（2026-10-16 に旧 `SettingsDrawer` から移設） |
@@ -203,7 +204,7 @@
 ### ホーム（`/home`）
 
 2026-10-21、ログイン前（トップ）とログイン後の画面の雰囲気の差を縮めるため、依頼者の指定でまずホームだけ変更（よければ他の画面へ広げる）：
-- ページ背景をトップと同じ `bg-nav-bg`（読み込み中の枠 `PageSkeleton` も `bgClass="bg-nav-bg"`）。カードは白のまま
+- ページ背景をトップと同じ `bg-nav-bg`。カードは白のまま
 - 見出し（「予約済みイベント」「次回のイベント」）はトップの紹介文と同じ `font-zenkaku`・通常の太さ・16px・`ink-700`
 - `ProfileCard` の累計参加数・Points の数字はトップのヒーロー見出しと同じ `font-bebas`（36px）
 

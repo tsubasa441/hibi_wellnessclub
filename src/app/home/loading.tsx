@@ -1,5 +1,5 @@
-import PageSkeleton from "@/components/PageSkeleton";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function Loading() {
-  return <PageSkeleton bgClass="bg-nav-bg" />;
+  return <LoadingScreen />;
 }
