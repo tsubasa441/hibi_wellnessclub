@@ -260,7 +260,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
                 <button
                   onClick={handleSaveNickname}
                   disabled={savingNickname}
-                  className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-ink-600 transition disabled:opacity-60"
+                  className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-sage-600 transition disabled:opacity-60"
                 >
                   {savingNickname ? "保存中..." : "保存する"}
                 </button>
@@ -316,7 +316,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
                     <button
                       onClick={handleRequestEmailChange}
                       disabled={savingEmail}
-                      className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-ink-600 transition disabled:opacity-60"
+                      className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-sage-600 transition disabled:opacity-60"
                     >
                       {savingEmail ? "送信中..." : "確認メールを送る"}
                     </button>
@@ -362,7 +362,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
                     <button
                       onClick={handleSavePassword}
                       disabled={savingPassword}
-                      className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-ink-600 transition disabled:opacity-60"
+                      className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-sage-600 transition disabled:opacity-60"
                     >
                       {savingPassword ? "変更中..." : "変更する"}
                     </button>
@@ -396,7 +396,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
                 <button
                   onClick={handleSaveCard}
                   disabled={savingCard}
-                  className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-ink-600 transition disabled:opacity-60"
+                  className="bg-ink-500 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-sage-600 transition disabled:opacity-60"
                 >
                   {savingCard ? "保存中..." : "保存する"}
                 </button>
