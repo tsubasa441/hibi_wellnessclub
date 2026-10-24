@@ -75,6 +75,7 @@ src/
 │   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。size="lg" は /checkin 用の大きなボタン。Client Component）
 │   ├── checkin/page.tsx        # チェックイン（下ナビ中央。本日開催の予約を大きなボタンでチェックイン。無ければ次の予約を案内）
 │   ├── mypage/page.tsx         # マイページ（プロフィール・ショートカット・アカウント設定。法定ページへのリンクは最下部のフッター）
+│   ├── faq/page.tsx            # よくあるご質問（質問と回答はページ内の定数。details/summary で開閉。認証不要）
 │   ├── support/page.tsx        # お問い合わせ（運営とのチャット。開いた時点で運営からの返信を既読にする）
 │   ├── auth/
 │   │   ├── confirm/route.ts         # 再設定メールのリンク先。GET は検証せず /auth/verify へリダイレクト（リンクの先読みでトークンが消費されないように）。POST（確認ページのボタン）で token_hash を verifyOtp して /auth/reset-password へ 303
