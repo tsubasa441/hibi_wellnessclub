@@ -13,8 +13,8 @@ function sanitizeNext(next: string | null | undefined): string {
   return isSameSitePath ? next : DEFAULT_NEXT;
 }
 
-// パスワード再設定メールのリンク先。メールテンプレートの
-// `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` から遷移する。
+// パスワード再設定・メールアドレス変更のメールのリンク先。メールテンプレートの
+// `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`（type=email_change）から遷移する。
 // GET では検証しない。メールクライアントやセキュリティスキャナがリンクを先読みすると、
 // 1回限りの token_hash が消費されて本人のクリックが「リンクが無効です」になるため、
 // 確認ページ（/auth/verify）へ渡すだけにする。
@@ -52,6 +52,25 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createClient();
+
+  // メールアドレス変更の確認メール（テンプレート「Change Email Address」）からのリンク。
+  // Secure email change では新旧両方のアドレスに確認メールが届き、1通目の確認ではセッションが返らず、
+  // 2通目の確認でセッションが返って変更が確定する。結果はログイン不要の /auth/email-change で伝える
+  if (type === "email_change") {
+    const { data, error } = await supabase.auth.verifyOtp({ type: "email_change", token_hash: tokenHash });
+    const result = (status: "done" | "pending" | "invalid") =>
+      NextResponse.redirect(new URL(`/auth/email-change?status=${status}`, request.url), 303);
+    if (error) {
+      Sentry.captureMessage("Email change link verification failed", {
+        level: "warning",
+        tags: { area: "auth_email_change" },
+        extra: { supabaseErrorCode: error.code, supabaseErrorStatus: error.status, supabaseErrorName: error.name, supabaseErrorText: error.message },
+      });
+      return result("invalid");
+    }
+    return result(data.session ? "done" : "pending");
+  }
+
   const { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
   if (!error) return NextResponse.redirect(destination, 303);
 

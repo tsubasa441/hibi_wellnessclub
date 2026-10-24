@@ -3,7 +3,7 @@ import AuthShell from "@/components/AuthShell";
 import { headingClass, bodyTextClass } from "@/lib/authStyles";
 import VerifyForm from "./VerifyForm";
 
-// パスワード再設定メールのリンクの遷移先。ここでは token_hash を検証しない（メールクライアントや
+// パスワード再設定・メールアドレス変更のメールのリンクの遷移先。ここでは token_hash を検証しない（メールクライアントや
 // セキュリティスキャナのリンク先読みで、1回限りのトークンが消費されるのを防ぐため）。
 // ボタンを押すと POST /auth/confirm が検証し、リカバリーセッションを確立する。
 export default async function VerifyPage({
@@ -17,13 +17,17 @@ export default async function VerifyPage({
     redirect("/auth/reset-password?error=invalid_link");
   }
 
+  const isEmailChange = type === "email_change";
+
   return (
     <AuthShell>
       <div className="space-y-6">
         <div className="space-y-3">
-          <p className={headingClass}>パスワードの再設定</p>
+          <p className={headingClass}>{isEmailChange ? "メールアドレスの変更" : "パスワードの再設定"}</p>
           <p className={bodyTextClass}>
-            下のボタンを押して、新しいパスワードの設定に進んでください。
+            {isEmailChange
+              ? "下のボタンを押して、メールアドレスの変更を確定してください。"
+              : "下のボタンを押して、新しいパスワードの設定に進んでください。"}
           </p>
         </div>
 

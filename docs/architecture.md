@@ -81,6 +81,7 @@ src/
 │   │   ├── confirm/route.ts         # 再設定メールのリンク先。GET は検証せず /auth/verify へリダイレクト（リンクの先読みでトークンが消費されないように）。POST（確認ページのボタン）で token_hash を verifyOtp して /auth/reset-password へ 303
 │   │   ├── verify/page.tsx          # 再設定の確認ページ（「パスワードを再設定する」ボタンのみ。ボタンで POST /auth/confirm）
 │   │   ├── verify/VerifyForm.tsx    # 確認ページのフォーム（送信中はボタンを無効化して二重押しを防ぐ。Client Component）
+│   │   ├── email-change/page.tsx    # メールアドレス変更の確認リンクを押したあとの結果（完了／もう1通の確認待ち／無効。ログイン不要。type=email_change のときは confirm/route.ts の POST がここへ 303）
 │   │   └── reset-password/page.tsx  # パスワード再設定（confirm 経由でリカバリーセッション確立後に表示）
 │   ├── legal/
 │   │   ├── tokushoho/page.tsx   # 特定商取引法に基づく表記（認証不要・静的コンテンツ）
@@ -107,6 +108,7 @@ src/
 │   ├── global-error.tsx         # ルートのエラーバウンダリ（Sentryへ送信）
 │   └── api/
 │       ├── account/delete/route.ts        # アカウント削除（個人情報の匿名化・auth.users無効化）
+│       ├── account/email/route.ts         # メールアドレス変更の申し込み（現在のパスワードを確認→PKCEを使わないクライアントでupdateUser。確定は確認メールのリンク）
 │       ├── auth/forgot-password/route.ts  # パスワード再設定メール送信（未認証・IPアドレスでレート制限。PKCEを使わないservice_roleクライアントでresetPasswordForEmail()を呼び、/auth/confirmのverifyOtpと互換性のあるtoken_hashを発行させる）
 │       ├── bookings/[id]/cancel/route.ts   # 予約キャンセル・返金処理
 │       ├── bookings/[id]/checkin/route.ts  # イベントチェックイン（時間ゲート・service_role更新）

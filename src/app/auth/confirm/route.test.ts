@@ -141,3 +141,27 @@ describe("POST /auth/confirm（確認ページのボタンで検証する）", (
     expect(res.dest).toBe("/auth/reset-password");
   });
 });
+
+describe("POST /auth/confirm（メールアドレス変更の確認リンク）", () => {
+  it("両方の確認が済んでセッションが返れば、変更完了の画面へ", async () => {
+    mocks.verifyOtp.mockResolvedValue({ data: { session: { access_token: "t" }, user: {} }, error: null });
+    const { status, dest } = await runPost({ token_hash: "abc", type: "email_change" });
+    expect(status).toBe(303);
+    expect(dest).toBe("/auth/email-change?status=done");
+    expect(mocks.verifyOtp).toHaveBeenCalledWith({ type: "email_change", token_hash: "abc" });
+  });
+
+  it("1通目の確認（セッションなし）は、もう1通の確認を促す画面へ", async () => {
+    mocks.verifyOtp.mockResolvedValue({ data: { session: null, user: null }, error: null });
+    const { dest } = await runPost({ token_hash: "abc", type: "email_change" });
+    expect(dest).toBe("/auth/email-change?status=pending");
+  });
+
+  it("検証に失敗したら、ログイン中でも無効の画面へ（next には進めない）", async () => {
+    mocks.verifyOtp.mockResolvedValue({ data: { session: null, user: null }, error: { code: "otp_expired", status: 403, name: "AuthApiError", message: "expired" } });
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    const { dest } = await runPost({ token_hash: "abc", type: "email_change", next: "/home" });
+    expect(dest).toBe("/auth/email-change?status=invalid");
+    expect(mocks.captureMessage).toHaveBeenCalledWith("Email change link verification failed", expect.objectContaining({ tags: { area: "auth_email_change" } }));
+  });
+});

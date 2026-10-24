@@ -33,6 +33,12 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordDone, setPasswordDone] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailRequested, setEmailRequested] = useState(false);
   const [currentCard, setCurrentCard] = useState<SavedCard>(savedCard);
   const [editingCard, setEditingCard] = useState(false);
   const [savingCard, setSavingCard] = useState(false);
@@ -106,6 +112,40 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
     setNewPassword("");
     setConfirmPassword("");
     setPasswordDone(true);
+  }
+
+  function resetEmailForm() {
+    setEditingEmail(false);
+    setNewEmail("");
+    setEmailPassword("");
+    setEmailError(null);
+    setEmailRequested(false);
+  }
+
+  // 申し込みのみ。切り替わるのは新旧両方のアドレスに届く確認メールのリンクが押されたとき
+  async function handleRequestEmailChange() {
+    setEmailError(null);
+    if (!newEmail.trim() || !emailPassword) {
+      setEmailError("未入力項目があります");
+      return;
+    }
+
+    setSavingEmail(true);
+    const res = await fetch("/api/account/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: newEmail, currentPassword: emailPassword }),
+    });
+    const json = await res.json();
+    setSavingEmail(false);
+
+    if (!res.ok) {
+      setEmailError(json.error ?? "メールアドレスの変更を受け付けられませんでした");
+      return;
+    }
+
+    setEmailPassword("");
+    setEmailRequested(true);
   }
 
   function resetCardForm() {
@@ -238,6 +278,57 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
             </div>
           ) : (
             <MenuRow label="名前を変更する" sublabel={currentNickname} onClick={() => setEditingNickname(true)} />
+          )}
+
+          {/* メールアドレス変更 */}
+          {editingEmail ? (
+            <div className="px-5 py-4 border-b border-base-200">
+              <p className="font-outfit text-xs text-ink-300 mb-2">メールアドレスを変更する</p>
+              {emailRequested ? (
+                <div className="space-y-3">
+                  <p className="font-dm text-xs text-ink-500 leading-relaxed">
+                    確認メールをお送りしました。今のメールアドレスと新しいメールアドレスの両方に届いたメールのリンクを押すと、変更が完了します。それまでは、今のメールアドレスでログインしてください。
+                  </p>
+                  <button onClick={resetEmailForm} className="font-outfit text-xs text-ink-300 hover:text-ink-500 transition">
+                    閉じる
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <p className={labelClass}>新しいメールアドレス</p>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      autoComplete="email"
+                      maxLength={254}
+                      className={inputClass}
+                      placeholder="example@example.com"
+                    />
+                  </div>
+                  <div>
+                    <p className={labelClass}>現在のパスワード</p>
+                    <PasswordInput value={emailPassword} onChange={(e) => setEmailPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+                  </div>
+                  {emailError && <p className="font-dm text-xs text-red-500">{emailError}</p>}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleRequestEmailChange}
+                      disabled={savingEmail}
+                      className="bg-sage-600 text-white font-outfit text-xs font-medium px-4 py-2 rounded-sm hover:bg-sage-500 transition disabled:opacity-60"
+                    >
+                      {savingEmail ? "送信中..." : "確認メールを送る"}
+                    </button>
+                    <button onClick={resetEmailForm} className="font-outfit text-xs text-ink-300 hover:text-ink-500 transition px-4 py-2">
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <MenuRow label="メールアドレスを変更する" sublabel={email ?? undefined} onClick={() => setEditingEmail(true)} />
           )}
 
           {/* パスワード変更 */}

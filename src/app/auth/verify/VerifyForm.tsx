@@ -42,7 +42,7 @@ export default function VerifyForm({
         disabled={submitting}
         className={primaryButtonClass}
       >
-        {submitting ? "確認しています..." : "パスワードを再設定する"}
+        {submitting ? "確認しています..." : type === "email_change" ? "メールアドレスの変更を確定する" : "パスワードを再設定する"}
       </button>
     </form>
   );

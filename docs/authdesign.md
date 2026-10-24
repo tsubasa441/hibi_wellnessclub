@@ -88,6 +88,30 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 6. 同ページ内に再設定完了画面を表示し、「ログイン画面へ」ボタンからリカバリーセッションを signOut() した上で /login へ遷移
 ```
 
+### メールアドレス変更（マイページ `/mypage` の「メールアドレスを変更する」。2026-10-24 追加）
+
+```
+1. ユーザーが新しいメールアドレスと現在のパスワードを入力し、POST /api/account/email を呼ぶ
+2. サーバー側で:
+   - レート制限（5回/600秒。パスワードの総当たり対策）
+   - 形式チェック・今のアドレスと同じなら拒否
+   - 現在のパスワードを signInWithPassword で確認（本人以外がログイン中の端末を操作しただけで変更できないように）
+   - 同じクライアントの updateUser({ email }) で Supabase に変更を申し込み、確認用のセッションは signOut({ scope: "local" }) で破棄
+     （@supabase/supabase-js の createClient、flowType 既定 "implicit"。@supabase/ssr のクライアントから申し込むと
+     token_hash が PKCE 用の値になり /auth/confirm で検証できない。BUG-10 と同じ理由）
+   - 既に他のアカウントが使っているアドレスは Supabase が拒否する（email_exists）→「このメールアドレスは使用できません」
+3. Supabase の Secure email change（オン）により、今のアドレスと新しいアドレスの両方に確認メールが届く
+   - メールテンプレート（Supabase Dashboard > Authentication > Email Templates > Change Email Address）は
+     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change` を指す
+4. リンク → GET /auth/confirm → /auth/verify（「メールアドレスの変更を確定する」ボタン）→ POST /auth/confirm が
+   verifyOtp({ type: "email_change" }) を実行し、/auth/email-change（ログイン不要）へ 303
+   - 1通目の確認ではセッションが返らない → status=pending（「もう1通のメールも確認してください」）
+   - 2通目の確認でセッションが返り、メールアドレスが切り替わる → status=done。この時点から新しいアドレスでログインする
+   - 検証失敗 → status=invalid（Sentry に area=auth_email_change で記録。メールアドレス・トークンは含めない）
+```
+
+他人のアカウントの乗っ取り・悪用への対策：既に使われているアドレスには変更できない（Supabase の一意制約）。他人のまだ登録されていないアドレスに変えようとしても、その受信箱のリンクを押さない限り切り替わらない。パスワードを盗まれても、今のアドレスの確認メールのリンクを押さない限り切り替わらない。メールアドレスは `auth.users` のみに保存しており、管理画面の参加者一覧・CSV も `auth.users` から読むため、切り替え後は自動で新しいアドレスになる。
+
 ---
 
 ### アカウント削除（マイページ `/mypage` の「退会」）
