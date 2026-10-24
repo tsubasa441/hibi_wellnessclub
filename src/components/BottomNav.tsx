@@ -84,7 +84,7 @@ function NavLink({ item, pathname, dot = false }: { item: NavItem; pathname: str
   return (
     <Link
       href={item.href}
-      className={`flex flex-col items-center gap-1 py-2 transition ${active ? "text-sage-600" : "text-ink-300 hover:text-ink-500"}`}
+      className={`flex flex-col items-center gap-1 py-2 transition ${active ? "text-sage-600" : "text-ink-300 hover:text-sage-600"}`}
     >
       <span className="relative">
         {item.icon(active)}
@@ -130,11 +130,11 @@ export default function BottomNav() {
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
 
-        {/* チェックイン：画面中央の大きな丸ボタン */}
+        {/* チェックイン：画面中央の大きな丸ボタン。ホバーは他のタブと同じく、選択中と同じ sage-600 に変わる（選択中はホバーで変えない） */}
         <Link href="/checkin" className="group flex flex-col items-center gap-1 -mt-6 focus-visible:outline-none">
           <span
             className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_4px_12px_rgba(44,53,49,0.25)] ring-4 ring-nav-bg transition-colors duration-200 group-focus-visible:ring-sage-300 ${
-              checkinActive ? "bg-sage-600 group-hover:bg-sage-500" : "bg-ink-500 group-hover:bg-sage-600"
+              checkinActive ? "bg-sage-600" : "bg-ink-500 group-hover:bg-sage-600"
             }`}
           >
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
