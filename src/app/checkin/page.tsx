@@ -122,7 +122,7 @@ export default async function CheckinPage() {
             ) : (
               <Link
                 href="/events"
-                className="inline-block mt-4 font-outfit text-sm font-medium text-white bg-sage-500 px-6 py-2.5 rounded-md hover:bg-sage-600 transition"
+                className="inline-block mt-4 font-outfit text-sm font-medium text-white bg-ink-500 px-6 py-2.5 rounded-md hover:bg-ink-600 transition"
               >
                 イベントを探す
               </Link>
