@@ -71,8 +71,7 @@ export default async function CheckinPage() {
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="font-outfit text-lg font-semibold text-ink-700">チェックイン</h1>
-        <p className="font-dm text-xs text-ink-300 mt-1 mb-5">
+        <p className="font-dm text-xs text-ink-300 mb-5">
           会場に着いたら、イベントの開始時刻から終了時刻までの間にチェックインしてください。
         </p>
 

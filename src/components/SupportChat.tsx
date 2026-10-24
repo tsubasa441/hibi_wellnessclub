@@ -112,7 +112,7 @@ export default function SupportChat({ messages, postUrl, viewer, emptyText, plac
           <button
             onClick={handleSend}
             disabled={sending || !text.trim()}
-            className="bg-sage-600 text-white font-outfit text-sm font-medium px-6 py-2 rounded-full hover:bg-sage-500 transition disabled:opacity-50"
+            className="bg-sage-600 text-white font-outfit text-sm font-medium px-6 py-2 rounded-md hover:bg-sage-500 transition disabled:opacity-50"
           >
             {sending ? "送信中..." : "送信する"}
           </button>

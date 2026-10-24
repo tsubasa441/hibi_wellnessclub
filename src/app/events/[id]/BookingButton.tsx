@@ -96,7 +96,7 @@ export default function BookingButton({
         <button
           onClick={handleCancel}
           disabled={cancelLoading}
-          className="w-full border border-ink-300 text-ink-500 font-noto font-medium py-3 rounded-full hover:bg-base-100 transition disabled:opacity-60"
+          className="w-full border border-ink-300 text-ink-500 font-noto font-medium py-3 rounded-md hover:bg-base-100 transition disabled:opacity-60"
         >
           {cancelLoading ? "キャンセル中..." : "予約をキャンセルする"}
         </button>
@@ -106,7 +106,7 @@ export default function BookingButton({
 
   if (isSoldOut) {
     return (
-      <button disabled className="w-full bg-base-200 text-ink-300 font-noto font-medium py-3 rounded-full cursor-not-allowed">
+      <button disabled className="w-full bg-base-200 text-ink-300 font-noto font-medium py-3 rounded-md cursor-not-allowed">
         満席
       </button>
     );
@@ -160,14 +160,14 @@ export default function BookingButton({
         <button
           onClick={handleFreeBooking}
           disabled={loading}
-          className="w-full bg-sage-500 text-white font-noto font-medium py-3 rounded-full hover:bg-sage-600 transition disabled:opacity-60"
+          className="w-full bg-sage-500 text-white font-noto font-medium py-3 rounded-md hover:bg-sage-600 transition disabled:opacity-60"
         >
           {loading ? "予約中..." : "予約する"}
         </button>
       ) : (
         <button
           onClick={handleGoToCheckout}
-          className="w-full text-center bg-sage-500 text-white font-noto font-medium py-3 rounded-full hover:bg-sage-600 transition"
+          className="w-full text-center bg-sage-500 text-white font-noto font-medium py-3 rounded-md hover:bg-sage-600 transition"
         >
           予約する
         </button>
