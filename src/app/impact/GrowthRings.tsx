@@ -16,7 +16,7 @@ export default function GrowthRings({ level, progress }: { level: number; progre
   const nextRing = rings.find((ring) => ring.level === level + 1);
 
   return (
-    <div className="relative w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] shrink-0">
+    <div className="relative w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] shrink-0">
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full" role="img" aria-label={`全${RANKS.length}段階のうち${level}段階目`}>
         {rings.map((ring) => {
           const reached = ring.level <= level;

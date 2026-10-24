@@ -159,10 +159,10 @@ export default async function ImpactPage() {
       <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
 
         {/* 年輪：ランクと累計参加 */}
-        <section aria-label="あなたの年輪" className="bg-sage-600 text-white rounded-3xl px-5 py-6 sm:px-8 sm:py-7 overflow-hidden animate-fade-up animate-delay-100">
-          <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+        <section aria-label="あなたの年輪" className="bg-sage-600 text-white rounded-3xl px-5 py-5 sm:px-8 sm:py-6 overflow-hidden animate-fade-up animate-delay-100">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
             <GrowthRings level={currentRank.level} progress={rankProgress} />
-            <div className="w-full flex flex-col gap-3 text-center sm:text-left">
+            <div className="w-full flex flex-col gap-2.5 text-center sm:text-left">
               <div>
                 <p className="font-outfit text-xs text-white/80">いまのランク</p>
                 <p className="font-outfit text-2xl font-semibold leading-tight">
@@ -171,7 +171,7 @@ export default async function ImpactPage() {
                 </p>
               </div>
               <div className="flex items-end justify-center sm:justify-start gap-2">
-                <span className="font-bebas text-7xl leading-[0.8]">{totalCount}</span>
+                <span className="font-bebas text-6xl leading-[0.8]">{totalCount}</span>
                 <span className="font-outfit text-sm pb-1">回、体を動かしました</span>
               </div>
               <p className="font-dm text-sm text-white">
