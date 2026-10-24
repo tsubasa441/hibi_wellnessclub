@@ -12,16 +12,17 @@ const LINKS: { label: string; href: string }[] = [
 // 親の main を flex-col にして mt-auto で下端に寄せ、固定の下ナビに隠れないよう下に余白を取る（2026-10-24、依頼者の指定）
 export default function AppFooter() {
   return (
-    <footer className="mt-auto w-full bg-base-200/60 pt-8 pb-28">
+    // 色はトップ・法定ページの Footer と同じ（bg-ink-700・白文字・白いロゴ。2026-10-24、依頼者の指定）
+    <footer className="mt-auto w-full bg-ink-700 text-white pt-8 pb-28">
       <div className="max-w-2xl mx-auto px-6 flex items-center justify-center gap-10">
         <Link href="/home" className="shrink-0 flex flex-col items-center">
-          <Image src="/images/hibi-logo.png" alt="Hibi" width={540} height={236} className="h-8 w-auto" />
-          <span className="font-dm text-xs text-ink-500 tracking-[0.1em] mt-1">wellness club</span>
+          <Image src="/images/hibi-logo-white.png" alt="Hibi" width={540} height={236} className="h-8 w-auto" />
+          <span className="font-dm text-xs text-white/80 tracking-[0.1em] mt-1">wellness club</span>
         </Link>
         <ul className="space-y-2.5">
           {LINKS.map((l) => (
             <li key={l.href}>
-              <Link href={l.href} className="font-dm text-xs text-ink-500 hover:text-ink-700 transition">
+              <Link href={l.href} className="font-dm text-xs text-white/80 hover:text-white transition">
                 {l.label}
               </Link>
             </li>
