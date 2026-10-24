@@ -91,8 +91,7 @@ export default async function HomePage() {
   const showRankUpModal = (profile.rank_level ?? 1) > rankNotifiedLevel && rankNotifiedLevel > 0;
 
   return (
-    // 背景はトップと同じ nav-bg（ログイン前の雰囲気に揃える。依頼者の指定、2026-10-21）
-    <main className="relative min-h-screen bg-nav-bg flex flex-col">
+    <main className="relative min-h-screen app-bg flex flex-col">
       {showRankUpModal && <RankUpModal rank={currentRank} />}
       <RefreshAt at={nextEndMs ? new Date(nextEndMs).toISOString() : null} />
       <Header />

@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import RankIcon from "@/components/RankIcon";
-import RankGuideModal from "@/components/RankGuideModal";
+import RankList from "@/components/RankList";
 import type { Rank } from "@/lib/ranks";
 
 type Props = {
@@ -26,8 +29,12 @@ export default function ProfileCard({
   countToNext,
   className = "",
 }: Props) {
+  // 「ランクについて」はモーダルではなく、カードの下にランク一覧を開く（2026-10-24、依頼者の指定）
+  const [rankGuideOpen, setRankGuideOpen] = useState(false);
+
   return (
-    <div className={`bg-white text-ink-700 -mx-4 sm:mx-0 p-4 sm:px-5 ${className}`}>
+    <div className={className}>
+    <div className="bg-white text-ink-700 -mx-4 sm:mx-0 p-4 sm:px-5">
       {variant === "home" ? (
         <>
           <div className="flex items-center justify-between gap-3">
@@ -71,8 +78,21 @@ export default function ProfileCard({
         ) : (
           <p className="font-dm text-xs text-ink-300">最高ランク到達</p>
         )}
-        <RankGuideModal currentLevel={currentRank.level} />
+        <button
+          onClick={() => setRankGuideOpen((v) => !v)}
+          aria-expanded={rankGuideOpen}
+          aria-controls="rank-guide-list"
+          className="font-dm text-xs text-sage-600 underline underline-offset-2 hover:text-sage-500 transition"
+        >
+          {rankGuideOpen ? "ランク一覧を閉じる" : "ランクについて"}
+        </button>
       </div>
+    </div>
+    {rankGuideOpen && (
+      <section id="rank-guide-list" aria-label="ランク一覧" className="bg-white -mx-4 sm:mx-0 mt-2">
+        <RankList currentLevel={currentRank.level} variant="rows" />
+      </section>
+    )}
     </div>
   );
 }
