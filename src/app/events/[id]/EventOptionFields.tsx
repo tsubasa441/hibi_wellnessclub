@@ -32,7 +32,7 @@ function CheckboxDropdown({
   const summary = selected.length > 0 ? selected.join("、") : "選択してください";
 
   return (
-    <div className="bg-white border border-base-200 rounded-lg">
+    <div className="bg-white border border-base-200">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -108,7 +108,7 @@ export default function EventOptionFields({
               <select
                 value={selected[0] ?? ""}
                 onChange={(e) => setOption(option.id, e.target.value ? [e.target.value] : [])}
-                className="w-full bg-white border border-base-200 rounded-lg px-3 py-2.5 font-noto text-sm text-ink-700"
+                className="w-full bg-white border border-base-200 px-3 py-2.5 font-noto text-sm text-ink-700"
               >
                 <option value="">選択してください</option>
                 {option.choices.map((choice) => (

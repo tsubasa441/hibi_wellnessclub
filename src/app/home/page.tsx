@@ -146,7 +146,7 @@ export default async function HomePage() {
           {nextEvent ? (
             <EventCard event={nextEvent} href={`/events/${nextEvent.id}`} />
           ) : (
-            <div className="bg-white border border-base-200 rounded-2xl p-6 text-center">
+            <div className="bg-white -mx-4 sm:mx-0 p-6 text-center">
               <p className="font-dm text-sm text-ink-300">現在開催予定のイベントはありません</p>
             </div>
           )}

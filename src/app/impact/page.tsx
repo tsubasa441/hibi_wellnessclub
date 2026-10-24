@@ -159,10 +159,11 @@ export default async function ImpactPage() {
       <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
 
         {/* 年輪：ランクと累計参加 */}
-        <section aria-label="あなたの年輪" className="bg-sage-600 text-white rounded-3xl px-5 py-5 sm:px-8 sm:py-6 overflow-hidden animate-fade-up animate-delay-100">
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
+        <section aria-label="あなたの年輪" className="bg-sage-600 text-white -mx-4 sm:mx-0 px-4 py-4 sm:px-8 sm:py-6 overflow-hidden animate-fade-up animate-delay-100">
+          {/* スマホも横並びにして高さを詰める（2026-10-24、高いとの指摘で縦並びから変更） */}
+          <div className="flex items-center gap-4 sm:gap-8">
             <GrowthRings level={currentRank.level} progress={rankProgress} />
-            <div className="w-full flex flex-col gap-2.5 text-center sm:text-left">
+            <div className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-2.5 text-left">
               <div>
                 <p className="font-outfit text-xs text-white/80">いまのランク</p>
                 <p className="font-outfit text-2xl font-semibold leading-tight">
@@ -170,8 +171,8 @@ export default async function ImpactPage() {
                   <span className="text-base font-normal text-white/80 ml-1.5">{currentRank.nameJa}</span>
                 </p>
               </div>
-              <div className="flex items-end justify-center sm:justify-start gap-2">
-                <span className="font-bebas text-6xl leading-[0.8]">{totalCount}</span>
+              <div className="flex items-end gap-2">
+                <span className="font-bebas text-5xl sm:text-6xl leading-[0.8]">{totalCount}</span>
                 <span className="font-outfit text-sm pb-1">回、体を動かしました</span>
               </div>
               <p className="font-dm text-sm text-white">
@@ -179,7 +180,7 @@ export default async function ImpactPage() {
                   ? `あと${countToNext}回で ${nextRank.nameEn}（${nextRank.nameJa}）`
                   : "最高ランクに到達しています"}
               </p>
-              <div className="flex items-center justify-center sm:justify-start gap-4 pt-1">
+              <div className="flex items-center gap-4 pt-1">
                 <span className="font-outfit text-sm bg-white/15 rounded-full px-3 py-1">
                   <span className="font-semibold">{profile?.points ?? 0}</span> pt
                 </span>
@@ -193,7 +194,7 @@ export default async function ImpactPage() {
         </section>
 
         {/* 今月のバッジ：スタンプカード */}
-        <section aria-label={`${month}月のバッジ`} className="bg-white border border-base-200 rounded-3xl px-5 py-5 sm:px-7 animate-fade-up animate-delay-200">
+        <section aria-label={`${month}月のバッジ`} className="bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-7 animate-fade-up animate-delay-200">
           <h2 className="font-outfit font-semibold text-base text-ink-700 mb-4">{month}月のバッジ</h2>
 
           <ul className="grid grid-cols-5 gap-x-2 gap-y-4">
@@ -221,7 +222,7 @@ export default async function ImpactPage() {
             <ol className="grid grid-cols-9 gap-1" aria-label={`今月の獲得バッジ ${earnedBadgeCount}個`}>
               {bonusSlots.map((slot, i) => (
                 <li key={i} className="flex flex-col items-center gap-1">
-                  <span className={`h-2.5 w-full rounded-full ${slot.filled ? "bg-sage-600" : "bg-base-200"}`} />
+                  <span className={`h-2.5 w-full ${slot.filled ? "bg-sage-600" : "bg-base-200"}`} />
                   <span className={`font-outfit text-[10px] h-3 ${slot.tier ? (slot.filled ? "text-sage-600 font-semibold" : "text-ink-400") : "text-transparent"}`}>
                     {slot.tier ? `${slot.tier.points}` : "-"}
                   </span>
@@ -233,7 +234,7 @@ export default async function ImpactPage() {
         </section>
 
         {/* あなたから広がった幸せ・招待 */}
-        <section aria-label="あなたから広がった幸せ" className="bg-white border border-base-200 rounded-3xl px-5 py-5 sm:px-7 animate-fade-up">
+        <section aria-label="あなたから広がった幸せ" className="bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-7 animate-fade-up">
           <div className="flex items-center gap-4">
             <ReachRipple count={referralReach} />
             <div className="min-w-0">
@@ -263,7 +264,7 @@ export default async function ImpactPage() {
                 </li>
               ))}
             </ol>
-            <div className="mt-4 flex items-center justify-between gap-3 bg-base-100 rounded-2xl px-4 py-3">
+            <div className="mt-4 flex items-center justify-between gap-3 bg-base-100 px-4 py-3">
               <span className="font-dm text-xs text-ink-400">あなたの紹介コード</span>
               <span className="font-outfit font-semibold text-lg text-ink-700 tracking-widest">{profile?.referral_code}</span>
             </div>

@@ -201,7 +201,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
     <div className="space-y-5">
       <section>
         <h2 className="font-outfit text-sm font-semibold text-ink-500 tracking-wide mb-2 px-1">アカウント設定</h2>
-        <div className="bg-white border border-base-200 rounded-2xl overflow-hidden">
+        <div className="bg-white -mx-4 sm:mx-0">
           {/* ニックネーム変更 */}
           {editingNickname ? (
             <div className="px-5 py-4 border-b border-base-200">
@@ -329,7 +329,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
         </div>
       </section>
 
-      <section className="bg-white border border-base-200 rounded-2xl overflow-hidden">
+      <section className="bg-white -mx-4 sm:mx-0">
         <MenuRow label={loggingOut ? "ログアウト中..." : "ログアウト"} onClick={handleLogout} disabled={loggingOut} />
         {deleteError && (
           <p className="font-dm text-xs text-red-500 px-5 pt-4">{deleteError}</p>

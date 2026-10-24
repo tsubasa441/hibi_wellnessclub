@@ -27,7 +27,7 @@ export default function ProfileCard({
   className = "",
 }: Props) {
   return (
-    <div className={`bg-white text-ink-700 rounded-[20px] p-4 shadow-[0_1px_4px_rgba(44,53,49,0.08)] ${className}`}>
+    <div className={`bg-white text-ink-700 -mx-4 sm:mx-0 p-4 sm:px-5 ${className}`}>
       {variant === "home" ? (
         <>
           <div className="flex items-center justify-between gap-3">

@@ -107,7 +107,7 @@ export default function FaqPage() {
           {FAQ.map((group) => (
             <section key={group.category}>
               <h2 className="font-zenkaku text-sm text-ink-500 tracking-wide mb-2 px-1">{group.category}</h2>
-              <div className="bg-white border border-base-200 rounded-2xl overflow-hidden divide-y divide-base-200">
+              <div className="bg-white -mx-4 sm:mx-0 divide-y divide-base-200">
                 {group.items.map((item) => (
                   <details key={item.q} className="group">
                     <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none flex items-start justify-between gap-3 px-5 py-4 hover:bg-base-50 transition">

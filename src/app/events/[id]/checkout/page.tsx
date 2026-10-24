@@ -76,7 +76,7 @@ export default async function CheckoutPage({
       <div className="max-w-md mx-auto px-4 py-8">
         <h1 className="font-outfit text-2xl font-semibold text-ink-700 mb-6 animate-fade-up animate-delay-100">予約・お支払い</h1>
 
-        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(44,53,49,0.08)] p-5 mb-6 animate-fade-up animate-delay-200">
+        <div className="bg-white -mx-4 sm:mx-0 p-5 mb-6 animate-fade-up animate-delay-200">
           <p className="font-outfit text-xs text-ink-300 mb-1">予約するイベント</p>
           <p className="font-outfit font-semibold text-lg text-ink-700">{event.title}</p>
           <p className="font-dm text-sm text-ink-300 mt-1">
@@ -108,7 +108,7 @@ export default async function CheckoutPage({
         </div>
 
         {optionSelections.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(44,53,49,0.08)] p-5 mb-6">
+          <div className="bg-white -mx-4 sm:mx-0 p-5 mb-6">
             <p className="font-outfit text-xs text-ink-300 mb-2">選択内容</p>
             {optionSelections.map((s) => (
               <p key={s.option_id} className="font-dm text-sm text-ink-700">
@@ -121,7 +121,7 @@ export default async function CheckoutPage({
           </div>
         )}
 
-        <div className="bg-base-100 border border-sage-200 rounded-xl p-4 mb-6 text-sm text-ink-700">
+        <div className="bg-base-100 border border-sage-200 p-4 mb-6 text-sm text-ink-700">
           <p className="font-outfit font-semibold mb-1">キャンセルポリシー</p>
           <ul className="font-dm space-y-0.5">
             <li>・イベント当日までキャンセル可能です</li>

@@ -105,7 +105,7 @@ export default async function MyPage() {
 
       <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-5">
         {/* プロフィール */}
-        <section className="bg-white border border-base-200 rounded-2xl p-5 flex items-center gap-4">
+        <section className="bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-5 flex items-center gap-4">
           <Image src="/images/default-avatar.svg" alt="" width={52} height={64} unoptimized className="w-[52px] h-16 shrink-0" />
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1 text-sage-600 border border-sage-200 rounded-full px-2.5 py-0.5">
@@ -120,12 +120,13 @@ export default async function MyPage() {
         </section>
 
         {/* ショートカット */}
-        <section className="grid grid-cols-3 gap-3">
+        {/* 1本の白い帯を細い線で3つに区切る（角丸なし。2026-10-24、依頼者の指定） */}
+        <section className="bg-white -mx-4 sm:mx-0 grid grid-cols-3 divide-x divide-base-200">
           {SHORTCUTS.map((s) => (
             <Link
               key={s.href}
               href={s.href}
-              className="relative bg-white border border-base-200 rounded-2xl py-4 flex flex-col items-center gap-2 text-ink-500 hover:border-sage-300 hover:text-ink-700 transition"
+              className="relative py-4 flex flex-col items-center gap-2 text-ink-500 hover:bg-base-50 hover:text-ink-700 transition"
             >
               {s.href === "/support" && (unreadSupport ?? 0) > 0 && (
                 <span

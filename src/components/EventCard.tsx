@@ -35,13 +35,14 @@ function formatDateRange(startStr: string, endStr: string | null) {
 }
 
 // イベント一覧・ホームで共通のイベントカード（日時・イベント名・開催場所、アイコンの下に種別）
+// 角丸・枠線なしの白い帯。スマホはページの左右の余白（px-4）を打ち消して画面の端まで広げる（2026-10-24、依頼者の指定）
 export default function EventCard({ event, href }: { event: EventCardEvent; href: string }) {
   const label = TYPE_LABELS[event.event_type] ?? event.event_type;
 
   return (
     <Link
       href={href}
-      className="block bg-white border border-base-200 rounded-2xl p-5 hover:border-sage-300 transition"
+      className="block bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-5 hover:bg-base-50 transition"
     >
       <div className="flex items-start gap-4">
         <div className="flex flex-col items-center gap-2 shrink-0">

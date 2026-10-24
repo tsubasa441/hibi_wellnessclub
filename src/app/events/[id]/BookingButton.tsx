@@ -76,12 +76,12 @@ export default function BookingButton({
     const answered = (userBooking.option_selections ?? []).filter((s) => s.values.length > 0);
     return (
       <div className="space-y-3">
-        <div className="bg-sage-100 border border-sage-200 rounded-xl p-4 text-center">
+        <div className="bg-sage-100 border border-sage-200 p-4 text-center">
           <p className="font-noto font-semibold text-ink-700">予約済みです</p>
           <p className="font-noto text-sm text-ink-500 mt-1">このイベントへの参加が確定しています。</p>
         </div>
         {answered.length > 0 && (
-          <div className="bg-base-100 rounded-xl p-4">
+          <div className="bg-base-100 p-4">
             <p className="font-noto text-xs text-ink-400 mb-1">選択内容</p>
             {answered.map((s) => (
               <p key={s.option_id} className="font-noto text-sm font-medium text-ink-700">
@@ -91,7 +91,7 @@ export default function BookingButton({
           </div>
         )}
         {cancelError && (
-          <div className="bg-red-50 text-red-600 font-noto text-sm rounded-lg px-4 py-3">{cancelError}</div>
+          <div className="bg-red-50 text-red-600 font-noto text-sm px-4 py-3">{cancelError}</div>
         )}
         <button
           onClick={handleCancel}
@@ -154,7 +154,7 @@ export default function BookingButton({
         <EventOptionFields options={options} value={selections} onChange={setSelections} />
       )}
       {error && (
-        <div className="bg-red-50 text-red-600 font-noto text-sm rounded-lg px-4 py-3">{error}</div>
+        <div className="bg-red-50 text-red-600 font-noto text-sm px-4 py-3">{error}</div>
       )}
       {event.price === 0 ? (
         <button

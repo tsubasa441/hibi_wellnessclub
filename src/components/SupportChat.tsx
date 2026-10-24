@@ -67,7 +67,7 @@ export default function SupportChat({ messages, postUrl, viewer, emptyText, plac
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-white border border-base-200 rounded-2xl p-4 min-h-[40svh] space-y-3">
+      <div className="bg-white border border-base-200 p-4 min-h-[40svh] space-y-3">
         {messages.length === 0 ? (
           <p className="font-dm text-sm text-ink-300 text-center py-10 whitespace-pre-line">{emptyText}</p>
         ) : (
@@ -95,7 +95,7 @@ export default function SupportChat({ messages, postUrl, viewer, emptyText, plac
         <div ref={bottomRef} />
       </div>
 
-      <div className="bg-white border border-base-200 rounded-2xl p-3">
+      <div className="bg-white border border-base-200 p-3">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}

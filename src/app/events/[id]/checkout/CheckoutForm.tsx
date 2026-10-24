@@ -102,10 +102,10 @@ export default function CheckoutForm({
       <div>
         <p className="font-outfit text-sm font-medium text-ink-700 mb-3">お支払い方法を選択</p>
         <div className="space-y-3">
-          <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${method === "square" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
+          <label className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition ${method === "square" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
             <input type="radio" name="method" value="square" checked={method === "square"} onChange={() => setMethod("square")} className="accent-ink-500" />
             <div className="flex items-center gap-3">
-              <div className="w-20 h-14 shrink-0 bg-white rounded-lg border border-base-200 flex items-center justify-center overflow-hidden">
+              <div className="w-20 h-14 shrink-0 bg-white border border-base-200 flex items-center justify-center overflow-hidden">
                 <Image src="/images/square-logo.png" alt="Square" width={72} height={18} />
               </div>
               <div>
@@ -115,10 +115,10 @@ export default function CheckoutForm({
             </div>
           </label>
 
-          <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${method === "paypay" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
+          <label className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition ${method === "paypay" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
             <input type="radio" name="method" value="paypay" checked={method === "paypay"} onChange={() => setMethod("paypay")} className="accent-ink-500" />
             <div className="flex items-center gap-3">
-              <div className="w-20 h-14 shrink-0 bg-white rounded-lg border border-base-200 flex items-center justify-center overflow-hidden">
+              <div className="w-20 h-14 shrink-0 bg-white border border-base-200 flex items-center justify-center overflow-hidden">
                 <Image src="/images/paypay-logo.png" alt="PayPay" width={52} height={52} />
               </div>
               <div>
@@ -131,7 +131,7 @@ export default function CheckoutForm({
       </div>
 
       {event.price > 0 && pointsBalance > 0 && (
-        <div className="bg-white rounded-xl border border-base-200 p-4">
+        <div className="bg-white border border-base-200 p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="font-outfit text-xs font-medium text-ink-700">ポイントを使う</p>
             <p className="font-dm text-xs text-ink-300">保有 {pointsBalance.toLocaleString()}pt</p>
@@ -145,14 +145,14 @@ export default function CheckoutForm({
             value={pointsInput}
             onChange={(e) => setPointsInput(e.target.value)}
             onBlur={() => setPointsInput(String(pointsToUse))}
-            className="w-full rounded-lg border border-base-200 px-3 py-2 font-outfit text-sm text-ink-700"
+            className="w-full border border-base-200 px-3 py-2 font-outfit text-sm text-ink-700"
           />
           <p className="font-dm text-xs text-ink-300 mt-1">最大 {maxPoints.toLocaleString()}pt まで利用できます（1pt = 1円）</p>
         </div>
       )}
 
       {event.price > 0 && (
-        <div className="bg-base-100 rounded-xl p-4 space-y-1">
+        <div className="bg-base-100 p-4 space-y-1">
           <div className="flex justify-between font-dm text-sm text-ink-500">
             <span>参加費</span>
             <span>¥{event.price.toLocaleString()}</span>
@@ -171,7 +171,7 @@ export default function CheckoutForm({
       )}
 
       {method === "square" && discountedAmount > 0 && willUseSavedCard && (
-        <div className="bg-white rounded-xl border border-base-200 p-4 flex items-center justify-between gap-3">
+        <div className="bg-white border border-base-200 p-4 flex items-center justify-between gap-3">
           <div>
             <p className="font-outfit text-xs text-ink-300 mb-1">登録済みのカードで支払う</p>
             <p className="font-outfit text-sm font-medium text-ink-700">
@@ -192,7 +192,7 @@ export default function CheckoutForm({
       )}
 
       {needsCardInput && (
-        <div className="bg-white rounded-xl border border-base-200 p-4">
+        <div className="bg-white border border-base-200 p-4">
           <p className="font-outfit text-xs text-ink-300 mb-1">カード情報</p>
           {process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT !== "production" && (
             <p className="font-dm text-xs text-ink-300 mb-3">
@@ -216,7 +216,7 @@ export default function CheckoutForm({
       )}
 
       {(error || cardError) && (
-        <div className="bg-red-50 text-red-600 font-dm text-sm rounded-lg px-4 py-3">{error ?? cardError}</div>
+        <div className="bg-red-50 text-red-600 font-dm text-sm px-4 py-3">{error ?? cardError}</div>
       )}
 
       <button

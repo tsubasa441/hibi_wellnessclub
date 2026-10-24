@@ -79,7 +79,7 @@ export default async function CheckinPage() {
         {todays.length > 0 ? (
           <div className="space-y-4">
             {todays.map((booking) => (
-              <div key={booking.id} className="bg-white border border-base-200 rounded-2xl p-5">
+              <div key={booking.id} className="bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-5">
                 <Link href={`/events/${booking.event_id}`} className="flex items-start gap-3">
                   <EventTypeIcon type={booking.events.event_type} />
                   <div className="min-w-0">
@@ -105,7 +105,7 @@ export default async function CheckinPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white border border-base-200 rounded-2xl p-8 text-center">
+          <div className="bg-white -mx-4 sm:mx-0 p-8 text-center">
             <p className="font-dm text-sm text-ink-500">本日チェックインできるイベントはありません</p>
             {next ? (
               <div className="mt-5 pt-5 border-t border-base-200">
