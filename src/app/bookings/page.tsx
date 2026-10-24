@@ -77,8 +77,6 @@ export default async function BookingsPage() {
         <div className="mb-6">
           <ReserveTabs active="bookings" />
         </div>
-        <h1 className="font-outfit text-lg font-semibold text-ink-700 mb-5">予約済みイベント</h1>
-
         {bookings.length === 0 ? (
           <div className="bg-white -mx-4 sm:mx-0 p-8 text-center">
             <p className="font-dm text-sm text-ink-300 mb-4">予約中のイベントはありません</p>
