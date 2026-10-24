@@ -45,9 +45,10 @@ export default function EventCard({ event, href }: { event: EventCardEvent; href
       className="block bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-5 hover:bg-base-50 transition"
     >
       <div className="flex items-start gap-4">
-        <div className="flex flex-col items-center gap-2 shrink-0">
+        {/* 種別名の長さ（ヨガ〜トレーニング）で右の文字の位置がずれないよう、左の列は幅を固定する */}
+        <div className="flex flex-col items-center gap-2 shrink-0 w-24">
           <EventTypeIcon type={event.event_type} label={label} />
-          <span className="inline-flex items-center text-xs font-noto font-medium px-3 py-1 rounded-full whitespace-nowrap bg-sage-100 text-ink-700">
+          <span className="inline-flex items-center text-xs font-noto font-medium px-2.5 py-1 rounded-full whitespace-nowrap bg-sage-100 text-ink-700">
             {label}
           </span>
         </div>
