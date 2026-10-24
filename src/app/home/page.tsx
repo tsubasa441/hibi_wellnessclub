@@ -113,7 +113,7 @@ export default async function HomePage() {
         {/* 予約済みイベント */}
         {upcomingBookings.length > 0 && (
           <div className="animate-fade-up animate-delay-200">
-            <h2 className="font-zenkaku text-base font-normal text-ink-700 tracking-wide mb-3">予約済みイベント</h2>
+            <h2 className="inline-block mb-3 rounded-full border border-ink-400 bg-base-200 px-3 py-0.5 font-zenkaku text-xs text-ink-700 tracking-wide">予約済みイベント</h2>
             <div className="space-y-3">
               {shownBookings.map((booking) => (
                 <EventCard key={booking.id} event={booking.events} href={`/events/${booking.event_id}`} />
@@ -141,7 +141,7 @@ export default async function HomePage() {
 
         {/* 次回イベント */}
         <div className="animate-fade-up animate-delay-200">
-          <h2 className="font-zenkaku text-base font-normal text-ink-700 tracking-wide mb-3">次回のイベント</h2>
+          <h2 className="inline-block mb-3 rounded-full border border-ink-400 bg-base-200 px-3 py-0.5 font-zenkaku text-xs text-ink-700 tracking-wide">次回のイベント</h2>
           {nextEvents.length > 0 ? (
             <div className="space-y-3">
               {nextEvents.map((event) => (
