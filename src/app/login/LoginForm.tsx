@@ -27,7 +27,9 @@ const tabClass = (active: boolean) =>
     active ? "bg-sage-600 text-white font-medium" : "text-ink-500 hover:text-ink-700"
   }`;
 
-function LoginFormInner() {
+type Greetings = { signin: string; signup: string };
+
+function LoginFormInner({ greetings }: { greetings: Greetings }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(searchParams.get("ref") ? "signup" : "signin");
@@ -293,7 +295,7 @@ function LoginFormInner() {
 
           {tab === "signin" ? (
             <>
-              <p className={`${headingClass} mb-6`}>Hello!</p>
+              <p className={`${headingClass} mb-6`}>{greetings.signin}</p>
               <form onSubmit={handleSignIn} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Email</p>
@@ -363,7 +365,7 @@ function LoginFormInner() {
             )
           ) : (
             <>
-              <p className={`${headingClass} mb-6`}>Nice to meet you!</p>
+              <p className={`${headingClass} mb-6`}>{greetings.signup}</p>
               <form onSubmit={handleSignUp} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Name</p>
@@ -464,10 +466,10 @@ function LoginFormInner() {
   );
 }
 
-export default function LoginForm() {
+export default function LoginForm({ greetings }: { greetings: Greetings }) {
   return (
     <Suspense>
-      <LoginFormInner />
+      <LoginFormInner greetings={greetings} />
     </Suspense>
   );
 }
