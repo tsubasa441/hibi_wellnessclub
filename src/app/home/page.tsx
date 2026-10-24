@@ -32,7 +32,7 @@ export default async function HomePage() {
   const [profileRes, sessionRes, eventsRes, bookingsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("bookings").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "confirmed").not("checked_in_at", "is", null),
-    supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(1),
+    supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(2),
     supabase
       .from("bookings")
       .select("id, event_id, events(title, start_at, end_at, location, event_type)")
@@ -47,7 +47,7 @@ export default async function HomePage() {
     name_roman: profileRaw.name_roman ? decrypt(profileRaw.name_roman) : profileRaw.name_roman,
   };
   const sessionCount = sessionRes.count ?? 0;
-  const nextEvent = eventsRes.data?.[0] ?? null;
+  const nextEvents = eventsRes.data ?? [];
 
   type BookedEvent = { title: string; start_at: string; end_at: string | null; location: string; event_type: string };
   type BookingRaw = {
@@ -71,8 +71,8 @@ export default async function HomePage() {
     .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
     .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
   const nextEndMs = upcomingBookings.length > 0 ? Math.min(...upcomingBookings.map((b) => eventEndMs(b.events))) : null;
-  // ホームには近い順に3件まで出し、4件目以降は「ほかn件の予約を見る」で開く
-  const HOME_BOOKING_LIMIT = 3;
+  // ホームには近い順に2件まで出し、3件目以降は「ほかn件の予約を見る」で開く（2026-10-24、依頼者の指定で3件から変更）
+  const HOME_BOOKING_LIMIT = 2;
   const shownBookings = upcomingBookings.slice(0, HOME_BOOKING_LIMIT);
   const hiddenBookings = upcomingBookings.slice(HOME_BOOKING_LIMIT);
 
@@ -142,8 +142,12 @@ export default async function HomePage() {
         {/* 次回イベント */}
         <div className="animate-fade-up animate-delay-200">
           <h2 className="font-zenkaku text-base font-normal text-ink-700 tracking-wide mb-3">次回のイベント</h2>
-          {nextEvent ? (
-            <EventCard event={nextEvent} href={`/events/${nextEvent.id}`} />
+          {nextEvents.length > 0 ? (
+            <div className="space-y-3">
+              {nextEvents.map((event) => (
+                <EventCard key={event.id} event={event} href={`/events/${event.id}`} />
+              ))}
+            </div>
           ) : (
             <div className="bg-white -mx-4 sm:mx-0 p-6 text-center">
               <p className="font-dm text-sm text-ink-300">現在開催予定のイベントはありません</p>
