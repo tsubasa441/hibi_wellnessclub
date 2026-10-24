@@ -57,12 +57,6 @@ const SHORTCUTS = [
   },
 ];
 
-const LEGAL_LINKS = [
-  { href: "/legal/terms", label: "利用規約" },
-  { href: "/legal/privacy", label: "プライバシーポリシー" },
-  { href: "/legal/tokushoho", label: "特定商取引法に基づく表記" },
-];
-
 // 下ナビ「マイページ」。プロフィール・お問い合わせ・各種設定（設定は 2026-10-16 にヘッダーの設定ドロワーから移設）
 export default async function MyPage() {
   const supabase = createClient();
@@ -147,26 +141,6 @@ export default async function MyPage() {
 
         <SettingsMenu nickname={nickname} email={user.email} savedCard={savedCard} />
 
-        {/* その他 */}
-        <section>
-          <h2 className="font-outfit text-sm font-semibold text-ink-500 tracking-wide mb-2 px-1">その他</h2>
-          <div className="bg-white border border-base-200 rounded-2xl overflow-hidden">
-            {LEGAL_LINKS.map((l, i) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`flex items-center justify-between px-5 py-4 hover:bg-base-100 transition ${
-                  i < LEGAL_LINKS.length - 1 ? "border-b border-base-200" : ""
-                }`}
-              >
-                <span className="font-outfit text-sm text-ink-700">{l.label}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-300">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </Link>
-            ))}
-          </div>
-        </section>
       </div>
 
       <AppFooter />
