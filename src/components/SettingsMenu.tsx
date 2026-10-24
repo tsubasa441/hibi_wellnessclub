@@ -316,7 +316,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
             </div>
           ) : (
             <MenuRow
-              label="クレジットカード"
+              label="クレジットカードを設定する"
               sublabel={
                 currentCard
                   ? `${currentCard.brand ?? "カード"} •••• ${currentCard.last4}（有効期限 ${String(currentCard.expMonth).padStart(2, "0")}/${String(currentCard.expYear).slice(-2)}）`
