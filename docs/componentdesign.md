@@ -150,7 +150,7 @@
 | カード | 最大幅 `max-w-md`、白・`rounded-[20px]`・ホームの `ProfileCard` と同じ影。フォーム・案内文はこの中 |
 | 見出し | 英語（「Hello!」「Nice to meet you!」「Welcome to Hibi!」）は `font-bebas`（大文字・34px、`headingEnClass`）。日本語（「パスワードの再設定」等）は Bebas に字形が無いため `font-zenkaku` 太字（`headingClass`） |
 | 入力欄 | 囲み枠（`rounded-lg`・`bg-base-50`・フォーカス時 `border-sage-600`。`boxedInputClass`） |
-| ボタン | ピル型（`rounded-full`・`bg-sage-600`・`font-dm`・高さ48px。`primaryButtonClass`）。性別の選択もピル型 |
+| ボタン | 角丸 6px の四角寄り（`rounded-md`・`bg-sage-600`・`font-dm`・高さ48px。`primaryButtonClass`。2026-10-25、依頼者の指定でピル型から変更し、ログイン後の画面の主なボタンと揃えた）。性別の選択とログイン／新規登録のタブはピル型のまま |
 
 クラスは `src/lib/authStyles.ts` に集約。`inputClass`・`labelClass`（下線の入力欄）はマイページの `SettingsMenu` 用として残している。
 
