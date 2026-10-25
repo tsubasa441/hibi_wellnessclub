@@ -129,16 +129,17 @@ export default async function ImpactPage() {
     { conditionType: "monthly_referral_count", value: 5, mark: "5人",  name: "5人招待",  earnedClass: "bg-ink-500" },
   ];
 
-  // ---- 今月獲得したバッジの数とボーナス（3個:300pt / 5個:500pt / 9個:1000pt、最高ティアのみ翌月1日に付与） ----
+  // ---- 今月獲得したバッジの数とボーナス（3個:100pt / 5個:200pt / 8個:300pt / 10個:400pt、最高ティアのみ翌月1日に付与。src/lib/points.ts と合わせる） ----
   const earnedBadgeCount = (userBadges ?? []).filter(
     (ub) => (ub as unknown as UserBadgeRow).period === thisMonth
   ).length;
   const BADGE_BONUS_TIERS = [
-    { count: 3, points: 300 },
-    { count: 5, points: 500 },
-    { count: 9, points: 1000 },
+    { count: 3, points: 100 },
+    { count: 5, points: 200 },
+    { count: 8, points: 300 },
+    { count: 10, points: 400 },
   ];
-  const BONUS_SLOTS = 9;
+  const BONUS_SLOTS = 10;
   const nextBonusTier = BADGE_BONUS_TIERS.find((t) => earnedBadgeCount < t.count) ?? null;
   const achievedBonusTier = [...BADGE_BONUS_TIERS].reverse().find((t) => earnedBadgeCount >= t.count) ?? null;
   const bonusSlots = Array.from({ length: BONUS_SLOTS }, (_, i) => ({
@@ -209,7 +210,7 @@ export default async function ImpactPage() {
             ))}
           </ul>
 
-          {/* バッジボーナス：9マスの目盛り */}
+          {/* バッジボーナス：10マスの目盛り（3・5・8・10個目にボーナス） */}
           <div className="mt-6 pt-5 border-t border-base-200">
             <div className="flex items-baseline justify-between mb-2">
               <p className="font-outfit text-sm font-medium text-ink-700">バッジボーナス</p>
@@ -219,7 +220,7 @@ export default async function ImpactPage() {
                   : `${achievedBonusTier?.points}pt 確定`}
               </p>
             </div>
-            <ol className="grid grid-cols-9 gap-1" aria-label={`今月の獲得バッジ ${earnedBadgeCount}個`}>
+            <ol className="grid grid-cols-10 gap-1" aria-label={`今月の獲得バッジ ${earnedBadgeCount}個`}>
               {bonusSlots.map((slot, i) => (
                 <li key={i} className="flex flex-col items-center gap-1">
                   <span className={`h-2.5 w-full ${slot.filled ? "bg-sage-600" : "bg-base-200"}`} />

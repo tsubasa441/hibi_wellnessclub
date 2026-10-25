@@ -231,12 +231,14 @@ describe("checkAndAwardPendingPoints", () => {
 describe("awardBadgeCountPoints", () => {
   it.each([
     [2, 0],
-    [3, 300],
-    [4, 300],
-    [5, 500],
-    [8, 500],
-    [9, 1000],
-    [12, 1000],
+    [3, 100],
+    [4, 100],
+    [5, 200],
+    [7, 200],
+    [8, 300],
+    [9, 300],
+    [10, 400],
+    [12, 400],
   ])("バッジ%d個の月は%dpt付与する", async (badgeCount, expectedPoints) => {
     const { supabase, from, rpc } = createSupabaseMock();
     from.mockReturnValueOnce(chainable({ count: badgeCount }));

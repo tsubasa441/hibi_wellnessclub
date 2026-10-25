@@ -191,7 +191,7 @@ export async function revokeEventPoints(
 }
 
 // 月末 cron から呼び出す（バッジ獲得数に応じたボーナスポイント）
-// 3個: 300pt / 5個: 500pt / 9個: 1000pt（最高ティアのみ付与）
+// 3〜4個: 100pt / 5〜7個: 200pt / 8〜9個: 300pt / 10個: 400pt（最高ティアのみ付与。2026-10-25 に 300／500／1000pt から変更）
 export async function awardBadgeCountPoints(
   supabase: SupabaseClient,
   userId: string,
@@ -206,9 +206,10 @@ export async function awardBadgeCountPoints(
   const badgeCount = count ?? 0;
 
   let pts = 0;
-  if (badgeCount >= 9) pts = 1000;
-  else if (badgeCount >= 5) pts = 500;
-  else if (badgeCount >= 3) pts = 300;
+  if (badgeCount >= 10) pts = 400;
+  else if (badgeCount >= 8) pts = 300;
+  else if (badgeCount >= 5) pts = 200;
+  else if (badgeCount >= 3) pts = 100;
 
   if (pts === 0) return;
 
