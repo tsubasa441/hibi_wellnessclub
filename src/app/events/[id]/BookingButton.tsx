@@ -160,14 +160,14 @@ export default function BookingButton({
         <button
           onClick={handleFreeBooking}
           disabled={loading}
-          className="w-full bg-ink-500 text-white font-noto font-medium py-3 rounded-md hover:bg-sage-600 transition disabled:opacity-60"
+          className="w-full bg-ink-500 text-white font-noto font-medium py-3 rounded-md hover:bg-base-200 hover:text-ink-700 transition disabled:opacity-60"
         >
           {loading ? "予約中..." : "予約する"}
         </button>
       ) : (
         <button
           onClick={handleGoToCheckout}
-          className="w-full text-center bg-ink-500 text-white font-noto font-medium py-3 rounded-md hover:bg-sage-600 transition"
+          className="w-full text-center bg-ink-500 text-white font-noto font-medium py-3 rounded-md hover:bg-base-200 hover:text-ink-700 transition"
         >
           予約する
         </button>

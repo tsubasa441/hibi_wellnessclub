@@ -384,18 +384,15 @@ function LoginFormInner() {
                     <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} placeholder="太郎" autoComplete="given-name" />
                   </div>
                 </div>
-                <div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className={labelClass}>フリガナ（セイ）</p>
-                      <input type="text" required value={kanaSei} onChange={(e) => setKanaSei(e.target.value)} className={inputClass} placeholder="ヤマダ" />
-                    </div>
-                    <div>
-                      <p className={labelClass}>フリガナ（メイ）</p>
-                      <input type="text" required value={kanaMei} onChange={(e) => setKanaMei(e.target.value)} className={inputClass} placeholder="タロウ" />
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className={labelClass}>フリガナ（セイ）</p>
+                    <input type="text" required value={kanaSei} onChange={(e) => setKanaSei(e.target.value)} className={inputClass} placeholder="ヤマダ" />
                   </div>
-                  <p className="font-dm text-xs text-ink-300 mt-1.5">フリガナ（メイ）が、アプリ内での表示名になります（マイページで変更できます）</p>
+                  <div>
+                    <p className={labelClass}>フリガナ（メイ）</p>
+                    <input type="text" required value={kanaMei} onChange={(e) => setKanaMei(e.target.value)} className={inputClass} placeholder="タロウ" />
+                  </div>
                 </div>
                 <div>
                   <p className={labelClass}>Email</p>
