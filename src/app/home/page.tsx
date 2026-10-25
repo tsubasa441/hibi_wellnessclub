@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
@@ -32,7 +33,7 @@ export default async function HomePage() {
   const [profileRes, sessionRes, eventsRes, bookingsRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("bookings").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "confirmed").not("checked_in_at", "is", null),
-    supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }).limit(2),
+    supabase.from("events").select("*").eq("status", "published").gt("start_at", now).order("start_at", { ascending: true }),
     supabase
       .from("bookings")
       .select("id, event_id, events(title, start_at, end_at, location, event_type)")
@@ -48,6 +49,10 @@ export default async function HomePage() {
   };
   const sessionCount = sessionRes.count ?? 0;
   const nextEvents = eventsRes.data ?? [];
+  // 次回のイベントも予約済みと同じく近い順に2件まで出し、3件以上あれば「ほかn件のイベントを見る」でイベント一覧へ（2026-10-25、依頼者の指定）
+  const HOME_EVENT_LIMIT = 2;
+  const shownEvents = nextEvents.slice(0, HOME_EVENT_LIMIT);
+  const hiddenEvents = nextEvents.slice(HOME_EVENT_LIMIT);
 
   type BookedEvent = { title: string; start_at: string; end_at: string | null; location: string; event_type: string };
   type BookingRaw = {
@@ -71,7 +76,7 @@ export default async function HomePage() {
     .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
     .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
   const nextEndMs = upcomingBookings.length > 0 ? Math.min(...upcomingBookings.map((b) => eventEndMs(b.events))) : null;
-  // ホームには近い順に2件まで出し、3件目以降は「ほかn件の予約を見る」で開く（2026-10-24、依頼者の指定で3件から変更）
+  // ホームには近い順に2件まで出し、3件以上あれば「ほかn件の予約を見る」で予約済みの画面へ（2026-10-24・25、依頼者の指定）
   const HOME_BOOKING_LIMIT = 2;
   const shownBookings = upcomingBookings.slice(0, HOME_BOOKING_LIMIT);
   const hiddenBookings = upcomingBookings.slice(HOME_BOOKING_LIMIT);
@@ -120,21 +125,7 @@ export default async function HomePage() {
               ))}
             </div>
             {hiddenBookings.length > 0 && (
-              // 4件目以降はその場で開いて全件を見られるようにする（JS不要の details/summary）
-              <details className="group mt-3">
-                <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none flex items-center justify-center gap-1.5 min-h-11 rounded-full border border-base-300 bg-white font-outfit text-sm font-medium text-ink-700 hover:border-sage-300 transition">
-                  <span className="group-open:hidden">ほか{hiddenBookings.length}件の予約を見る</span>
-                  <span className="hidden group-open:inline">閉じる</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                </summary>
-                <div className="space-y-3 mt-3">
-                  {hiddenBookings.map((booking) => (
-                    <EventCard key={booking.id} event={booking.events} href={`/events/${booking.event_id}`} />
-                  ))}
-                </div>
-              </details>
+              <ShowMoreLink href="/bookings" label={`ほか${hiddenBookings.length}件の予約を見る`} />
             )}
           </div>
         )}
@@ -143,11 +134,16 @@ export default async function HomePage() {
         <div className="animate-fade-up animate-delay-200">
           <h2 className="mb-3 font-zenkaku text-base font-bold text-ink-700 tracking-wide">次回のイベント</h2>
           {nextEvents.length > 0 ? (
-            <div className="space-y-3">
-              {nextEvents.map((event) => (
-                <EventCard key={event.id} event={event} href={`/events/${event.id}`} />
-              ))}
-            </div>
+            <>
+              <div className="space-y-3">
+                {shownEvents.map((event) => (
+                  <EventCard key={event.id} event={event} href={`/events/${event.id}`} />
+                ))}
+              </div>
+              {hiddenEvents.length > 0 && (
+                <ShowMoreLink href="/events" label={`ほか${hiddenEvents.length}件のイベントを見る`} />
+              )}
+            </>
           ) : (
             <div className="bg-white -mx-4 sm:mx-0 p-6 text-center">
               <p className="font-dm text-sm text-ink-300">現在開催予定のイベントはありません</p>
@@ -160,5 +156,20 @@ export default async function HomePage() {
       <AppFooter />
       <BottomNav />
     </main>
+  );
+}
+
+// 3件目以降は、ホームでは開かずに一覧の画面（予約済み /bookings・イベントを探す /events）で見てもらう（2026-10-25、依頼者の指定）
+function ShowMoreLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="mt-3 flex items-center justify-center gap-1.5 min-h-11 rounded-full border border-base-300 bg-white font-outfit text-sm font-medium text-ink-700 hover:border-sage-300 transition"
+    >
+      {label}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    </Link>
   );
 }
