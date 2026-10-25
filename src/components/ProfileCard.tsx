@@ -36,17 +36,21 @@ export default function ProfileCard({
     <div className={className}>
     <div className="bg-white text-ink-700 -mx-4 sm:mx-0 p-4 sm:px-5">
       {variant === "home" ? (
-        <>
-          <div className="flex items-center justify-between gap-3">
+        // ランクは右側の余白に大きく出す（2026-10-25、依頼者の指定。以前は右上に小さく表示）
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <p className="font-dm text-xs text-ink-300">Member since {memberSince}</p>
-            <div className="flex items-center gap-1 text-sage-600">
-              <RankIcon level={currentRank.level} size={14} />
-              <p className="font-outfit text-sm font-bold leading-tight">{currentRank.nameEn}</p>
-              <p className="font-outfit text-xs text-sage-600/70">（{currentRank.nameJa}）</p>
-            </div>
+            <p className="font-outfit text-xl font-semibold tracking-wide mt-2 truncate">{displayName}</p>
+            <Stats sessionCount={sessionCount} points={points} />
           </div>
-          <p className="font-outfit text-xl font-semibold tracking-wide mt-2 truncate">{displayName}</p>
-        </>
+          <div className="shrink-0 flex flex-col items-center text-sage-600 pr-2">
+            <span className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center">
+              <RankIcon level={currentRank.level} size={36} />
+            </span>
+            <p className="font-outfit text-xl font-bold leading-tight mt-1.5">{currentRank.nameEn}</p>
+            <p className="font-outfit text-xs text-sage-600/70">{currentRank.nameJa}</p>
+          </div>
+        </div>
       ) : (
         <div>
           <p className="font-dm text-xs text-ink-300">現在のランク</p>
@@ -55,20 +59,9 @@ export default function ProfileCard({
             <p className="font-outfit text-lg font-bold leading-tight">{currentRank.nameEn}</p>
             <p className="font-outfit text-xs text-sage-600/70">（{currentRank.nameJa}）</p>
           </div>
+          <Stats sessionCount={sessionCount} points={points} />
         </div>
       )}
-
-      <div className="flex items-center gap-6 mt-3">
-        <div>
-          <p className="font-bebas text-4xl leading-none text-sage-600">{sessionCount}</p>
-          <p className="font-dm text-xs text-ink-300 mt-0.5">累計参加数</p>
-        </div>
-        <div className="w-px h-8 bg-ink-200" />
-        <div>
-          <p className="font-bebas text-4xl leading-none text-sage-600">{points}</p>
-          <p className="font-dm text-xs text-ink-300 mt-0.5">Points</p>
-        </div>
-      </div>
 
       <div className="flex items-center justify-between mt-3">
         {nextRank && countToNext !== null && countToNext > 0 ? (
@@ -93,6 +86,22 @@ export default function ProfileCard({
         <RankList currentLevel={currentRank.level} variant="rows" />
       </section>
     )}
+    </div>
+  );
+}
+
+function Stats({ sessionCount, points }: { sessionCount: number; points: number }) {
+  return (
+    <div className="flex items-center gap-6 mt-3">
+      <div>
+        <p className="font-bebas text-4xl leading-none text-sage-600">{sessionCount}</p>
+        <p className="font-dm text-xs text-ink-300 mt-0.5">累計参加数</p>
+      </div>
+      <div className="w-px h-8 bg-ink-200" />
+      <div>
+        <p className="font-bebas text-4xl leading-none text-sage-600">{points}</p>
+        <p className="font-dm text-xs text-ink-300 mt-0.5">Points</p>
+      </div>
     </div>
   );
 }
