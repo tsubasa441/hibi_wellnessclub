@@ -2,22 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-function eventEnd(startAt: string, endAt: string | null): number {
-  if (endAt) return new Date(endAt).getTime();
-  return new Date(startAt).getTime() + 2 * 60 * 60 * 1000;
-}
+import { CHECKIN_OPENS_BEFORE_MINUTES, getCheckinWindow } from "@/lib/checkinWindow";
 
 export default function CheckInButton({
   bookingId,
   startAt,
-  endAt,
   checkedInAt,
   size = "md",
 }: {
   bookingId: string;
   startAt: string;
-  endAt: string | null;
+  // 受付時間は開始時刻だけで決まる（開始30分前〜開始15分後）。呼び出し側の互換のため残している
+  endAt?: string | null;
   checkedInAt: string | null;
   // "lg" はチェックイン画面（/checkin）用の横幅いっぱいの大きなボタン
   size?: "md" | "lg";
@@ -44,10 +40,9 @@ export default function CheckInButton({
     );
   }
 
-  const start = new Date(startAt).getTime();
-  const end = eventEnd(startAt, endAt);
-  const beforeStart = now < start;
-  const afterEnd = now > end;
+  const { opensAt, closesAt } = getCheckinWindow(startAt);
+  const beforeStart = now < opensAt;
+  const afterEnd = now > closesAt;
   const active = !beforeStart && !afterEnd;
 
   async function handleCheckIn() {
@@ -80,7 +75,7 @@ export default function CheckInButton({
         {loading ? "処理中..." : afterEnd ? "受付終了" : "チェックイン"}
       </button>
       {beforeStart && (
-        <p className="font-dm text-xs text-ink-300">開始時刻になるとチェックインできます</p>
+        <p className="font-dm text-xs text-ink-300">開始{CHECKIN_OPENS_BEFORE_MINUTES}分前からチェックインできます</p>
       )}
     </div>
   );

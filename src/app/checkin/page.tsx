@@ -8,6 +8,7 @@ import EventTypeIcon from "@/components/EventTypeIcon";
 import CheckInButton from "@/app/bookings/CheckInButton";
 import RefreshAt from "@/components/RefreshAt";
 import { getJstParts, getTodayJst } from "@/lib/date";
+import { CHECKIN_CLOSES_AFTER_MINUTES, CHECKIN_OPENS_BEFORE_MINUTES, getCheckinWindow } from "@/lib/checkinWindow";
 import { reconcilePendingPayPayBookings } from "@/lib/paypayReconcile";
 
 type EventInfo = { title: string; start_at: string; end_at: string | null; location: string; event_type: string };
@@ -58,9 +59,9 @@ export default async function CheckinPage() {
     .filter((b): b is Booking => b !== null && eventEndMs(b.events) > nowMs)
     .sort((a, b) => a.events.start_at.localeCompare(b.events.start_at));
 
-  // 日付をまたぐイベント（23時開始など）は、0時を過ぎても終了までは開催中としてチェックインできるようにする
+  // 日付をまたぐイベント（0時台開始・23時開始など）も、チェックインの受付が始まっていれば（開始30分前から）本日の分として出す
   const todays = upcoming.filter(
-    (b) => getTodayJst(new Date(b.events.start_at)) === today || new Date(b.events.start_at).getTime() <= nowMs
+    (b) => getTodayJst(new Date(b.events.start_at)) === today || getCheckinWindow(b.events.start_at).opensAt <= nowMs
   );
   const next = todays.length === 0 ? upcoming[0] ?? null : null;
   const nextEndMs = todays.length > 0 ? Math.min(...todays.map((b) => eventEndMs(b.events))) : null;
@@ -72,7 +73,7 @@ export default async function CheckinPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         <p className="font-dm text-xs text-ink-300 mb-5">
-          会場に着いたら、イベントの開始時刻から終了時刻までの間にチェックインしてください。
+          会場に着いたら、イベントの開始{CHECKIN_OPENS_BEFORE_MINUTES}分前から開始{CHECKIN_CLOSES_AFTER_MINUTES}分後までの間にチェックインしてください。
         </p>
 
         {todays.length > 0 ? (

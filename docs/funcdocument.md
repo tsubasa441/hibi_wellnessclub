@@ -107,7 +107,7 @@
 | points_used | integer | 予約時に充当したポイント数（1pt = 1円）。デフォルト0 |
 | amount_charged | integer | Square / PayPay に実際に請求した金額（円）。ポイント全額充当時は0。価格変動時の返金額算出にはこの値を使う（`events.price` は使わない） |
 | option_selections | jsonb | 予約時の選択項目（`event_options`）の回答スナップショット。形: `[{ "option_id": uuid, "label": text, "values": [text] }]`。既定 `[]`。決済額・返金には無関係 |
-| checked_in_at | timestamptz | チェックイン日時。`null` = 未チェックイン。**チェックインが「参加」の唯一の条件**（参加ポイント・月間ボーナス・クラスバッジ・ランクの累計参加回数はチェックイン済みの予約のみでカウント）。ユーザーがイベント開始時刻〜終了時刻の間に `POST /api/bookings/[id]/checkin` でセットする。書き込みは API が service_role で行う（`bookings` の UPDATE RLS は不可のまま） |
+| checked_in_at | timestamptz | チェックイン日時。`null` = 未チェックイン。**チェックインが「参加」の唯一の条件**（参加ポイント・月間ボーナス・クラスバッジ・ランクの累計参加回数はチェックイン済みの予約のみでカウント）。ユーザーがイベント開始30分前〜開始15分後の間に（2026-10-25 に「開始〜終了」から変更。`src/lib/checkinWindow.ts`） `POST /api/bookings/[id]/checkin` でセットする。書き込みは API が service_role で行う（`bookings` の UPDATE RLS は不可のまま） |
 | created_at | timestamptz | |
 
 ### badges
@@ -193,7 +193,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | DELETE | `/api/payment-methods/square` | 登録済みクレジットカードの削除 | 必要（本人のみ） |
 | POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み。確定はコールバックまたは `/bookings`・`/events/[id]` ロード時の照会で行う。`docs/architecture.md` の決済フロー参照） | 必要 |
 | POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
-| POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始〜終了時刻の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定し、紹介経由の初回参加なら紹介報酬（双方200pt）を付与 | 必要（本人のみ） |
+| POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始30分前〜開始15分後の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定し、紹介経由の初回参加なら紹介報酬（双方200pt）を付与 | 必要（本人のみ） |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
 | POST | `/api/profile/nickname` | ニックネーム変更（マイページから） | 必要（本人のみ） |
 | POST | `/api/support/messages` | お問い合わせの送信（運営へメールで通知。10回/60秒のレート制限） | 必要（本人のみ） |

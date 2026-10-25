@@ -42,7 +42,7 @@ function makeBooking(overrides: BookingOverrides = {}) {
     user_id: "user-1",
     status: "confirmed",
     checked_in_at: null,
-    events: { start_at: "2026-07-20T04:00:00Z", end_at: "2026-07-20T06:00:00Z" },
+    events: { start_at: "2026-07-20T05:00:00Z", end_at: "2026-07-20T07:00:00Z" },
     ...overrides,
   };
 }
@@ -112,34 +112,39 @@ describe("POST /api/bookings/[id]/checkin", () => {
     expect(res.status).toBe(400);
   });
 
-  it("イベント開始前は400", async () => {
-    setup({
-      booking: makeBooking({ events: { start_at: "2026-07-20T09:00:00Z", end_at: "2026-07-20T11:00:00Z" } }),
-    });
-    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
-    const body = await res.json();
-    expect(res.status).toBe(400);
-    expect(body.error).toContain("開始前");
-  });
-
-  it("イベント終了後は400", async () => {
-    setup({
-      booking: makeBooking({ events: { start_at: "2026-07-20T01:00:00Z", end_at: "2026-07-20T03:00:00Z" } }),
-    });
-    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
-    const body = await res.json();
-    expect(res.status).toBe(400);
-    expect(body.error).toContain("終了");
-  });
-
-  it("end_at 未設定のときは開始+2時間を終了とみなす", async () => {
-    // 開始 2026-07-20T04:00Z、現在 05:00Z → +2h（06:00Z）以内なのでOK
-    const { updateSpy } = setup({
-      booking: makeBooking({ events: { start_at: "2026-07-20T04:00:00Z", end_at: null } }),
-    });
+  // 受付時間は開始30分前〜開始15分後（現在は 05:00Z）
+  it.each([
+    ["開始30分前ちょうど", "2026-07-20T05:30:00Z"],
+    ["開始の10分前", "2026-07-20T05:10:00Z"],
+    ["開始時刻ちょうど", "2026-07-20T05:00:00Z"],
+    ["開始15分後ちょうど", "2026-07-20T04:45:00Z"],
+  ])("%s はチェックインできる", async (_label, startAt) => {
+    const { updateSpy } = setup({ booking: makeBooking({ events: { start_at: startAt, end_at: null } }) });
     const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
     expect(res.status).toBe(200);
     expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ checked_in_at: expect.any(String) }));
+  });
+
+  it("開始30分前より前は400", async () => {
+    const { updateSpy } = setup({
+      booking: makeBooking({ events: { start_at: "2026-07-20T05:31:00Z", end_at: "2026-07-20T07:00:00Z" } }),
+    });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
+    const body = await res.json();
+    expect(res.status).toBe(400);
+    expect(body.error).toContain("開始30分前から");
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
+  it("開始15分後を過ぎたら、イベントの途中でも400", async () => {
+    const { updateSpy } = setup({
+      booking: makeBooking({ events: { start_at: "2026-07-20T04:44:00Z", end_at: "2026-07-20T07:00:00Z" } }),
+    });
+    const res = await POST(DUMMY_REQUEST, { params: Promise.resolve({ id: "booking-1" }) });
+    const body = await res.json();
+    expect(res.status).toBe(400);
+    expect(body.error).toContain("受付は終了");
+    expect(updateSpy).not.toHaveBeenCalled();
   });
 
   it("既にチェックイン済みなら冪等に200を返す", async () => {

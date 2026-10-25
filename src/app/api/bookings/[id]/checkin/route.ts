@@ -5,14 +5,7 @@ import { checkEventBadges } from "@/lib/badges";
 import { checkRankUp } from "@/lib/ranks";
 import { checkAndAwardReferralReward } from "@/lib/referrals";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
-
-// イベント終了時刻。end_at 未設定時は開始 + 2時間（既存コードの慣習に合わせる）。
-function eventEnd(startAt: string, endAt: string | null): Date {
-  if (endAt) return new Date(endAt);
-  const end = new Date(startAt);
-  end.setHours(end.getHours() + 2);
-  return end;
-}
+import { CHECKIN_CLOSES_AFTER_MINUTES, CHECKIN_OPENS_BEFORE_MINUTES, getCheckinWindow } from "@/lib/checkinWindow";
 
 export async function POST(
   _req: NextRequest,
@@ -63,14 +56,13 @@ export async function POST(
   }
 
   const now = new Date();
-  const start = new Date(event.start_at);
-  const end = eventEnd(event.start_at, event.end_at);
+  const { opensAt, closesAt } = getCheckinWindow(event.start_at);
 
-  if (now < start) {
-    return NextResponse.json({ error: "イベント開始前です" }, { status: 400 });
+  if (now.getTime() < opensAt) {
+    return NextResponse.json({ error: `チェックインは開始${CHECKIN_OPENS_BEFORE_MINUTES}分前から受け付けます` }, { status: 400 });
   }
-  if (now > end) {
-    return NextResponse.json({ error: "イベントは終了しました" }, { status: 400 });
+  if (now.getTime() > closesAt) {
+    return NextResponse.json({ error: `チェックインの受付は終了しました（開始${CHECKIN_CLOSES_AFTER_MINUTES}分後まで）` }, { status: 400 });
   }
 
   // service_role で条件付き更新（未チェックインの行のみ）。同時リクエストの二重処理を防ぐ。

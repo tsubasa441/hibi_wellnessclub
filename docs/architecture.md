@@ -72,7 +72,7 @@ src/
 │   │           └── CheckoutForm.tsx
 │   ├── bookings/
 │   │   ├── page.tsx            # 予約済みイベント一覧・キャンセル・チェックイン
-│   │   └── CheckInButton.tsx   # チェックインボタン（開始〜終了時刻のみ活性。size="lg" は /checkin 用の大きなボタン。Client Component）
+│   │   └── CheckInButton.tsx   # チェックインボタン（開始30分前〜開始15分後のみ活性。受付時間は src/lib/checkinWindow.ts。size="lg" は /checkin 用の大きなボタン。Client Component）
 │   ├── checkin/page.tsx        # チェックイン（下ナビ中央。本日開催の予約を大きなボタンでチェックイン。無ければ次の予約を案内）
 │   ├── mypage/page.tsx         # マイページ（プロフィール・ショートカット・アカウント設定。法定ページへのリンクは最下部のフッター）
 │   ├── faq/page.tsx            # よくあるご質問（質問と回答はページ内の定数。details/summary で開閉。認証不要）
