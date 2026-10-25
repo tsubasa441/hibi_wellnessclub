@@ -43,12 +43,12 @@ export default function ProfileCard({
             <p className="font-outfit text-xl font-semibold tracking-wide mt-2 truncate">{displayName}</p>
             <Stats sessionCount={sessionCount} points={points} />
           </div>
-          <div className="shrink-0 flex flex-col items-center text-sage-600 pr-2">
-            <span className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center">
-              <RankIcon level={currentRank.level} size={36} />
-            </span>
-            <p className="font-outfit text-xl font-bold leading-tight mt-1.5">{currentRank.nameEn}</p>
-            <p className="font-outfit text-xs text-sage-600/70">{currentRank.nameJa}</p>
+          <div className="shrink-0 flex items-center gap-2 text-sage-600 pr-1">
+            <RankIcon level={currentRank.level} size={36} />
+            <div className="text-center">
+              <p className="font-outfit text-xl font-bold leading-tight">{currentRank.nameEn}</p>
+              <p className="font-outfit text-xs text-sage-600/70">{currentRank.nameJa}</p>
+            </div>
           </div>
         </div>
       ) : (
