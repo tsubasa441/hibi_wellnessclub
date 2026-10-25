@@ -11,7 +11,6 @@ import {
   boxedLabelClass as labelClass,
   primaryButtonClass,
   linkButtonClass,
-  headingEnClass as headingClass,
 } from "@/lib/authStyles";
 import { validateName, validateNickname } from "@/lib/nameValidation";
 
@@ -27,9 +26,7 @@ const tabClass = (active: boolean) =>
     active ? "bg-white text-ink-700 font-medium shadow-[0_1px_3px_rgba(44,53,49,0.15)]" : "text-ink-400 hover:text-ink-700"
   }`;
 
-type Greetings = { signin: string; signup: string };
-
-function LoginFormInner({ greetings }: { greetings: Greetings }) {
+function LoginFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>(searchParams.get("ref") ? "signup" : "signin");
@@ -295,7 +292,6 @@ function LoginFormInner({ greetings }: { greetings: Greetings }) {
 
           {tab === "signin" ? (
             <>
-              <p className={`${headingClass} mb-6`}>{greetings.signin}</p>
               <form onSubmit={handleSignIn} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Email</p>
@@ -365,7 +361,6 @@ function LoginFormInner({ greetings }: { greetings: Greetings }) {
             )
           ) : (
             <>
-              <p className={`${headingClass} mb-6`}>{greetings.signup}</p>
               <form onSubmit={handleSignUp} noValidate className="space-y-5">
                 <div>
                   <p className={labelClass}>Name</p>
@@ -466,10 +461,10 @@ function LoginFormInner({ greetings }: { greetings: Greetings }) {
   );
 }
 
-export default function LoginForm({ greetings }: { greetings: Greetings }) {
+export default function LoginForm() {
   return (
     <Suspense>
-      <LoginFormInner greetings={greetings} />
+      <LoginFormInner />
     </Suspense>
   );
 }

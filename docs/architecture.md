@@ -162,9 +162,7 @@ src/
 │   ├── points.ts               # ポイント付与・取り消しロジック
 │   ├── passwordPolicy.ts       # パスワードの形式検証（サインアップ・パスワード再設定・設定画面でのパスワード変更で共通）
 │   ├── passwordUpdateError.ts  # updateUser 失敗時の原因別メッセージ（再設定画面・設定画面でのパスワード変更で共通）
-│   ├── ranks.ts                # ランク定義・ランクアップ判定
-│   ├── greetings.ts            # ログイン・新規登録の見出しの一言（季節・時間帯（JST）に合う候補からランダムに選ぶ）
-│   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）
+│   ├── ranks.ts                # ランク定義・ランクアップ判定│   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）
 │   ├── squareClient.ts         # Square クライアントの共通生成（決済APIとカード保存ヘルパーで使い回す）
 │   ├── squareCards.ts          # クレジットカード保存機能: Customer/Card on File の作成・保存・無効化（/api/payments/square・/api/payment-methods/square から使用）
 │   ├── squareErrors.ts         # Square API のエラーコードをユーザー向けの日本語の案内に変換（Square のエラー本文は画面に出さない）
