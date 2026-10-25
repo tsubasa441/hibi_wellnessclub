@@ -100,6 +100,7 @@ describe("POST /api/account/delete", () => {
     expect(profileUpdateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         nickname: "退会済みユーザー",
+        name_kana: null,
         gender: null,
         birth_date: null,
         referral_code_used: null,

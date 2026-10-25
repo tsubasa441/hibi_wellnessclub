@@ -4,7 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt } from "@/lib/encrypt";
 import { getJstParts } from "@/lib/date";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
-import { validateName, validateNickname } from "@/lib/nameValidation";
+import { validateKana, validateName, validateNickname, type NameValidationResult } from "@/lib/nameValidation";
 import * as Sentry from "@sentry/nextjs";
 
 // ローマ字変換（kuroshiro）は長音を ō 等のマクロン付き文字で返すため、
@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
     name?: string;
     nameRoman?: string;
     nickname?: string;
+    nameKanaSei?: string;
+    nameKanaMei?: string;
     gender?: string;
     birthDate?: string;
     referralCode?: string;
@@ -39,7 +41,20 @@ export async function POST(req: NextRequest) {
   if (body.nameRoman && !NAME_ROMAN_REGEX.test(body.nameRoman.trim())) {
     return NextResponse.json({ error: "nameRoman の形式が正しくありません" }, { status: 400 });
   }
-  const nicknameResult = validateNickname(body.nickname);
+  // 新規登録ではニックネームを入力させず、フリガナのメイを表示名（nickname）にする（2026-10-25）。
+  // フリガナを送らない古い画面（デプロイ直後に開いたままの画面）からは、従来どおりニックネームを受け付ける
+  let nameKana: string | null = null;
+  let nicknameResult: NameValidationResult;
+  if (body.nameKanaSei !== undefined || body.nameKanaMei !== undefined) {
+    const sei = validateKana(body.nameKanaSei, "セイ");
+    if (!sei.ok) return NextResponse.json({ error: sei.error }, { status: 400 });
+    const mei = validateKana(body.nameKanaMei, "メイ");
+    if (!mei.ok) return NextResponse.json({ error: mei.error }, { status: 400 });
+    nameKana = `${sei.value} ${mei.value}`;
+    nicknameResult = validateNickname(mei.value);
+  } else {
+    nicknameResult = validateNickname(body.nickname);
+  }
   if (!nicknameResult.ok) {
     return NextResponse.json({ error: nicknameResult.error }, { status: 400 });
   }
@@ -60,6 +75,7 @@ export async function POST(req: NextRequest) {
   const updates: Record<string, string> = {};
   updates.name = encrypt(nameResult.value);
   if (body.nameRoman) updates.name_roman = encrypt(body.nameRoman.trim());
+  if (nameKana) updates.name_kana = encrypt(nameKana);
   // ニックネームは本人が公開を意図した表示名のため暗号化しない（docs/codingstandards.md参照）
   updates.nickname = nicknameResult.value;
   updates.gender = encrypt(body.gender);

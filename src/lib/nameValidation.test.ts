@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizePersonName, validateName, validateNickname } from "./nameValidation";
+import { normalizePersonName, validateKana, validateName, validateNickname } from "./nameValidation";
 
 describe("normalizePersonName", () => {
   it("全角英数字を半角に、半角カナを全角に、全角スペースを半角に揃え、空白をまとめる", () => {
@@ -79,5 +79,34 @@ describe("validateNickname", () => {
   it("20文字まで登録でき、21文字は不可", () => {
     expect(validateNickname("a".repeat(20)).ok).toBe(true);
     expect(validateNickname("a".repeat(21))).toEqual({ ok: false, error: "ニックネームは20文字以内で入力してください" });
+  });
+});
+
+describe("validateKana", () => {
+  it.each([
+    ["ヤマダ", "ヤマダ"],
+    ["やまだ", "ヤマダ"],
+    ["ﾔﾏﾀﾞ", "ヤマダ"],
+    ["ヤ マ ダ", "ヤマダ"],
+    ["ヴァレリー", "ヴァレリー"],
+    ["ア".repeat(20), "ア".repeat(20)],
+  ])("%s を受け付けて %s に揃える", (input, expected) => {
+    expect(validateKana(input, "セイ")).toEqual({ ok: true, value: expected });
+  });
+
+  it.each([
+    ["空", ""],
+    ["漢字", "山田"],
+    ["英字", "Yamada"],
+    ["記号", "ヤマダ!"],
+    ["長音符だけ", "ー"],
+    ["21文字", "ア".repeat(21)],
+  ])("%s は受け付けない", (_label, input) => {
+    expect(validateKana(input, "メイ").ok).toBe(false);
+  });
+
+  it("エラーにどちらの欄かを含める", () => {
+    const result = validateKana("", "メイ");
+    expect(result.ok === false && result.error).toContain("フリガナ（メイ）");
   });
 });

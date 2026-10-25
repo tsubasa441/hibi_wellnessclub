@@ -12,7 +12,7 @@ import {
   primaryButtonClass,
   linkButtonClass,
 } from "@/lib/authStyles";
-import { validateName, validateNickname } from "@/lib/nameValidation";
+import { validateKana, validateName } from "@/lib/nameValidation";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
@@ -32,8 +32,10 @@ function LoginFormInner() {
   const [tab, setTab] = useState<Tab>(searchParams.get("ref") ? "signup" : "signin");
   const formTopRef = useRef<HTMLDivElement>(null);
 
-  const [name, setName] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [kanaSei, setKanaSei] = useState("");
+  const [kanaMei, setKanaMei] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
@@ -76,8 +78,10 @@ function LoginFormInner() {
   }
 
   function resetForm() {
-    setName("");
-    setNickname("");
+    setLastName("");
+    setFirstName("");
+    setKanaSei("");
+    setKanaMei("");
     setEmail("");
     setPassword("");
     setGender("");
@@ -142,24 +146,31 @@ function LoginFormInner() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!name || !nickname || !email || !password || !gender || !birthDate) {
+    if (!lastName.trim() || !firstName.trim() || !kanaSei || !kanaMei || !email || !password || !gender || !birthDate) {
       showError("未入力項目があります");
       return;
     }
 
-    const nameResult = validateName(name);
+    // 姓・名は別々に入力してもらい、保存は従来どおり「姓 名」の1つの値にする
+    const nameResult = validateName(`${lastName} ${firstName}`);
     if (!nameResult.ok) {
       showError(nameResult.error);
       return;
     }
     const validName = nameResult.value;
 
-    const nicknameResult = validateNickname(nickname);
-    if (!nicknameResult.ok) {
-      showError(nicknameResult.error);
+    // フリガナのメイがそのまま表示名（ニックネーム）になる
+    const seiResult = validateKana(kanaSei, "セイ");
+    if (!seiResult.ok) {
+      showError(seiResult.error);
       return;
     }
-    const validNickname = nicknameResult.value;
+    const meiResult = validateKana(kanaMei, "メイ");
+    if (!meiResult.ok) {
+      showError(meiResult.error);
+      return;
+    }
+    const validKana = `${seiResult.value} ${meiResult.value}`;
 
     // メール：標準形式・最大254文字
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -197,13 +208,13 @@ function LoginFormInner() {
       }
     }
 
-    // ローマ字変換
+    // ローマ字変換（読み間違いを避けるため、漢字ではなくフリガナから変換する）
     let nameRoman = validName;
     try {
       const res = await fetch("/api/convert-name", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: validName }),
+        body: JSON.stringify({ name: validKana }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -241,7 +252,8 @@ function LoginFormInner() {
       const profileBody = JSON.stringify({
         name: validName,
         nameRoman,
-        nickname: validNickname,
+        nameKanaSei: seiResult.value,
+        nameKanaMei: meiResult.value,
         gender,
         birthDate,
         referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
@@ -362,13 +374,28 @@ function LoginFormInner() {
           ) : (
             <>
               <form onSubmit={handleSignUp} noValidate className="space-y-5">
-                <div>
-                  <p className={labelClass}>Name</p>
-                  <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="山田 太郎" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className={labelClass}>姓</p>
+                    <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} placeholder="山田" autoComplete="family-name" />
+                  </div>
+                  <div>
+                    <p className={labelClass}>名</p>
+                    <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} placeholder="太郎" autoComplete="given-name" />
+                  </div>
                 </div>
                 <div>
-                  <p className={labelClass}>Nickname</p>
-                  <input type="text" required value={nickname} onChange={(e) => setNickname(e.target.value)} className={inputClass} placeholder="タロウ" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className={labelClass}>フリガナ（セイ）</p>
+                      <input type="text" required value={kanaSei} onChange={(e) => setKanaSei(e.target.value)} className={inputClass} placeholder="ヤマダ" />
+                    </div>
+                    <div>
+                      <p className={labelClass}>フリガナ（メイ）</p>
+                      <input type="text" required value={kanaMei} onChange={(e) => setKanaMei(e.target.value)} className={inputClass} placeholder="タロウ" />
+                    </div>
+                  </div>
+                  <p className="font-dm text-xs text-ink-300 mt-1.5">フリガナ（メイ）が、アプリ内での表示名になります（マイページで変更できます）</p>
                 </div>
                 <div>
                   <p className={labelClass}>Email</p>

@@ -13,14 +13,15 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 ### 新規登録（/login の SIGN UP タブ）
 
 ```
-1. ユーザーが名前・ニックネーム・メール・パスワード・性別・生年月日・紹介コード（任意）を入力
+1. ユーザーが姓・名・フリガナ（セイ・メイ）・メール・パスワード・性別・生年月日・紹介コード（任意）を入力（2026-10-25 にニックネームの入力欄を廃止し、フリガナを追加）
    - 「登録」ボタンの直前に「『登録』を押すと、利用規約とプライバシーポリシーに同意したものとみなします」と表示し、`/legal/terms`・`/legal/privacy` へのリンクを置く（入力内容が消えないよう別タブで開く。チェックボックスは設けない）
 2. supabase.auth.signUp() を呼び出す（options.data に name のみ渡す）
 3. Supabase の auth.users にレコード作成
 4. DB トリガーで profiles テーブルにレコード作成
    - referral_code をランダム生成して付与
-5. POST /api/signup/profile を呼び出し、性別・生年月日・紹介コードを暗号化して profiles に保存
-   - ニックネームは表示専用の情報のため暗号化せず平文で保存する（@docs/codingstandards.md 参照）
+5. POST /api/signup/profile を呼び出し、氏名・フリガナ（name_kana）・性別・生年月日・紹介コードを暗号化して profiles に保存
+   - フリガナのメイを表示名（nickname）として保存する。ニックネームは表示専用の情報のため暗号化せず平文で保存する（@docs/codingstandards.md 参照）
+   - フリガナを送らない古い画面からの登録は、従来どおり nickname を受け付ける（デプロイ直後に開いたままの画面への配慮）
    - 紹介コードがある場合、紹介者を特定し referrals レコードを `status: pending` で作成する（**この時点では 200pt を付与しない**）。報酬確定は被紹介者の初回イベント参加後（下記「紹介コードの処理」参照）
 6. /register-complete にリダイレクト
 ```
@@ -121,7 +122,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 2. 確認ダイアログ（削除内容の説明）→ POST /api/account/delete
 3. サーバー側（service_role）で:
    - is_admin なら 400 で拒否（管理者は運営に連絡してもらう運用）
-   - profiles の氏名・ローマ字氏名・ニックネーム・性別・生年月日・使用した紹介コード・
+   - profiles の氏名・ローマ字氏名・フリガナ・ニックネーム・性別・生年月日・使用した紹介コード・
      アバターURLを匿名化（nickname は「退会済みユーザー」に置換、他はnull）
    - auth.users は削除しない（profiles.id が auth.users(id) on delete cascade のため、
      削除すると bookings・journals・referrals 等の履歴も連鎖的に消えてしまう）。

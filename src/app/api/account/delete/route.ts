@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     .update({
       name: encrypt(ANONYMIZED_NAME),
       name_roman: encrypt(ANONYMIZED_NAME),
+      name_kana: null,
       nickname: ANONYMIZED_NAME,
       gender: null,
       birth_date: null,

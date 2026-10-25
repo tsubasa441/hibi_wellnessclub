@@ -1,4 +1,4 @@
-// 氏名・ニックネームの正規化と入力チェック（新規登録フォーム・登録 API・ニックネーム変更 API で共通）
+// 氏名・フリガナ・ニックネームの正規化と入力チェック（新規登録フォーム・登録 API・ニックネーム変更 API で共通）
 
 // NFKC で全角英数字→半角・半角カナ→全角・全角スペース→半角に揃え、連続する空白を1つにまとめる
 export function normalizePersonName(input: string): string {
@@ -33,6 +33,27 @@ export function validateName(input: string | undefined | null): NameValidationRe
   }
   if (!NAME_CHARS.test(value) || !HAS_LETTER.test(value)) {
     return { ok: false, error: "お名前は漢字・ひらがな・カタカナ・英字で入力してください" };
+  }
+  return { ok: true, value };
+}
+
+// フリガナ（セイ・メイ）。ひらがなで入力されてもカタカナに揃え、空白は取り除く。
+// メイはそのまま表示名（nickname）になるため、長さはニックネームの上限に合わせる（2026-10-25）
+export const KANA_MAX_LENGTH = NICKNAME_MAX_LENGTH;
+const KANA_CHARS = /^[\p{Script=Katakana}ー]+$/u;
+
+function toKatakana(s: string): string {
+  return s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+
+export function validateKana(input: string | undefined | null, label: "セイ" | "メイ"): NameValidationResult {
+  const value = toKatakana((input ?? "").normalize("NFKC").replace(/\s+/g, ""));
+  if (!value) return { ok: false, error: `フリガナ（${label}）を入力してください` };
+  if (charLength(value) > KANA_MAX_LENGTH) {
+    return { ok: false, error: `フリガナ（${label}）は${KANA_MAX_LENGTH}文字以内で入力してください` };
+  }
+  if (!KANA_CHARS.test(value) || /^ー+$/.test(value)) {
+    return { ok: false, error: `フリガナ（${label}）はカタカナで入力してください` };
   }
   return { ok: true, value };
 }

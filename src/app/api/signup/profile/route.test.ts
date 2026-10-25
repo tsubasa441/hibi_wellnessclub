@@ -220,3 +220,46 @@ describe("POST /api/signup/profile: 紹介", () => {
     expect(referralInsertSpy).not.toHaveBeenCalled();
   });
 });
+
+describe("POST /api/signup/profile: フリガナ（2026-10-25 以降の新規登録画面）", () => {
+  const kanaBody = (overrides: Body = {}) =>
+    validBody({ nickname: undefined, nameKanaSei: "ヤマダ", nameKanaMei: "タロウ", ...overrides });
+
+  it("フリガナは暗号化して保存し、メイを表示名（nickname）にする", async () => {
+    const { profileUpdateSpy } = setup();
+    const res = await POST(makeRequest(kanaBody()));
+    expect(res.status).toBe(200);
+    expect(profileUpdateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name_kana: "enc(ヤマダ タロウ)", nickname: "タロウ" })
+    );
+  });
+
+  it("ひらがな・半角カナ・空白はカタカナに揃える", async () => {
+    const { profileUpdateSpy } = setup();
+    const res = await POST(makeRequest(kanaBody({ nameKanaSei: "やま だ", nameKanaMei: "ﾀﾛｳ" })));
+    expect(res.status).toBe(200);
+    expect(profileUpdateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name_kana: "enc(ヤマダ タロウ)", nickname: "タロウ" })
+    );
+  });
+
+  it("nickname を送ってきても、フリガナがあればメイを優先する", async () => {
+    const { profileUpdateSpy } = setup();
+    await POST(makeRequest(kanaBody({ nickname: "taro" })));
+    expect(profileUpdateSpy).toHaveBeenCalledWith(expect.objectContaining({ nickname: "タロウ" }));
+  });
+
+  it.each([
+    ["セイが空", { nameKanaSei: "" }],
+    ["メイが無い", { nameKanaMei: undefined }],
+    ["メイに漢字", { nameKanaMei: "太郎" }],
+    ["メイに英字", { nameKanaMei: "Taro" }],
+    ["メイが長音符だけ", { nameKanaMei: "ーー" }],
+    ["メイが21文字", { nameKanaMei: "ア".repeat(21) }],
+  ])("%s は400で、保存しない", async (_label, overrides) => {
+    const { profileUpdateSpy } = setup();
+    const res = await POST(makeRequest(kanaBody(overrides)));
+    expect(res.status).toBe(400);
+    expect(profileUpdateSpy).not.toHaveBeenCalled();
+  });
+});

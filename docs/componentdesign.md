@@ -158,7 +158,7 @@
 
 - ログイン／新規登録／パスワード再設定を1ページ内でタブ・状態切り替え（`useState`で制御。ロジックは変更なし）
 - ログインフォーム: EMAIL・PASSWORD
-- 新規登録フォーム: NAME・NICKNAME・EMAIL・PASSWORD・GENDER・DATE OF BIRTH・REFERRAL CODE（任意）— 項目は変更前と同一
+- 新規登録フォーム: 姓・名（横並び）・フリガナ（セイ）・フリガナ（メイ）（横並び。下に「フリガナ（メイ）が、アプリ内での表示名になります（マイページで変更できます）」）・EMAIL・PASSWORD・GENDER・DATE OF BIRTH・REFERRAL CODE（任意）。2026-10-25、依頼者の指定で NAME（1欄）・NICKNAME から変更
 - タブ切り替え時にフォームをリセット
 - ログイン成功後 `/home` へ、新規登録成功後 `/register-complete` へ遷移
 - カラーはアプリ全体と同じトークン（`base-*` / `ink-*` / `sage-*`）を使用するが、ニューモーフィズム系クラス（`.nm-card` / `.nm-inset` / `.nm-btn-primary`）は使わずフラットな表現にする
