@@ -24,7 +24,7 @@ const toggleClass = (active: boolean) =>
   }`;
 const tabClass = (active: boolean) =>
   `text-center font-outfit text-sm py-2 rounded-full transition ${
-    active ? "bg-sage-600 text-white font-medium" : "text-ink-500 hover:text-ink-700"
+    active ? "bg-white text-ink-700 font-medium shadow-[0_1px_3px_rgba(44,53,49,0.15)]" : "text-ink-400 hover:text-ink-700"
   }`;
 
 type Greetings = { signin: string; signup: string };
@@ -278,7 +278,7 @@ function LoginFormInner({ greetings }: { greetings: Greetings }) {
       topRef={formTopRef}
       above={
           tab !== "forgot" ? (
-            <div className="grid grid-cols-2 gap-1 bg-white border border-base-200 rounded-full p-1 mb-5 animate-fade-up animate-delay-100">
+            <div className="grid grid-cols-2 gap-1 bg-base-200 rounded-full p-1 mb-5 animate-fade-up animate-delay-100">
               <button onClick={() => { setTab("signin"); resetForm(); }} className={tabClass(tab === "signin")}>
                 ログイン
               </button>

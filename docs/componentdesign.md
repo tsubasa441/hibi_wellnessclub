@@ -146,7 +146,7 @@
 |--------|------|
 | 背景 | トップ・ホームと同じ `bg-nav-bg` |
 | ロゴ | 上部中央にトップと同じロゴ画像（`hibi-logo.png`）＋「wellness club」（font-dm）。`/` へのリンク |
-| タブ（`/login` のみ） | 「ログイン」「新規登録」をピル型の2択（`ReserveTabs` と同じ見た目、選択中 `bg-sage-600` 白文字） |
+| タブ（`/login` のみ） | 「ログイン」「新規登録」をピル型の2択（`ReserveTabs` と同じ見た目。地は `bg-base-200` のグレー、選択中は白（`bg-white`・`ink-700`・薄い影）、選択していない方は `ink-400`。2026-10-25、依頼者の指定で緑の選択中から変更） |
 | カード | 最大幅 `max-w-md`、白・`rounded-[20px]`・ホームの `ProfileCard` と同じ影。フォーム・案内文はこの中 |
 | 見出し | 英語は `font-bebas`（大文字・34px、`headingEnClass`）。ログイン・新規登録の見出しは、ユーザーへの一言（思わず答えたくなる問いかけ等）を、季節（3〜5月 春／6〜8月 夏／9〜11月 秋／12〜2月 冬）と時間帯（JST の 5〜10時 朝／10〜17時 昼／17〜22時 夕方／22〜5時 夜）に合う候補と、いつでも使える候補（「Hello!」「Nice to meet you!」等）の中からランダムに表示する（2026-10-25、依頼者の指定。候補は `src/lib/greetings.ts`。表示のちらつきを避けるため `login/page.tsx`（サーバー）で選んで `LoginForm` に渡す）。登録完了の「Welcome to Hibi!」は固定。日本語（「パスワードの再設定」等）は Bebas に字形が無いため `font-zenkaku` 太字（`headingClass`） |
 | 入力欄 | 囲み枠（`rounded-lg`・`bg-base-50`・フォーカス時 `border-sage-600`。`boxedInputClass`） |
@@ -197,7 +197,7 @@
 
 ### ReserveTabs（予約タブ内の切り替え）
 
-`/events` と `/bookings` の上部に置くピル型の2択（「イベントを探す」「予約済み」）。選択中は `bg-sage-600` の白文字。Server Component で、`active` で選択中を受け取る。`/bookings` の「ホームへ戻る」矢印はこの切り替えに置き換えて撤去した。
+`/events` と `/bookings` の上部に置くピル型の2択（「イベントを探す」「予約済み」）。地は `bg-base-200` のグレー、選択中は白（`bg-white`・`ink-700`・薄い影）、選択していない方は `ink-400`（2026-10-25、依頼者の指定で `bg-sage-600` の白文字から変更。ログイン・新規登録の切り替えと同じ見た目）。Server Component で、`active` で選択中を受け取る。`/bookings` の「ホームへ戻る」矢印はこの切り替えに置き換えて撤去した。
 
 ### チェックイン画面（`/checkin`）
 
