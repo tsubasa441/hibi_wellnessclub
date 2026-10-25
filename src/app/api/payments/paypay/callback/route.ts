@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendBookingConfirmation } from "@/lib/email";
 import { refundUsedPoints } from "@/lib/points";
+import { notifyWaitlistIfSeatsOpen } from "@/lib/waitlist";
 import { withPayPayProxy } from "@/lib/paypayProxy";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 import { decrypt } from "@/lib/encrypt";
@@ -66,6 +67,7 @@ export async function GET(req: NextRequest) {
     if (booking.points_used > 0) {
       await refundUsedPoints(supabase, booking.user_id, booking.id);
     }
+    await notifyWaitlistIfSeatsOpen(booking.event_id);
     return NextResponse.redirect(
       new URL(`/events/${booking.event_id}?payment=cancelled`, req.url)
     );

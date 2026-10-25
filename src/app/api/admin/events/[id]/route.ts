@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { EventInput, validateEventInput } from "@/lib/eventValidation";
+import { notifyWaitlistIfSeatsOpen } from "@/lib/waitlist";
 
 function normalizeOptions(options: EventInput["options"]) {
   return (options ?? [])
@@ -87,6 +88,9 @@ export async function PATCH(
       return NextResponse.json({ error: "選択項目の更新に失敗しました" }, { status: 500 });
     }
   }
+
+  // 定員を増やして空きが出た場合は、キャンセル待ちの人に知らせる
+  await notifyWaitlistIfSeatsOpen(id);
 
   return NextResponse.json({ event: data });
 }

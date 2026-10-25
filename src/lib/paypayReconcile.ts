@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { withPayPayProxy } from "@/lib/paypayProxy";
 import { sendBookingConfirmation } from "@/lib/email";
 import { refundUsedPoints } from "@/lib/points";
+import { notifyWaitlistIfSeatsOpen } from "@/lib/waitlist";
 import { decrypt } from "@/lib/encrypt";
 
 PAYPAY.Configure({
@@ -112,6 +113,8 @@ async function reconcileOne(supabase: SupabaseClient, user: User, booking: Pendi
   if (removed?.length && booking.points_used > 0) {
     await refundUsedPoints(supabase, booking.user_id, booking.id);
   }
+  // 押さえていた席が空いたので、キャンセル待ちの人に知らせる
+  if (removed?.length) await notifyWaitlistIfSeatsOpen(booking.event_id);
 }
 
 // ログイン中ユーザーの pending な PayPay 予約を PayPay に照会し、支払い済みなら確定、

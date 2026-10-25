@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   createServerClient: vi.fn(),
 }));
 
+vi.mock("@/lib/waitlist", () => ({ notifyWaitlistIfSeatsOpen: vi.fn().mockResolvedValue(0) }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: mocks.createServerClient,
 }));

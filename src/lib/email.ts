@@ -383,6 +383,42 @@ export async function sendSupportInquiryToAdmin(params: { userId: string; userNa
   });
 }
 
+// キャンセル待ちしていたイベントに空きが出たことを知らせる（先着順のため、予約ページへのリンクを置く）
+export async function sendWaitlistSeatAvailable(params: {
+  to: string;
+  userName: string;
+  eventId: string;
+  eventTitle: string;
+  startAt: string;
+}) {
+  const { to, userName, eventId, eventTitle, startAt } = params;
+
+  await sendEmail("waitlist_available", {
+    from: FROM,
+    to,
+    subject: `【Hibi】キャンセル待ちのイベントに空きが出ました：${eventTitle}`,
+    html: supportEmailLayout(`
+              <p style="margin:0 0 8px;font-size:14px;color:#2C3531;">${escapeHtml(userName)} さん</p>
+              <p style="margin:0 0 24px;font-size:22px;font-weight:600;color:#1C221F;line-height:1.4;">
+                キャンセル待ちのイベントに空きが出ました
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F3F3;border-radius:12px;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;font-size:14px;color:#1C221F;line-height:1.7;">
+                    <strong>${escapeHtml(eventTitle)}</strong><br />${formatDateTime(startAt)}
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 32px;font-size:14px;color:#2C3531;line-height:1.7;">
+                キャンセル待ちに登録していた皆さまに同時にお知らせしています。先にご予約いただいた方から確定しますので、お早めにどうぞ。
+              </p>
+              <p style="margin:0 0 32px;text-align:center;">${supportButton(`${SITE_URL}/events/${eventId}`, "予約ページを開く")}</p>
+              <p style="margin:0;font-size:12px;color:#919694;line-height:1.7;">
+                このお知らせでキャンセル待ちは終了しました。再び満席になった場合は、イベントのページからもう一度キャンセル待ちに登録してください。
+              </p>`),
+  });
+}
+
 // 運営が返信したことをユーザーへ知らせる（本文はメールに載せず、アプリで読んでもらう）
 export async function sendSupportReplyToUser(params: { to: string; userName: string }) {
   const { to, userName } = params;

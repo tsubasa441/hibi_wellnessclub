@@ -65,7 +65,7 @@ src/
 │   │   ├── page.tsx            # イベント一覧
 │   │   └── [id]/
 │   │       ├── page.tsx        # イベント詳細
-│   │       ├── BookingButton.tsx
+│   │       ├── BookingButton.tsx  # 予約・キャンセル・キャンセル待ち（WaitlistButton）のボタン
 │   │       ├── EventOptionFields.tsx  # 選択項目の入力UI（単一=select / 複数=チェックボックスパネル）
 │   │       └── checkout/
 │   │           ├── page.tsx

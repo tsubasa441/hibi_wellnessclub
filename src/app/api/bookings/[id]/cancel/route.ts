@@ -8,6 +8,7 @@ import { SquareClient, SquareEnvironment } from "square";
 import PAYPAY from "@paypayopa/paypayopa-sdk-node";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { withPayPayProxy } from "@/lib/paypayProxy";
+import { notifyWaitlistIfSeatsOpen } from "@/lib/waitlist";
 import * as Sentry from "@sentry/nextjs";
 
 const squareClient = new SquareClient({
@@ -45,7 +46,7 @@ export async function POST(
 
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, user_id, status, payment_method, payment_status, payment_id, points_used, amount_charged, events(start_at, price, title)")
+    .select("id, user_id, event_id, status, payment_method, payment_status, payment_id, points_used, amount_charged, events(start_at, price, title)")
     .eq("id", bookingId)
     .single();
 
@@ -102,6 +103,9 @@ export async function POST(
   if (claimError || !claimed) {
     return NextResponse.json({ error: "既にキャンセル済みです" }, { status: 400 });
   }
+
+  // 席が空いたので、キャンセル待ちの人に知らせる（返金の成否に関わらず席は空いている）
+  await notifyWaitlistIfSeatsOpen(booking.event_id);
 
   // 返金処理（2日前より後・未決済はスキップ）。返金額は現在の events.price ではなく、
   // 予約確定時に実際に請求した amount_charged を使う（価格改定・ポイント充当との整合性のため）。

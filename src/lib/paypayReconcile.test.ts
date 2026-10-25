@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   captureMessage: vi.fn(),
 }));
 
+vi.mock("@/lib/waitlist", () => ({ notifyWaitlistIfSeatsOpen: vi.fn().mockResolvedValue(0) }));
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient: mocks.createServiceClient }));
 vi.mock("@paypayopa/paypayopa-sdk-node", () => ({
   default: { Configure: vi.fn(), GetCodePaymentDetails: mocks.getPaymentDetails },

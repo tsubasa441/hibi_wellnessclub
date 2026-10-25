@@ -40,7 +40,7 @@
 |-------------|------|------|---------|
 | ProgramCarousel | `app/ProgramCarousel.tsx` | トップページの Program（5クラスのカードを自動送り・スワイプ・矢印で切り替えるスライド） | ✅ |
 | LoginForm | `app/login/LoginForm.tsx` | ログイン・新規登録・パスワード再設定リクエストフォーム | ✅ |
-| BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン | ✅ |
+| BookingButton | `app/events/[id]/BookingButton.tsx` | 予約・決済ボタン。未予約の人には、予約するボタン（満席なら「満席」）の下に「キャンセル待ちをする」ボタンを出す（満席のときだけ押せる。2026-10-25 追加）。登録済みなら「キャンセル待ち中です。空きが出たらメールでお知らせします。」と「キャンセル待ちを取り消す」。予約済みの人には出さない | ✅ |
 | CheckoutForm | `app/events/[id]/checkout/CheckoutForm.tsx` | 決済フォーム。保存済みクレジットカードがある場合はカード入力欄の代わりに「登録済みのカードで支払う」表示（「別のカードを使う」で入力欄に切り替え可能）。新しいカードで支払うと決済成功後に自動保存される（クレジットカード保存機能） | ✅ |
 | ReferralShare | `app/impact/ReferralShare.tsx` | URLコピー・シェアボタン | ✅ |
 | GrowthRings | `app/impact/GrowthRings.tsx` | インパクト画面の「年輪」。8つのランク（種→大樹）を内側から8本の輪で描き、到達したランクは塗り（`sage-50`）、次のランクの輪は進み具合の分だけ白い弧、それより先は点線。中心に `RankIcon`。SVG | - |

@@ -170,6 +170,19 @@
 
 RLS は SELECT のみ（本人のスレッド、または管理者）。書き込みは API が本人確認・管理者確認のうえ service_role で行う。本文は暗号化しない（運営が読んで返信するための問い合わせ内容。氏名等の登録情報ではない）。
 
+### event_waitlist（2026-10-25 追加、`034_event_waitlist.sql`）
+
+イベントのキャンセル待ち。満席の公開イベントで、まだ予約していないユーザーが登録できる。席が空いたら（予約のキャンセル・PayPay の未払い予約の解放・管理画面での定員の変更）、登録者全員にメールで知らせ（先着順で予約）、行を削除してキャンセル待ちを終了する（`src/lib/waitlist.ts` の `notifyWaitlistIfSeatsOpen`）。予約しそびれて再び満席になったら、本人がもう一度登録する。
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| id | uuid | PK |
+| event_id | uuid | FK → events.id（`on delete cascade`） |
+| user_id | uuid | FK → profiles.id（`on delete cascade`） |
+| created_at | timestamptz | |
+
+`(event_id, user_id)` で一意。RLS は SELECT のみ（本人、または管理者）。登録・取り消し・通知後の削除は API が service_role で行う。退会済みのユーザー（メールアドレスを置き換え済み）には送らない。
+
 ### rate_limits
 
 API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` の `checkRateLimit()` から `check_rate_limit` RPC（service_role専用）経由でのみ読み書きされる。ユーザーやadmin画面から直接参照することはない。
@@ -192,7 +205,9 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | POST | `/api/payment-methods/square` | クレジットカードの登録・変更（決済を伴わない。マイページから） | 必要（本人のみ） |
 | DELETE | `/api/payment-methods/square` | 登録済みクレジットカードの削除 | 必要（本人のみ） |
 | POST | `/api/payments/paypay` | PayPay 決済処理（予約作成込み。確定はコールバックまたは `/bookings`・`/events/[id]` ロード時の照会で行う。`docs/architecture.md` の決済フロー参照） | 必要 |
-| POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理 | 必要 |
+| POST | `/api/bookings/[id]/cancel` | 予約キャンセル・返金処理（席が空くので、キャンセル待ちの人へ通知する） | 必要 |
+| POST | `/api/events/[id]/waitlist` | キャンセル待ちの登録（満席の公開イベント・未予約・開始前のみ。10回/60秒のレート制限） | 必要（本人のみ） |
+| DELETE | `/api/events/[id]/waitlist` | キャンセル待ちの取り消し | 必要（本人のみ） |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始30分前〜開始15分後の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定し、紹介経由の初回参加なら紹介報酬（双方200pt）を付与 | 必要（本人のみ） |
 | POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
 | POST | `/api/profile/nickname` | ニックネーム変更（マイページから） | 必要（本人のみ） |

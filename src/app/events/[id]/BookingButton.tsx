@@ -15,12 +15,14 @@ export default function BookingButton({
   user,
   userBooking,
   isSoldOut,
+  isWaitlisted = false,
   options = [],
 }: {
   event: Event;
   user: User;
   userBooking: Booking;
   isSoldOut: boolean;
+  isWaitlisted?: boolean;
   options?: EventOption[];
 }) {
   const router = useRouter();
@@ -106,9 +108,12 @@ export default function BookingButton({
 
   if (isSoldOut) {
     return (
-      <button disabled className="w-full bg-base-200 text-ink-300 font-noto font-medium py-3 rounded-md cursor-not-allowed">
-        満席
-      </button>
+      <div className="space-y-3">
+        <button disabled className="w-full bg-base-200 text-ink-300 font-noto font-medium py-3 rounded-md cursor-not-allowed">
+          満席
+        </button>
+        <WaitlistButton eventId={event.id} isSoldOut isWaitlisted={isWaitlisted} />
+      </div>
     );
   }
 
@@ -172,6 +177,66 @@ export default function BookingButton({
           予約する
         </button>
       )}
+      <WaitlistButton eventId={event.id} isSoldOut={false} isWaitlisted={isWaitlisted} />
+    </div>
+  );
+}
+
+// キャンセル待ち（2026-10-25）。満席のときだけ押せる。登録すると、空きが出たときにメールで知らせる
+function WaitlistButton({ eventId, isSoldOut, isWaitlisted }: { eventId: string; isSoldOut: boolean; isWaitlisted: boolean }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // サーバーの最新の状態が届いたら、押せる状態に戻す
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 登録・取り消しの反映を契機にリセットする
+    setLoading(false);
+  }, [isWaitlisted, isSoldOut]);
+
+  async function handleClick() {
+    setLoading(true);
+    setError(null);
+    const res = await fetch(`/api/events/${eventId}/waitlist`, { method: isWaitlisted ? "DELETE" : "POST" });
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error ?? "処理に失敗しました");
+      setLoading(false);
+      return;
+    }
+    router.refresh();
+  }
+
+  if (isSoldOut && isWaitlisted) {
+    return (
+      <div className="space-y-2">
+        <p className="font-noto text-sm text-ink-500 text-center">キャンセル待ち中です。空きが出たらメールでお知らせします。</p>
+        {error && <div className="bg-red-50 text-red-600 font-noto text-sm px-4 py-3">{error}</div>}
+        <button
+          onClick={handleClick}
+          disabled={loading}
+          className="w-full border border-ink-300 text-ink-500 font-noto font-medium py-3 rounded-md hover:bg-base-100 transition disabled:opacity-60"
+        >
+          {loading ? "処理中..." : "キャンセル待ちを取り消す"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {error && <div className="bg-red-50 text-red-600 font-noto text-sm px-4 py-3">{error}</div>}
+      <button
+        onClick={handleClick}
+        disabled={!isSoldOut || loading}
+        className={`w-full font-noto font-medium py-3 rounded-md transition ${
+          isSoldOut
+            ? "border border-ink-500 text-ink-700 hover:bg-base-200 disabled:opacity-60"
+            : "border border-base-200 text-ink-300 cursor-not-allowed"
+        }`}
+      >
+        {loading ? "処理中..." : "キャンセル待ちをする"}
+      </button>
     </div>
   );
 }

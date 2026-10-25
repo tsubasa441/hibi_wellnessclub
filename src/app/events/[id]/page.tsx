@@ -56,7 +56,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     supabase.from("bookings").select("*").eq("event_id", id).eq("user_id", user.id).eq("status", "confirmed").single();
 
   // 待ち時間を減らすため、PayPay 予約の照会と各種取得を同時に走らせる
-  const [reconciled, { data: event }, countRes, { data: eventOptions }, bookingRes] = await Promise.all([
+  const [reconciled, { data: event }, countRes, { data: eventOptions }, bookingRes, { data: waitlistEntry }] = await Promise.all([
     reconcilePendingPayPayBookings(supabase, user, { eventId: id }),
     supabase.from("events").select("*").eq("id", id).single(),
     fetchBookedCount(),
@@ -66,6 +66,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       .eq("event_id", id)
       .order("sort_order", { ascending: true }),
     fetchUserBooking(),
+    // 自分のキャンセル待ち（RLS で本人の行のみ）
+    supabase.from("event_waitlist").select("id").eq("event_id", id).eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (!event) notFound();
@@ -166,6 +168,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               user={user}
               userBooking={userBooking}
               isSoldOut={isSoldOut}
+              isWaitlisted={Boolean(waitlistEntry)}
               options={eventOptions ?? []}
             />
           </div>
