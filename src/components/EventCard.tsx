@@ -48,8 +48,8 @@ export default function EventCard({ event, href }: { event: EventCardEvent; href
         {/* 種別名の長さ（ヨガ〜トレーニング）で右の文字の位置がずれないよう、左の列は幅を固定する */}
         <div className="flex flex-col items-center gap-2 shrink-0 w-[92px]">
           <EventTypeIcon type={event.event_type} label={label} />
-          {/* ラベルの幅は一番長い「トレーニング」（6文字）に合わせて全種別で同じにする */}
-          <span className="inline-flex w-full items-center justify-center text-xs font-noto font-medium px-2.5 py-1 rounded-full whitespace-nowrap bg-sage-100 text-ink-700">
+          {/* 種別名は枠なしの文字だけ（2026-10-25、依頼者の指定）。列の幅は一番長い「トレーニング」に合わせてある */}
+          <span className="w-full text-center text-xs font-noto font-medium whitespace-nowrap text-ink-700">
             {label}
           </span>
         </div>
