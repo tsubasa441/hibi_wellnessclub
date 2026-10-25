@@ -96,17 +96,14 @@ export default async function BookingsPage() {
               const refundable = diffDays >= 2;
               return (
                 <div key={booking.id} className="bg-white -mx-4 sm:mx-0 p-4 sm:px-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <Link href={`/events/${booking.event_id}`} className="flex-1 min-w-0 flex items-start gap-3">
-                      <EventTypeIcon type={booking.events.event_type} />
-                      <div className="min-w-0">
-                        <p className="font-outfit font-semibold text-sm text-ink-700">{booking.events.title}</p>
-                        <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(booking.events.start_at)}</p>
-                        <p className="font-dm text-xs text-ink-300">{booking.events.location}</p>
-                      </div>
-                    </Link>
-                    <span className="font-outfit text-xs font-medium text-ink-700 bg-sage-100 px-2 py-1 rounded-full shrink-0">予約済み</span>
-                  </div>
+                  <Link href={`/events/${booking.event_id}`} className="flex items-start gap-3">
+                    <EventTypeIcon type={booking.events.event_type} />
+                    <div className="min-w-0">
+                      <p className="font-outfit font-semibold text-sm text-ink-700">{booking.events.title}</p>
+                      <p className="font-dm text-xs text-ink-300 mt-1">{formatDateTime(booking.events.start_at)}</p>
+                      <p className="font-dm text-xs text-ink-300">{booking.events.location}</p>
+                    </div>
+                  </Link>
                   <div className="mt-3 pt-3 border-t border-base-200 flex items-start justify-between gap-3">
                     <CheckInButton
                       bookingId={booking.id}
