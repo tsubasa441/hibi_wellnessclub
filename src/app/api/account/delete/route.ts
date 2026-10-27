@@ -2,20 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
-import { encrypt } from "@/lib/encrypt";
-import { randomUUID } from "crypto";
 
-// 匿名化後の氏名。profiles.name / name_roman は NOT NULL 制約があるため null にはできず、
-// 他の氏名カラム同様「暗号文が入っている」前提のコード（管理者一覧・CSV の decrypt 等）を
-// 壊さないよう、個人情報を含まないプレースホルダを暗号化して入れる。
-const ANONYMIZED_NAME = "退会済みユーザー";
-
-// アカウント削除：氏名・性別・生年月日・メールアドレス等の個人情報のみ匿名化し、
-// 予約・決済・ポイント履歴等は user_id を保持したまま残す（会計上の記録、および
-// 自分が紹介した相手の紹介実績表示に影響を与えないため）。auth.users の行自体は
-// 削除しない（profiles.id が auth.users(id) on delete cascade のため、削除すると
-// bookings 等の履歴も連鎖的に消えてしまう）。ログイン自体は ban_duration で無効化する。
-export async function POST(req: NextRequest) {
+// アカウント削除（退会）：ログイン情報（auth.users）を削除する（2026-10-27、依頼者の指定で匿名化から変更）。
+// profiles は auth.users に連動して消え、ポイントの記録・バッジ・紹介・お問い合わせ・キャンセル待ち等も一緒に消える。
+// 予約・支払いの記録だけは売上の記録として、user_id を null にして残す（035_retain_booking_records.sql）。
+// これからの予約がある場合は、返金の有無（2日前ルール）を本人に確かめてもらうため、先にキャンセルしてもらう。
+export async function POST(_req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -40,41 +32,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const service = createServiceClient();
-
-  const { error: profileError } = await service
-    .from("profiles")
-    .update({
-      name: encrypt(ANONYMIZED_NAME),
-      name_roman: encrypt(ANONYMIZED_NAME),
-      name_kana: null,
-      nickname: ANONYMIZED_NAME,
-      gender: null,
-      birth_date: null,
-      referral_code_used: null,
-      avatar_url: null,
-    })
-    .eq("id", user.id);
-
-  if (profileError) {
-    return NextResponse.json({ error: "アカウントの削除に失敗しました" }, { status: 500 });
+  const { data: bookings } = await supabase
+    .from("bookings")
+    .select("id, event_start_at, event_end_at")
+    .eq("user_id", user.id)
+    .eq("status", "confirmed");
+  const now = Date.now();
+  const hasUpcoming = (bookings ?? []).some((b) => {
+    if (!b.event_start_at) return false;
+    const end = b.event_end_at ? new Date(b.event_end_at).getTime() : new Date(b.event_start_at).getTime() + 2 * 60 * 60 * 1000;
+    return end > now;
+  });
+  if (hasUpcoming) {
+    return NextResponse.json(
+      { error: "これからのイベントの予約があります。予約済みの画面で予約をキャンセルしてから、退会してください。" },
+      { status: 400 }
+    );
   }
 
-  // auth.users も、パスワード・メールアドレス（＝ログインに使える個人情報）を無効化した上で
-  // 実質的に永久ログイン不可にする（Supabaseの ban_duration は無期限指定ができないため、
-  // 十分に長い期間を指定する慣例に従う）
-  const { error: authError } = await service.auth.admin.updateUserById(user.id, {
-    email: `deleted-${user.id}@deleted.invalid`,
-    password: randomUUID() + randomUUID(),
-    ban_duration: "876000h",
-    user_metadata: {},
-  });
-
-  if (authError) {
-    return NextResponse.json(
-      { error: "個人情報の匿名化は完了しましたが、ログイン無効化処理に失敗しました。運営にご連絡ください。" },
-      { status: 500 }
-    );
+  const { error } = await createServiceClient().auth.admin.deleteUser(user.id);
+  if (error) {
+    return NextResponse.json({ error: "アカウントの削除に失敗しました。時間をおいて、もう一度お試しください。" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

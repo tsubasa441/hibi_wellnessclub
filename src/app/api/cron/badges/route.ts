@@ -68,7 +68,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ processed: 0 });
   }
 
-  const userIds = [...new Set(bookings.map((b: { user_id: string }) => b.user_id))];
+  // 退会したユーザーの予約は user_id が null で残る（035）ため除く
+  const userIds = [...new Set(bookings.map((b: { user_id: string | null }) => b.user_id))].filter(
+    (id): id is string => Boolean(id)
+  );
 
   await Promise.all(userIds.map((userId) => checkEventBadges(supabase, userId)));
 

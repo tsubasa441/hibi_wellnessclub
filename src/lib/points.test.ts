@@ -182,7 +182,7 @@ describe("checkAndAwardPendingPoints", () => {
     from.mockReturnValueOnce(chainable({ data: { rank_level: 4 } })); // profiles（Leaf = 40pt）
     from.mockReturnValueOnce(
       chainable(
-        { data: [{ id: "b1", event_id: "e1", checked_in_at: PAST_EVENT_ISO, events: { start_at: PAST_EVENT_ISO } }] },
+        { data: [{ id: "b1", event_id: "e1", checked_in_at: PAST_EVENT_ISO, event_start_at: PAST_EVENT_ISO }] },
         { not: notSpy }
       )
     ); // bookings（checked_in_at で絞る）
@@ -201,7 +201,7 @@ describe("checkAndAwardPendingPoints", () => {
     const { supabase, from, rpc } = createSupabaseMock();
     from.mockReturnValueOnce(chainable({ data: { rank_level: 1 } })); // profiles（Seed = 30pt）
     from.mockReturnValueOnce(
-      chainable({ data: [{ id: "b1", event_id: "e1", events: { start_at: PAST_EVENT_ISO } }] })
+      chainable({ data: [{ id: "b1", event_id: "e1", event_start_at: PAST_EVENT_ISO }] })
     ); // bookings
     from.mockReturnValueOnce(chainable({ error: null })); // points_log insert（参加pt）
     from.mockReturnValueOnce(chainable({ data: [{ id: "e1" }] })); // 当月の公開イベント（1件）
@@ -218,7 +218,7 @@ describe("checkAndAwardPendingPoints", () => {
     const { supabase, from, rpc } = createSupabaseMock();
     from.mockReturnValueOnce(chainable({ data: { rank_level: 1 } })); // profiles
     from.mockReturnValueOnce(
-      chainable({ data: [{ id: "b1", event_id: "e1", events: { start_at: FUTURE_EVENT_ISO } }] })
+      chainable({ data: [{ id: "b1", event_id: "e1", event_start_at: FUTURE_EVENT_ISO }] })
     ); // bookings（未来のみ）
 
     await checkAndAwardPendingPoints(supabase, "user-1");

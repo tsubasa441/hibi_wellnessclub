@@ -6,8 +6,10 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   createServerClient: vi.fn(),
   isAdmin: vi.fn(),
+  cancelEventBookings: vi.fn(),
 }));
 
+vi.mock("@/lib/eventCancellation", () => ({ cancelEventBookings: mocks.cancelEventBookings }));
 vi.mock("@/lib/waitlist", () => ({ notifyWaitlistIfSeatsOpen: vi.fn().mockResolvedValue(0) }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: mocks.createServerClient,
@@ -131,33 +133,66 @@ describe("DELETE /api/admin/events/[id]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("既に削除済み（cancelled）の場合は400を返す", async () => {
+  function setupAdmin(event: { start_at: string; end_at: string | null }) {
     const { from } = createSupabaseMock();
     mocks.getUser.mockResolvedValueOnce({ data: { user: { id: "admin-1" } } });
     mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser }, from });
     mocks.isAdmin.mockResolvedValueOnce(true);
-    from.mockReturnValueOnce(chainable({ data: { id: "event-1", status: "cancelled" }, error: null }));
+    from.mockReturnValueOnce(chainable({ data: { id: "event-1", status: "published", ...event }, error: null }));
+    return from;
+  }
+  const HOUR = 60 * 60 * 1000;
+  const iso = (offsetMs: number) => new Date(Date.now() + offsetMs).toISOString();
+
+  it("開催中のイベントは400で削除しない", async () => {
+    setupAdmin({ start_at: iso(-HOUR / 2), end_at: iso(HOUR / 2) });
 
     const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
 
     expect(res.status).toBe(400);
+    expect(mocks.cancelEventBookings).not.toHaveBeenCalled();
   });
 
-  it("正常時は物理削除ではなくstatusをcancelledへ更新する", async () => {
-    const { from } = createSupabaseMock();
-    mocks.getUser.mockResolvedValueOnce({ data: { user: { id: "admin-1" } } });
-    mocks.createServerClient.mockReturnValueOnce({ auth: { getUser: mocks.getUser }, from });
-    mocks.isAdmin.mockResolvedValueOnce(true);
+  it("終了済みのイベントは返金せずにDBから削除する", async () => {
+    const from = setupAdmin({ start_at: iso(-3 * HOUR), end_at: iso(-2 * HOUR) });
+    const deleteSpy = vi.fn();
+    from.mockReturnValueOnce(chainable({ error: null }, { delete: deleteSpy }));
 
-    from.mockReturnValueOnce(chainable({ data: { id: "event-1", status: "published" }, error: null }));
-    const updateSpy = vi.fn();
-    from.mockReturnValueOnce(chainable({ error: null }, { update: updateSpy }));
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
+
+    expect(res.status).toBe(200);
+    expect(deleteSpy).toHaveBeenCalled();
+    expect(mocks.cancelEventBookings).not.toHaveBeenCalled();
+  });
+
+  it("これからのイベントは予約を中止・返金してから削除する", async () => {
+    const from = setupAdmin({ start_at: iso(24 * HOUR), end_at: iso(25 * HOUR) });
+    mocks.cancelEventBookings.mockResolvedValueOnce({ cancelled: 2, failedBookingIds: [] });
+    const deleteSpy = vi.fn();
+    from.mockReturnValueOnce(chainable({ error: null }, { delete: deleteSpy }));
 
     const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.success).toBe(true);
+    expect(mocks.cancelEventBookings).toHaveBeenCalledWith("event-1");
+    expect(json.cancelledBookings).toBe(2);
+    expect(deleteSpy).toHaveBeenCalled();
+  });
+
+  it("返金に失敗した予約があればイベントを消さず非公開にして500を返す", async () => {
+    const from = setupAdmin({ start_at: iso(24 * HOUR), end_at: null });
+    mocks.cancelEventBookings.mockResolvedValueOnce({ cancelled: 2, failedBookingIds: ["b-1"] });
+    const updateSpy = vi.fn();
+    const deleteSpy = vi.fn();
+    from.mockReturnValueOnce(chainable({ error: null }, { update: updateSpy, delete: deleteSpy }));
+
+    const res = await DELETE(makeRequest(), { params: Promise.resolve({ id: "event-1" }) });
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.failedBookingIds).toEqual(["b-1"]);
     expect(updateSpy).toHaveBeenCalledWith({ status: "cancelled" });
+    expect(deleteSpy).not.toHaveBeenCalled();
   });
 });

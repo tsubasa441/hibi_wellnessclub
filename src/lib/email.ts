@@ -296,6 +296,36 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
   });
 }
 
+// 運営がイベントを中止したことを予約者へ知らせる（代金は時期を問わず全額返金、ポイントも払い戻し）
+export async function sendEventCancelledNotification(params: {
+  to: string;
+  userName: string;
+  eventTitle: string;
+  startAt: string;
+  refundedAmount: number;
+  pointsRefunded: number;
+}) {
+  const { to, userName, eventTitle, startAt, refundedAmount, pointsRefunded } = params;
+  const refundLines: string[] = [];
+  if (refundedAmount > 0) refundLines.push(`お支払い金額（${priceLabel(refundedAmount)}）は全額返金します。反映までに数日かかる場合があります。`);
+  if (pointsRefunded > 0) refundLines.push(`ご利用いただいた${pointsRefunded.toLocaleString("ja-JP")}ptは、ポイント残高に払い戻しました。`);
+  if (refundLines.length === 0) refundLines.push("お支払いはありませんでした。");
+
+  await sendEmail("event_cancelled", {
+    from: FROM,
+    to,
+    subject: `【Hibi】イベント中止のお知らせ：${eventTitle}`,
+    html: emailLayout(`
+              ${greeting(userName)}
+              ${title("イベント中止のお知らせ")}
+              ${paragraph("誠に申し訳ございません。ご予約いただいていた以下のイベントは、中止となりました。ご予約はキャンセルしております。")}
+              ${infoBox({ heading: eventTitle, rows: [["日時", formatDateTime(startAt)]] })}
+              ${noteBox("返金について", refundLines.join("<br />"))}
+              ${button(`${SITE_URL}/events`, "ほかのイベントを探す")}
+              ${smallNote("ご不明な点は、アプリのマイページ「お問い合わせ」からご連絡ください。")}`),
+  });
+}
+
 // ---- お問い合わせ・キャンセル待ち ----
 
 // ユーザーからのお問い合わせを運営へ通知する（本文と、管理画面の該当スレッドへのリンク）

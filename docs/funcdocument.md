@@ -108,7 +108,12 @@
 | amount_charged | integer | Square / PayPay に実際に請求した金額（円）。ポイント全額充当時は0。価格変動時の返金額算出にはこの値を使う（`events.price` は使わない） |
 | option_selections | jsonb | 予約時の選択項目（`event_options`）の回答スナップショット。形: `[{ "option_id": uuid, "label": text, "values": [text] }]`。既定 `[]`。決済額・返金には無関係 |
 | checked_in_at | timestamptz | チェックイン日時。`null` = 未チェックイン。**チェックインが「参加」の唯一の条件**（参加ポイント・月間ボーナス・クラスバッジ・ランクの累計参加回数はチェックイン済みの予約のみでカウント）。ユーザーがイベント開始30分前〜開始15分後の間に（2026-10-25 に「開始〜終了」から変更。`src/lib/checkinWindow.ts`） `POST /api/bookings/[id]/checkin` でセットする。書き込みは API が service_role で行う（`bookings` の UPDATE RLS は不可のまま） |
+| event_title / event_start_at / event_end_at / event_type | text / timestamptz / timestamptz / text | イベントのスナップショット（2026-10-27 追加、`035_retain_booking_records.sql`）。予約作成時にトリガーで `events` から写し、イベントの編集時も同期する。イベントを削除しても参加回数・参加ポイント・バッジ・支払いの記録が分かるよう、`points.ts`・`badges.ts` はこちらを使う |
 | created_at | timestamptz | |
+
+**記録の保持（2026-10-27）**：`bookings.user_id` → `profiles`、`bookings.event_id` → `events` の外部キーは `on delete set null`。退会（`auth.users` の削除）やイベントの削除で予約は消えず、誰の・どのイベントのものか分からない形で、支払いの記録として残る。
+
+**自動削除（毎日、`GET /api/cron/cleanup`）**：お問い合わせは最後のやり取りから30日たったスレッドを丸ごと削除する（`src/lib/dataRetention.ts`）。`rate_limits` は1日より古い行を削除する。
 
 ### badges
 
@@ -215,13 +220,14 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | POST | `/api/admin/support/[userId]/messages` | お問い合わせへの返信（ユーザーへメールで通知。退会済みには送らない） | 必要（管理者のみ） |
 | POST | `/api/convert-name` | 名前ローマ字変換 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/auth/forgot-password` | パスワード再設定メール送信 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
-| POST | `/api/account/delete` | アカウント削除（`profiles`の個人情報を匿名化・`auth.users`をban_durationで無効化。予約等の履歴は保持） | 必要（本人のみ、管理者は不可） |
+| POST | `/api/account/delete` | アカウント削除（`auth.users` を削除し、関連データも連鎖して削除。予約＝支払いの記録だけは `user_id` を null にして保持。終了前の予約がある間は不可） | 必要（本人のみ、管理者は不可） |
 | POST | `/api/account/email` | メールアドレス変更の申し込み（マイページから。現在のパスワードを確認してから Supabase に申し込む。切り替わるのは新旧両方のアドレスの確認メールのリンクが押されたとき。5回/600秒のレート制限。2026-10-24 追加。@docs/authdesign.md 参照） | 必要（本人のみ） |
 | GET | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron。GETのみexport、Vercel Cronの既定に合わせた実装） | 不要（Cron Secret） |
+| GET | `/api/cron/cleanup` | 古いデータの削除（毎日 3:00 JST。30日やり取りのないお問い合わせ・古い `rate_limits`） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
 | POST | `/api/admin/events` | イベント作成（`event_options` の作成を含む） | 必要（管理者のみ） |
 | PATCH | `/api/admin/events/[id]` | イベント更新（`event_options` を置き換え方式で更新） | 必要（管理者のみ） |
-| DELETE | `/api/admin/events/[id]` | イベント削除（論理削除。`status` を `cancelled` に更新するのみ） | 必要（管理者のみ） |
+| DELETE | `/api/admin/events/[id]` | イベント削除（物理削除。終了済みはそのまま削除、開催中は不可、これからのイベントは「中止」として確定予約を全額返金・ポイント払い戻し・中止のお知らせメール（`src/lib/eventCancellation.ts`）のあと削除。返金に失敗した予約があれば削除せず非公開にして 500） | 必要（管理者のみ） |
 | GET | `/api/admin/events/[id]/participants/export` | 参加者一覧の CSV エクスポート | 必要（管理者のみ） |
 
 イベント一覧・詳細・プロフィールの取得は API Routes を介さず、Server Component から Supabase に直接クエリする（`docs/architecture.md` のデータフロー参照）。管理画面のイベント一覧・編集・参加者一覧も同様に Server Component から直接クエリし、書き込み（作成・更新・削除・CSV）のみ上記 API Routes を介する。`event_options` の取得（イベント詳細・決済画面・管理編集画面）も Server Component から直接クエリする。選択項目の回答は決済 API（`/api/payments/*`）でサーバー側検証（必須・選択肢の妥当性・単一/複数）してから `bookings.option_selections` に保存する。

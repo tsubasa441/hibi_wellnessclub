@@ -41,7 +41,8 @@ Next.js 16 に関する実装上の注意（2026-09-21 に 14 から更新）：
 - **レート制限**: `src/lib/rateLimit.ts` の `checkRateLimit()` が Supabase の `check_rate_limit` RPC（`rate_limits`テーブル、service_role専用）を使い、決済・サインアップ・チェックイン・キャンセル・アカウント削除等の主要APIをユーザーID（未認証のconvert-nameのみIPアドレス）単位で制限する
 - **セキュリティヘッダー / CSP**: `next.config.mjs` の `headers()` で全ルートに `X-Frame-Options`・`X-Content-Type-Options`・`Referrer-Policy`・`Permissions-Policy`・`Strict-Transport-Security` を付与。`Content-Security-Policy` はまず `Content-Security-Policy-Report-Only` として段階導入し、Square決済iframe等を壊さないことを確認してから本適用に切り替える運用（環境変数 `CSP_REPORT_ONLY=false` で本適用。`NEXT_PUBLIC_SENTRY_DSN` 設定時は CSP 違反レポートを Sentry に送信）。Sentry の疎通確認は `GET /api/debug/sentry?token=<CRON_SECRET>`（`docs/deployment.md` 参照）
 - **エラー監視**: `@sentry/nextjs` を導入（`sentry.server.config.ts`・`sentry.edge.config.ts`・`src/instrumentation.ts`・`src/instrumentation-client.ts`・`src/app/global-error.tsx`）。`SENTRY_DSN`・`NEXT_PUBLIC_SENTRY_DSN` が未設定の場合はSDKが何もしない安全なno-op状態になる
-- **アカウント削除**: マイページ（`/mypage`）の「退会」→ `POST /api/account/delete`。個人情報のみ匿名化し、予約・決済・ポイント等の履歴データは保持する（@docs/authdesign.md参照）
+- **アカウント削除**: マイページ（`/mypage`）の「退会」→ `POST /api/account/delete`。`auth.users` を削除して関連データも消し、予約（支払いの記録）だけを `user_id` null で残す（@docs/authdesign.md参照）
+- **データの保持**: イベントの削除・退会で予約は消えず、`035` のスナップショット列（イベント名・日時・種別）で参加回数・ポイント・バッジを判定する。毎日の `/api/cron/cleanup` が30日やり取りのないお問い合わせと古い `rate_limits` を削除する
 
 ---
 
@@ -100,20 +101,21 @@ src/
 │   │       ├── new/page.tsx      # イベント新規作成
 │   │       └── [id]/
 │   │           ├── page.tsx             # イベント編集
-│   │           ├── DeleteEventButton.tsx  # 論理削除ボタン（Client Component）
+│   │           ├── DeleteEventButton.tsx  # 削除・中止ボタン（終了済み／開催中／これから で確認文を出し分け。Client Component）
 │   │           └── participants/page.tsx  # 参加者一覧・CSVダウンロード導線
 │   │   └── support/
 │   │       ├── page.tsx          # お問い合わせ一覧（ユーザーごとのスレッド・未読数・未返信）
 │   │       └── [userId]/page.tsx # 1人とのやり取り・返信（開いた時点でユーザーからのメッセージを既読にする）
 │   ├── global-error.tsx         # ルートのエラーバウンダリ（Sentryへ送信）
 │   └── api/
-│       ├── account/delete/route.ts        # アカウント削除（個人情報の匿名化・auth.users無効化）
+│       ├── account/delete/route.ts        # アカウント削除（auth.users の削除。予約の記録のみ残る）
 │       ├── account/email/route.ts         # メールアドレス変更の申し込み（現在のパスワードを確認→PKCEを使わないクライアントでupdateUser。確定は確認メールのリンク）
 │       ├── auth/forgot-password/route.ts  # パスワード再設定メール送信（未認証・IPアドレスでレート制限。PKCEを使わないservice_roleクライアントでresetPasswordForEmail()を呼び、/auth/confirmのverifyOtpと互換性のあるtoken_hashを発行させる）
 │       ├── bookings/[id]/cancel/route.ts   # 予約キャンセル・返金処理
 │       ├── bookings/[id]/checkin/route.ts  # イベントチェックイン（時間ゲート・service_role更新）
 │       ├── convert-name/route.ts          # 名前ローマ字変換（未認証・IPアドレスでレート制限）
 │       ├── cron/badges/route.ts           # バッジ付与 Cron（Vercel）
+│       ├── cron/cleanup/route.ts          # 古いデータの削除 Cron（毎日。お問い合わせ30日・rate_limits）
 │       ├── debug/sentry/route.ts          # Sentry疎通確認（?token=<CRON_SECRET>で意図的にエラー。不一致は404）
 │       ├── payments/
 │       │   ├── square/route.ts             # 保存済みカードでの決済（useSavedCard）・新カードでの決済成功時の自動保存を含む
@@ -128,7 +130,7 @@ src/
 │       └── admin/events/
 │           ├── route.ts                    # POST イベント作成
 │           └── [id]/
-│               ├── route.ts                # PATCH 更新 / DELETE 論理削除
+│               ├── route.ts                # PATCH 更新 / DELETE 削除（これからのイベントは中止・全額返金のうえ削除）
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
 │   ├── LoadingScreen.tsx       # 画面遷移・処理待ちの全画面の読み込み画面（各画面の loading.tsx から使う）
@@ -150,6 +152,9 @@ src/
 │   ├── admin.ts                # 管理者判定（isAdmin）
 │   ├── badges.ts               # バッジ付与ロジック
 │   ├── csv.ts                  # CSV生成ヘルパー
+│   ├── dataRetention.ts        # 古いデータの削除（30日やり取りのないお問い合わせ・古い rate_limits）
+│   ├── eventCancellation.ts    # イベント中止：確定予約のキャンセル・全額返金・ポイント払い戻し・中止のお知らせメール
+│   ├── refunds.ts              # Square / PayPay の全額返金（イベント中止用）
 │   ├── authStyles.ts           # 認証系画面（ログイン・登録完了・パスワード再設定）共通の入力欄・ラベル・ボタン・見出しのクラス
 │   ├── date.ts                 # JST基準の日付・時刻ヘルパー（サーバーの実行タイムゾーンに依存しないための共通処理）
 │   ├── email.ts                # メール送信（Resend）。予約確定・キャンセル・お問い合わせの通知（運営宛て・ユーザー宛て）・キャンセル待ちの空きのお知らせ。全メール共通の外枠 emailLayout（2026-10-27、アプリと同じテイスト：クリームの背景・ロゴ画像・角丸なしの白いカード・インク色の角丸 6px のボタン・最下部に濃い帯のフッター。日時は24時間表記）。ユーザーの入力・イベント名は HTML エスケープして差し込む

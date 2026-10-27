@@ -50,7 +50,7 @@
 | VerifyForm | `app/auth/verify/VerifyForm.tsx` | パスワード再設定の確認ページのフォーム。「パスワードを再設定する」ボタンで `POST /auth/confirm`。送信中はボタンを無効化して二重押しを防ぐ | ✅ |
 | AdminNav | `app/admin/AdminNav.tsx` | 管理画面用ナビ（ログアウト・ユーザー画面への導線） | ✅ |
 | EventForm | `app/admin/events/EventForm.tsx` | イベント作成/編集共通フォーム | ✅ |
-| DeleteEventButton | `app/admin/events/[id]/DeleteEventButton.tsx` | イベント論理削除の確認ダイアログ | ✅ |
+| DeleteEventButton | `app/admin/events/[id]/DeleteEventButton.tsx` | イベント削除の確認ダイアログ。終了済み＝内容を削除（参加・支払いの記録は残る）、これからで予約あり＝「イベントを中止する（n人に返金）」、開催中＝ボタンを出さず案内のみ。返金に失敗した予約があればエラーに予約 ID を出す | ✅ |
 
 ---
 

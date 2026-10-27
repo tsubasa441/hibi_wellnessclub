@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { EventInput, validateEventInput } from "@/lib/eventValidation";
 import { notifyWaitlistIfSeatsOpen } from "@/lib/waitlist";
+import { cancelEventBookings } from "@/lib/eventCancellation";
 
 function normalizeOptions(options: EventInput["options"]) {
   return (options ?? [])
@@ -114,27 +115,44 @@ export async function DELETE(
 
   const { data: existing } = await supabase
     .from("events")
-    .select("id, status")
+    .select("id, status, start_at, end_at")
     .eq("id", id)
     .single();
 
   if (!existing) {
     return NextResponse.json({ error: "イベントが見つかりません" }, { status: 404 });
   }
-  if (existing.status === "cancelled") {
-    return NextResponse.json({ error: "既に削除済みです" }, { status: 400 });
+
+  // イベントは DB から完全に削除する（2026-10-27、依頼者の指定）。予約は 035 で event_id が null になって残るため、
+  // 参加回数・参加ポイント・支払いの記録は消えない。終了前のイベントの削除は「中止」として、予約者全員に全額返金する
+  const now = Date.now();
+  const start = new Date(existing.start_at).getTime();
+  const end = existing.end_at ? new Date(existing.end_at).getTime() : start + 2 * 60 * 60 * 1000;
+  if (start <= now && now < end) {
+    return NextResponse.json({ error: "開催中のイベントは削除できません。終了後に削除してください。" }, { status: 400 });
   }
 
-  // 物理削除はしない（bookings.event_id が on delete cascade のため、
-  // イベントを消すと紐づく予約履歴・決済履歴まで巻き添えで失われる）
-  const { error } = await supabase
-    .from("events")
-    .update({ status: "cancelled" })
-    .eq("id", id);
+  let refundedBookings = 0;
+  if (end > now) {
+    const { cancelled, failedBookingIds } = await cancelEventBookings(id);
+    refundedBookings = cancelled;
+    if (failedBookingIds.length > 0) {
+      // 返金できなかった予約がある間はイベントを消さない（新しい予約は受け付けないよう非公開にする）
+      await supabase.from("events").update({ status: "cancelled" }).eq("id", id);
+      return NextResponse.json(
+        {
+          error: `返金できなかった予約が${failedBookingIds.length}件あります。Square・PayPay の管理画面で返金してください（予約ID：${failedBookingIds.join("、")}）。イベントは非公開にしました。`,
+          failedBookingIds,
+        },
+        { status: 500 }
+      );
+    }
+  }
 
+  const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) {
     return NextResponse.json({ error: "削除に失敗しました" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, cancelledBookings: refundedBookings });
 }

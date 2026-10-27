@@ -29,23 +29,19 @@ export async function checkEventBadges(
   const ym = getYearMonthJst();
   const { start, end } = getJstMonthBounds(ym);
 
-  // 今月チェックインした予約とそのイベント種別を取得（チェックインが参加の条件）
+  // 今月チェックインした予約とそのイベント種別を取得（チェックインが参加の条件）。
+  // 種別は予約に書き写したもの（event_type）を使う。管理者がイベントを削除しても数えられるように（035）
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("id, checked_in_at, events(event_type)")
+    .select("id, checked_in_at, event_type")
     .eq("user_id", userId)
     .eq("status", "confirmed")
     .not("checked_in_at", "is", null)
     .gte("checked_in_at", start)
     .lte("checked_in_at", end);
 
-  type BookingWithEvent = { events: { event_type: string } | { event_type: string }[] | null };
   const eventTypes = (bookings ?? [])
-    .map((b) => {
-      const ev = (b as unknown as BookingWithEvent).events;
-      if (!ev) return undefined;
-      return Array.isArray(ev) ? ev[0]?.event_type : ev.event_type;
-    })
+    .map((b) => (b as { event_type: string | null }).event_type)
     .filter((t): t is string => Boolean(t));
 
   const count = eventTypes.length;

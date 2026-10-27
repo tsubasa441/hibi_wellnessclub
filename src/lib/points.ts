@@ -58,17 +58,17 @@ export async function checkAndAwardPendingPoints(
 
   // チェックイン済み かつ イベント終了時刻（start_at + 2時間）を過ぎた confirmed 予約に
   // ランク応じたポイントを付与する。チェックインが参加の唯一の条件。
+  // 開催日時は予約に書き写したもの（event_start_at）を使う。管理者がイベントを削除しても付与できるように（035）
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("id, event_id, checked_in_at, events(start_at)")
+    .select("id, event_id, checked_in_at, event_start_at")
     .eq("user_id", userId)
     .eq("status", "confirmed")
     .not("checked_in_at", "is", null);
 
   const pastBookings = (bookings ?? []).filter((b) => {
-    const ev = Array.isArray(b.events) ? b.events[0] : b.events;
-    if (!ev) return false;
-    const endAt = new Date((ev as { start_at: string }).start_at);
+    if (!b.event_start_at) return false;
+    const endAt = new Date(b.event_start_at);
     endAt.setHours(endAt.getHours() + 2);
     return endAt <= now;
   });
@@ -82,9 +82,7 @@ export async function checkAndAwardPendingPoints(
 
   const months = new Set<string>();
   for (const booking of pastBookings) {
-    const ev = Array.isArray(booking.events) ? booking.events[0] : booking.events;
-    if (!ev) continue;
-    const startAt = new Date((ev as { start_at: string }).start_at);
+    const startAt = new Date(booking.event_start_at as string);
     const endAt = new Date(startAt);
     endAt.setHours(endAt.getHours() + 2);
     const eventYearMonth = getYearMonthJst(startAt);

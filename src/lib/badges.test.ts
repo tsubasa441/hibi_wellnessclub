@@ -33,7 +33,7 @@ describe("checkEventBadges", () => {
 
   it("1種目のみ初参加した場合はその種目の初参加バッジだけ判定し、回数バッジは判定しない", async () => {
     const { supabase, from } = createSupabaseMock();
-    from.mockReturnValueOnce(chainable({ data: [{ events: { event_type: "yoga" } }] })); // bookings
+    from.mockReturnValueOnce(chainable({ data: [{ event_type: "yoga" }] })); // bookings
     const insert = mockBadgeAward(from, "badge-yoga-first");
 
     await checkEventBadges(supabase, "user-1");
@@ -47,7 +47,7 @@ describe("checkEventBadges", () => {
 
   it("同月3回参加すると種目初参加バッジと3 Classesバッジの両方が付与される", async () => {
     const { supabase, from } = createSupabaseMock();
-    const bookings = Array.from({ length: 3 }, () => ({ events: { event_type: "training" } }));
+    const bookings = Array.from({ length: 3 }, () => ({ event_type: "training" }));
     from.mockReturnValueOnce(chainable({ data: bookings }));
     const firstBadgeInsert = mockBadgeAward(from, "badge-training-first");
     const countBadgeInsert = mockBadgeAward(from, "badge-3classes");
@@ -65,7 +65,7 @@ describe("checkEventBadges", () => {
 
   it("同月5回参加すると3 Classesと5 Classesの両方が付与される", async () => {
     const { supabase, from } = createSupabaseMock();
-    const bookings = Array.from({ length: 5 }, () => ({ events: { event_type: "training" } }));
+    const bookings = Array.from({ length: 5 }, () => ({ event_type: "training" }));
     from.mockReturnValueOnce(chainable({ data: bookings }));
     mockBadgeAward(from, "badge-training-first");
     const badge3 = mockBadgeAward(from, "badge-3classes");
@@ -80,7 +80,7 @@ describe("checkEventBadges", () => {
 
   it("バッジマスタが存在しない場合は user_badges への insert を行わない", async () => {
     const { supabase, from } = createSupabaseMock();
-    from.mockReturnValueOnce(chainable({ data: [{ events: { event_type: "yoga" } }] })); // bookings
+    from.mockReturnValueOnce(chainable({ data: [{ event_type: "yoga" }] })); // bookings
     from.mockReturnValueOnce(chainable({ data: null })); // badges select（マスタ不在）
 
     await checkEventBadges(supabase, "user-1");

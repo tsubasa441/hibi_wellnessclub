@@ -122,19 +122,15 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 ```
 1. ユーザーが下ナビの「マイページ」を開き「退会」を押す（2026-10-16 にヘッダーの設定ドロワーから移設。`SettingsMenu`）
 2. 確認ダイアログ（削除内容の説明）→ POST /api/account/delete
-3. サーバー側（service_role）で:
+3. サーバー側で:
    - is_admin なら 400 で拒否（管理者は運営に連絡してもらう運用）
-   - profiles の氏名・ローマ字氏名・フリガナ・ニックネーム・性別・生年月日・使用した紹介コード・
-     アバターURLを匿名化（nickname は「退会済みユーザー」に置換、他はnull）
-   - auth.users は削除しない（profiles.id が auth.users(id) on delete cascade のため、
-     削除すると bookings・journals・referrals 等の履歴も連鎖的に消えてしまう）。
-     代わりに supabase.auth.admin.updateUserById() でメールアドレスを
-     `deleted-<uuid>@deleted.invalid` に、パスワードをランダム値に置き換え、
-     ban_duration（十分に長い期間）でログイン自体を無効化する
+   - 終了前のイベントの確定予約があれば 400 で拒否（先に予約済みの画面でキャンセルしてもらう。
+     キャンセルポリシーどおりの返金を経ずに消えないように）
+   - service_role で supabase.auth.admin.deleteUser() を実行し、auth.users を完全に削除する
 4. クライアント側で supabase.auth.signOut() → / へリダイレクト
 ```
 
-予約・決済・ポイント履歴・紹介関係（`bookings`・`points_log`・`referrals`等）は `user_id` を保持したまま残す。会計上の記録を保つことと、自分が紹介した相手の紹介実績表示（Impact画面）に影響を与えないことが理由。
+2026-10-27、依頼者の指定で「匿名化して残す」から「完全に削除する」に変更した。`auth.users` の削除で `profiles` と、そこから `on delete cascade` の `points_log`・`user_badges`・`referrals`・`support_messages`・`event_waitlist`・`journals` 等が連鎖して消える。**予約（＝支払いの記録）だけは残す**：`bookings.user_id` は `on delete set null`（`035_retain_booking_records.sql`）のため、誰の予約か分からない形で、イベント名・日時・金額・決済 ID とともに残る。紹介者側の紹介実績・バッジは、`referrals` の行が消えるため数から減る。
 
 ## セッション管理
 
@@ -191,7 +187,7 @@ if (!user) redirect("/login");
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
 |---------|--------|--------|--------|--------|
 | profiles | 本人のみ／管理者は全件（`032_security_hardening.sql`） | 不可（トリガー） | 本人のみ（`is_admin`・`points` 列は本人からの変更を無効化。`029_lock_points.sql`） | 不可 |
-| events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（アプリからは呼ばず論理削除で運用） |
+| events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（2026-10-27 から物理削除。予約は `event_id` が null になって残る） |
 | event_options | 全員（親イベントが公開済みのもの）／管理者は全件 | 管理者のみ | 管理者のみ | 管理者のみ |
 | bookings | 本人のみ／管理者は全件 | 不可（予約の作成は決済 API が本人確認・残席・決済の上 service_role で行う。本人に許すと決済を通さず「支払い済み」の予約を作れてしまうため。`032_security_hardening.sql`） | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
 | points_log | 本人のみ | 不可（`src/lib/points.ts` が service_role で記録。本人に許すと参加ポイントの記録を消して再付与させられるため。`032`） | 不可 | 不可（取り消しも service_role） |

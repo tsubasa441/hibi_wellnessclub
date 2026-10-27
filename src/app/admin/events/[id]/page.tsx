@@ -7,16 +7,24 @@ import DeleteEventButton from "./DeleteEventButton";
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createClient();
-  const [{ data: event }, { data: options }] = await Promise.all([
+  const [{ data: event }, { data: options }, { count: bookingCount }] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).single(),
     supabase
       .from("event_options")
       .select("id, label, choices, multi_select, required, sort_order")
       .eq("event_id", id)
       .order("sort_order", { ascending: true }),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("event_id", id).eq("status", "confirmed"),
   ]);
 
   if (!event) notFound();
+
+  // 削除ボタンの確認文を、終了済み・開催中・これから（＝中止して返金）で出し分ける
+  // eslint-disable-next-line react-hooks/purity -- Server Component のためリクエストごとに1回だけ評価される
+  const now = Date.now();
+  const start = new Date(event.start_at).getTime();
+  const end = event.end_at ? new Date(event.end_at).getTime() : start + 2 * 60 * 60 * 1000;
+  const phase = end <= now ? "ended" : start <= now ? "ongoing" : "upcoming";
 
   return (
     <div>
@@ -38,7 +46,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       <EventForm mode="edit" initialEvent={event} initialOptions={options ?? []} />
 
       <div className="mt-8 pt-6 border-t border-base-200">
-        <DeleteEventButton eventId={event.id} disabled={event.status === "cancelled"} />
+        <DeleteEventButton eventId={event.id} phase={phase} bookingCount={bookingCount ?? 0} />
       </div>
     </div>
   );
