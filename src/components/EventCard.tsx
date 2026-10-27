@@ -42,7 +42,7 @@ export default function EventCard({ event, href }: { event: EventCardEvent; href
   return (
     <Link
       href={href}
-      className="block bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-5 hover:bg-base-50 transition"
+      className="group block bg-white -mx-4 sm:mx-0 px-4 py-5 sm:px-5 hover:bg-base-50 transition"
     >
       <div className="flex items-start gap-4">
         {/* 種別名の長さ（ヨガ〜トレーニング）で右の文字の位置がずれないよう、左の列は幅を固定する */}
@@ -65,6 +65,13 @@ export default function EventCard({ event, href }: { event: EventCardEvent; href
           </p>
         </div>
       </div>
+      {/* カード全体が詳細へのリンクだと伝わるよう、右下に行き先を示す（2026-10-27、依頼者の指定） */}
+      <p className="mt-3 flex items-center justify-end gap-1 font-noto text-sm font-medium text-sage-600">
+        詳しく見る
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </p>
     </Link>
   );
 }
