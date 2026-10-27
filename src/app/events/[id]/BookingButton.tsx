@@ -53,7 +53,7 @@ export default function BookingButton({
 
   async function handleCancel() {
     if (!userBooking) return;
-    if (!confirm("予約をキャンセルしますか？決済済みの場合は返金されます。")) return;
+    if (!confirm("予約をキャンセルしますか？\n\n2日前までのキャンセルは全額返金、前日・当日は返金対象外です（使ったポイントは払い戻します）。")) return;
     setCancelLoading(true);
     setCancelError(null);
     const res = await fetch(`/api/bookings/${userBooking.id}/cancel`, { method: "POST" });
