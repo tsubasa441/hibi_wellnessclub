@@ -126,7 +126,7 @@ export default async function CheckoutPage({
           <ul className="font-dm space-y-0.5">
             <li>・イベント当日までキャンセル可能です</li>
             <li>・2日前まで：全額返金</li>
-            <li>・前日・当日：返金対象外（キャンセル料100%）</li>
+            <li>・前日・当日：返金対象外（キャンセル料100%）。使ったポイントは払い戻し</li>
             <li>・悪天候等による中止：時期を問わず全額返金</li>
           </ul>
         </div>

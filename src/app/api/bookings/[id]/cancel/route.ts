@@ -84,7 +84,8 @@ export async function POST(
   const isPaid = booking.payment_status === "paid";
   const willRefund = isPaid && isRefundable && booking.payment_id != null && (booking.payment_method === "square" || booking.payment_method === "paypay");
   const pointsUsed = booking.points_used ?? 0;
-  const willRefundPoints = pointsUsed > 0 && isRefundable;
+  // 充当したポイントは、前日・当日のキャンセルでも払い戻す（2026-10-28、依頼者の指定。現金の返金は2日前まで）
+  const willRefundPoints = pointsUsed > 0;
 
   // 予約を確定的にキャンセル状態へ遷移（confirmed の場合のみ成功する条件付き更新）。
   // 返金APIを呼ぶ前にここで排他を取ることで、同時に届いた複数リクエストによる二重返金を防ぐ。
@@ -187,7 +188,6 @@ export async function POST(
     await serviceSupabase.from("bookings").update({ payment_status: "refunded" }).eq("id", bookingId);
   }
 
-  // 充当していたポイントを払い戻す（現金と同じ2日前ルールが適用される）
   if (willRefundPoints) {
     await refundUsedPoints(supabase, user.id, bookingId);
   }

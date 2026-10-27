@@ -233,7 +233,7 @@ describe("POST /api/bookings/[id]/cancel", () => {
     expect(mocks.paypayRefund).not.toHaveBeenCalled();
   });
 
-  it("前日キャンセル（2日ルール対象外）: 返金もポイント払い戻しも行わないが、参加ポイントの取消は行う", async () => {
+  it("前日キャンセル（2日ルール対象外）: 現金の返金はしないが、充当ポイントは払い戻し、参加ポイントの取消も行う", async () => {
     const { paymentStatusUpdateSpy } = setupSupabase({
       booking: makeBooking({ events: { start_at: "2026-07-21T00:00:00Z", price: 3000, title: "Yoga" }, points_used: 500 }),
     });
@@ -244,10 +244,10 @@ describe("POST /api/bookings/[id]/cancel", () => {
     expect(res.status).toBe(200);
     expect(mocks.refundPayment).not.toHaveBeenCalled();
     expect(paymentStatusUpdateSpy).not.toHaveBeenCalled();
-    expect(mocks.refundUsedPoints).not.toHaveBeenCalled();
+    expect(mocks.refundUsedPoints).toHaveBeenCalledWith(expect.anything(), "user-1", "booking-1");
     expect(mocks.revokeEventPoints).toHaveBeenCalled();
     expect(mocks.sendCancellationNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ refunded: false })
+      expect.objectContaining({ refunded: false, pointsUsed: 500 })
     );
   });
 

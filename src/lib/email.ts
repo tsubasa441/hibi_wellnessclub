@@ -235,10 +235,14 @@ export async function sendCancellationNotification(params: CancellationNotificat
   const pointsText = pointsUsed && pointsUsed > 0
     ? `（ご利用いただいた${pointsUsed.toLocaleString("ja-JP")}ptも残高に払い戻されます）`
     : "";
+  // 充当したポイントは時期を問わず払い戻す（2026-10-28）。現金を返金しない場合も、ポイントの払い戻しは伝える
+  const pointsOnlyText = pointsUsed && pointsUsed > 0
+    ? `ご利用いただいた${pointsUsed.toLocaleString("ja-JP")}ptは、ポイント残高に払い戻されます。`
+    : "";
   const refundText = !refunded
-    ? paymentMethod === "free"
-      ? "このイベントは無料のため、返金はありません。"
-      : "キャンセルポリシーの適用対象外（イベント2日前を過ぎてのキャンセル）のため、返金はありません。"
+    ? (paymentMethod === "free"
+        ? "このイベントは無料のため、返金はありません。"
+        : "キャンセルポリシーの適用対象外（イベント2日前を過ぎてのキャンセル）のため、お支払い金額の返金はありません。") + pointsOnlyText
     : `お支払い金額（${priceLabel(price)}）は自動的に返金されます${pointsText}。反映までに数日かかる場合があります。`;
 
   await sendEmail("cancellation", {
@@ -289,7 +293,7 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
               )}
               ${noteBox(
                 "キャンセルポリシー",
-                "・イベント当日までキャンセル可能です<br />・2日前まで：全額返金<br />・前日・当日：返金対象外（キャンセル料100%）<br />・悪天候等による中止：時期を問わず全額返金"
+                "・イベント当日までキャンセル可能です<br />・2日前まで：全額返金<br />・前日・当日：返金対象外（キャンセル料100%）。使ったポイントは払い戻し<br />・悪天候等による中止：時期を問わず全額返金"
               )}
               ${button(`${SITE_URL}/bookings`, "予約を確認する")}
               ${smallNote("ご不明な点は、アプリのマイページ「お問い合わせ」からご連絡ください。")}`),
