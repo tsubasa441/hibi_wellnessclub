@@ -56,7 +56,9 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
      token_hash を発行させている（src/app/api/auth/forgot-password/route.ts 参照）
 3. Supabase からリセットリンク付きメールが送信される
    - メールテンプレート（Supabase Dashboard > Authentication > Email Templates > Reset Password）は
-     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` を指す（token_hash 方式）
+     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` を指す（token_hash 方式）。
+     本文の HTML は、アプリのメールと同じデザインのものを `supabase/email-templates/reset-password.html` に置いている
+     （メールアドレス変更の `change-email.html` も同様。2026-10-27。貼り付け手順は同フォルダの README）
 4. ユーザーがリンクをクリック → GET /auth/confirm（route handler）は**検証せず**、
    /auth/verify（確認ページ）へリダイレクトするだけにする
    - メールクライアントやセキュリティスキャナがリンクを先読み（GET）すると、1回限りの
