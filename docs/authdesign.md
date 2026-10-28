@@ -15,7 +15,7 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 ```
 1. ユーザーが姓・名・フリガナ（セイ・メイ）・メール・パスワード・性別・生年月日・紹介コード（任意）を入力（2026-10-25 にニックネームの入力欄を廃止し、フリガナを追加）
    - 「登録」ボタンの直前に「『登録』を押すと、利用規約とプライバシーポリシーに同意したものとみなします」と表示し、`/legal/terms`・`/legal/privacy` へのリンクを置く（入力内容が消えないよう別タブで開く。チェックボックスは設けない）
-2. supabase.auth.signUp() を呼び出す（options.data に name のみ渡す）
+2. supabase.auth.signUp() を呼び出す（メタデータは渡さない。氏名を auth.users に平文で残さないため。2026-10-28 に「name を渡す」から変更し、既存分は `036` で削除）
 3. Supabase の auth.users にレコード作成
 4. DB トリガーで profiles テーブルにレコード作成
    - referral_code をランダム生成して付与
@@ -186,7 +186,7 @@ if (!user) redirect("/login");
 
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
 |---------|--------|--------|--------|--------|
-| profiles | 本人のみ／管理者は全件（`032_security_hardening.sql`） | 不可（トリガー） | 本人のみ（`is_admin`・`points` 列は本人からの変更を無効化。`029_lock_points.sql`） | 不可 |
+| profiles | 本人のみ／管理者は全件（`032_security_hardening.sql`） | 不可（トリガー） | 不可（2026-10-28、`036_lock_profile_updates.sql`。以前は本人のみ可で、`rank_level`・カード列などを本人が書き換えられた。ニックネーム変更・新規登録のプロフィール保存・ランクアップのお知らせの既読化・カードの保存は、本人確認済みの API が service_role で行う。新規登録のプロフィール保存は、性別が未登録のとき（登録直後）の1回だけ） | 不可 |
 | events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（2026-10-27 から物理削除。予約は `event_id` が null になって残る） |
 | event_options | 全員（親イベントが公開済みのもの）／管理者は全件 | 管理者のみ | 管理者のみ | 管理者のみ |
 | bookings | 本人のみ／管理者は全件 | 不可（予約の作成は決済 API が本人確認・残席・決済の上 service_role で行う。本人に許すと決済を通さず「支払い済み」の予約を作れてしまうため。`032_security_hardening.sql`） | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
@@ -212,11 +212,11 @@ if (!user) redirect("/login");
 
 ## クレジットカード情報の権限（`030_saved_square_card.sql`）
 
-`profiles` の `square_customer_id`・`square_card_id`・`card_brand`・`card_last4`・`card_exp_month`・`card_exp_year` は、既存の「本人のみ SELECT/UPDATE」の RLS をそのまま使う（`is_admin`・`points`のような自己改ざん防止トリガーは設けていない）。
+`profiles` の `square_customer_id`・`square_card_id`・`card_brand`・`card_last4`・`card_exp_month`・`card_exp_year` は、本人のみ SELECT 可。UPDATE は本人からは不可（`036`）で、`src/lib/squareCards.ts` が service_role で書く。
 
 - 生の PAN・CVV は保存しないため、これらの列自体は機微情報ではない（下4桁・ブランド・有効期限は PCI DSS 上も暗号化対象外、`docs/codingstandards.md` 参照）
-- 本人がこれらの列を直接書き換えても、実際の課金は毎回 Square 側で `card_id` と `customer_id` の紐付けを検証されるため、なりすまし課金や他人のカードの不正利用にはつながらない
-- 書き込みは `src/lib/squareCards.ts` のヘルパーが、呼び出しユーザー自身のセッション（`createClient()`）で行う（nickname 変更と同じパターン、service_role は使わない）
+- 保存済みカードで課金する前、古いカードを無効化する前に、Square 側で持ち主を確かめる（Customer の `referenceId` が本人の user_id で、カードがその Customer のもので有効なこと。`isOwnCustomer`・`isOwnCard`・`disableOwnCard`）。以前は本人がこれらの列を他人の ID に書き換えると、他人の保存済みカードで課金したり、他人のカードを無効化したりできた（2026-10-28 のリリース前の権限の確認で発見。悪用の記録なし）
+- `profiles` に入っている Customer が本人のものでなければ使わず、新しく作り直す
 
 ## 紹介コードの処理
 

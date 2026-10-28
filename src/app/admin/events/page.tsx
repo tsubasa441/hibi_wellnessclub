@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminPage } from "@/lib/admin";
 import { getJstParts } from "@/lib/date";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -34,6 +35,7 @@ function formatDate(dateStr: string) {
 
 export default async function AdminEventsPage() {
   const supabase = createClient();
+  await requireAdminPage(supabase);
   const { data: events } = await supabase
     .from("events")
     .select("*")

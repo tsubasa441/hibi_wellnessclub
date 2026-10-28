@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
   paymentsCreate: vi.fn(),
   refundPayment: vi.fn(),
   customersCreate: vi.fn(),
+  customersGet: vi.fn(),
   cardsCreate: vi.fn(),
+  cardsGet: vi.fn(),
   cardsDisable: vi.fn().mockResolvedValue({}),
   sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
   checkRankUp: vi.fn().mockResolvedValue(undefined),
@@ -43,8 +45,8 @@ vi.mock("square", () => ({
     return {
       payments: { create: mocks.paymentsCreate },
       refunds: { refundPayment: mocks.refundPayment },
-      customers: { create: mocks.customersCreate },
-      cards: { create: mocks.cardsCreate, disable: mocks.cardsDisable },
+      customers: { create: mocks.customersCreate, get: mocks.customersGet },
+      cards: { create: mocks.cardsCreate, get: mocks.cardsGet, disable: mocks.cardsDisable },
     };
   }),
   SquareEnvironment: { Production: "production", Sandbox: "sandbox" },
@@ -131,27 +133,28 @@ function setupSupabase({
 
   if (withCardCharge) {
     from.mockReturnValueOnce(chainable({ data: cardProfile })); // カード保存機能: 保存済みカードの確認
-    if (!cardProfile.square_customer_id) {
-      from.mockReturnValueOnce(chainable({ error: null })); // getOrCreateCustomerId: 新規 Customer の square_customer_id 保存
-    }
   }
+  // Square 側の持ち主の確認：既定では profiles の Customer・カードは本人のもの
+  mocks.cardsGet.mockResolvedValue({ card: { customerId: cardProfile.square_customer_id, enabled: true } });
 
   // 予約の作成（bookings insert）は service_role クライアント経由（下の serviceFrom）
   const insertSpy = vi.fn();
 
-  // persistSavedCard（新しいカードでの決済に成功した場合のみ）は、確認メール用の
-  // profiles select より先に呼ばれる
+  // カード列の保存（getOrCreateCustomerId・persistSavedCard）は service_role 経由。persistSavedCard の呼び出しだけを記録する
   const persistCardSpy = vi.fn();
-  if (withPersistCard) {
-    from.mockReturnValueOnce(chainable({ error: null }, { update: persistCardSpy })); // persistSavedCard
-  }
+  void withPersistCard;
   from.mockReturnValueOnce(chainable({ data: { name: null } })); // profiles select（確認メール用）
 
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
 
   // 残席カウントと予約の作成は service_role クライアント経由
   const serviceFrom = vi.fn().mockReturnValue(
-    chainable({ count }, { insert: (...args: unknown[]) => { insertSpy(...args); return chainable({ error: insertError }); } })
+    chainable({ count }, {
+      insert: (...args: unknown[]) => { insertSpy(...args); return chainable({ error: insertError }); },
+      update: (values: unknown) => {
+        if (values && typeof values === "object" && "square_card_id" in values) persistCardSpy(values);
+      },
+    })
   );
   mocks.createServiceClient.mockReturnValue({ from: serviceFrom });
 
@@ -162,6 +165,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // カード保存（顧客作成・カード保存）のデフォルトは成功とする。個々のテストで上書き可能
   mocks.customersCreate.mockResolvedValue({ customer: { id: "sq-customer-1" } });
+  mocks.customersGet.mockResolvedValue({ customer: { referenceId: "user-1" } });
   mocks.cardsCreate.mockResolvedValue({
     card: { id: "sq-card-1", cardBrand: "VISA", last4: "4242", expMonth: BigInt(12), expYear: BigInt(2029) },
   });
@@ -398,6 +402,22 @@ describe("POST /api/payments/square", () => {
     // 保存済みカードをそのまま使った場合は profiles のカード情報を更新しない
     expect(persistCardSpy).not.toHaveBeenCalled();
     expect(mocks.cardsDisable).not.toHaveBeenCalled();
+  });
+
+  it("useSavedCard:true でも、profiles の Customer・カードが本人のものでなければ課金しない", async () => {
+    mocks.spendPointsForBooking.mockResolvedValueOnce(true);
+    setupSupabase({
+      event: makeEvent({ price: 3000 }),
+      withCardCharge: true,
+      cardProfile: { square_customer_id: "someone-customer", square_card_id: "someone-card" },
+    });
+    mocks.customersGet.mockResolvedValue({ customer: { referenceId: "someone-else" } });
+
+    const res = await POST(makeRequest({ eventId: "event-1", useSavedCard: true, pointsToUse: 500 }));
+
+    expect(res.status).toBe(400);
+    expect(mocks.paymentsCreate).not.toHaveBeenCalled();
+    expect(mocks.refundUsedPoints).toHaveBeenCalled();
   });
 
   it("useSavedCard:true だが保存済みカードが無い場合は400を返し、充当済みポイントを払い戻す", async () => {

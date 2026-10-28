@@ -214,7 +214,7 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | POST | `/api/events/[id]/waitlist` | キャンセル待ちの登録（満席の公開イベント・未予約・開始前のみ。10回/60秒のレート制限） | 必要（本人のみ） |
 | DELETE | `/api/events/[id]/waitlist` | キャンセル待ちの取り消し | 必要（本人のみ） |
 | POST | `/api/bookings/[id]/checkin` | イベントチェックイン（開始30分前〜開始15分後の間のみ。冪等）。成功時にクラスバッジ・ランクを再判定し、紹介経由の初回参加なら紹介報酬（双方200pt）を付与 | 必要（本人のみ） |
-| POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後） | 必要 |
+| POST | `/api/signup/profile` | サインアップ時プロフィール作成・`referrals` を `pending` で作成（報酬付与は初回イベント参加後）。登録直後の1回だけ（性別が登録済みなら 409。後から紹介コードを付けたり氏名を書き換えたりさせない） | 必要 |
 | POST | `/api/profile/nickname` | ニックネーム変更（マイページから） | 必要（本人のみ） |
 | POST | `/api/support/messages` | お問い合わせの送信（運営へメールで通知。10回/60秒のレート制限） | 必要（本人のみ） |
 | POST | `/api/admin/support/[userId]/messages` | お問い合わせへの返信（ユーザーへメールで通知。退会済みには送らない） | 必要（管理者のみ） |

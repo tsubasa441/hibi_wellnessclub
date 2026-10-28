@@ -82,7 +82,14 @@ export async function POST(req: NextRequest) {
   updates.birth_date = encrypt(body.birthDate);
   if (body.referralCode) updates.referral_code_used = encrypt(body.referralCode);
 
-  const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+  // 新規登録の直後に1回だけ保存できる（後から紹介コードを付けたり、氏名・生年月日を書き換えたりさせない）
+  const { data: current } = await supabase.from("profiles").select("gender").eq("id", user.id).single();
+  if (current?.gender) {
+    return NextResponse.json({ error: "プロフィールは登録済みです" }, { status: 409 });
+  }
+
+  // profiles は本人から直接更新できない（036）。本人確認済みのここから service_role で書く
+  const { error } = await createServiceClient().from("profiles").update(updates).eq("id", user.id);
   if (error) {
     Sentry.captureException(error, { tags: { area: "signup_profile" } });
     return NextResponse.json({ error: "プロフィールの保存に失敗しました" }, { status: 500 });

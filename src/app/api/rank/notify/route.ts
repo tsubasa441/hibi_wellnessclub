@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function POST() {
   const supabase = createClient();
@@ -19,7 +20,8 @@ export async function POST() {
     return NextResponse.json({ error: "プロフィールが見つかりません" }, { status: 404 });
   }
 
-  await supabase
+  // profiles は本人から直接更新できない（036）
+  await createServiceClient()
     .from("profiles")
     .update({ rank_notified_level: profile.rank_level })
     .eq("id", user.id);

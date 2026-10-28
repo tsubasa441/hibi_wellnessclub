@@ -45,20 +45,24 @@ function setup({
   profileUpdateError = null as { message: string } | null,
   referrer = null as { id: string } | null,
   existingReferral = null as { id: string } | null,
+  currentProfile = null as { gender: string | null } | null,
 } = {}) {
   const profileUpdateSpy = vi.fn();
   mocks.createServerClient.mockReturnValue({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
-    from: vi
-      .fn()
-      .mockReturnValue(chainable({ data: null, error: profileUpdateError }, { update: profileUpdateSpy })),
+    from: vi.fn().mockReturnValue(chainable({ data: currentProfile, error: null })),
   });
 
   const referralInsertSpy = vi.fn();
   const referralCodeEqSpy = vi.fn();
+  let profilesCalls = 0;
   const svcFrom = vi.fn((table: string) => {
     if (table === "profiles") {
-      return chainable({ data: referrer, error: null }, { eq: referralCodeEqSpy });
+      // 1回目はプロフィールの保存（update）、2回目以降は紹介者の検索
+      profilesCalls++;
+      return profilesCalls === 1
+        ? chainable({ data: null, error: profileUpdateError }, { update: profileUpdateSpy })
+        : chainable({ data: referrer, error: null }, { eq: referralCodeEqSpy });
     }
     return chainable({ data: existingReferral, error: null }, { insert: referralInsertSpy });
   });
@@ -183,10 +187,19 @@ describe("POST /api/signup/profile: 保存内容", () => {
 });
 
 describe("POST /api/signup/profile: 紹介", () => {
-  it("紹介コードが無ければ service クライアントを使わない", async () => {
-    setup();
+  it("紹介コードが無ければ referrals を作らない", async () => {
+    const { referralInsertSpy, svcFrom } = setup();
     await POST(makeRequest(validBody()));
-    expect(mocks.createServiceClient).not.toHaveBeenCalled();
+    expect(referralInsertSpy).not.toHaveBeenCalled();
+    expect(svcFrom).not.toHaveBeenCalledWith("referrals");
+  });
+
+  it("プロフィールが登録済み（性別あり）なら409で、上書き・紹介の追加をしない", async () => {
+    const { profileUpdateSpy, referralInsertSpy } = setup({ currentProfile: { gender: "enc(male)" }, referrer: { id: "r-1" } });
+    const res = await POST(makeRequest(validBody({ referralCode: "ABC123" })));
+    expect(res.status).toBe(409);
+    expect(profileUpdateSpy).not.toHaveBeenCalled();
+    expect(referralInsertSpy).not.toHaveBeenCalled();
   });
 
   it("紹介者が見つかれば referrals を pending で作成する（この時点でポイントは付与しない）", async () => {

@@ -7,12 +7,18 @@ const mocks = vi.hoisted(() => ({
   createServerClient: vi.fn(),
   checkRateLimit: vi.fn(),
   customersCreate: vi.fn(),
+  customersGet: vi.fn(),
   cardsCreate: vi.fn(),
+  cardsGet: vi.fn(),
+  serviceUpdate: vi.fn(),
   cardsDisable: vi.fn().mockResolvedValue({}),
   captureException: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: () => ({ from: () => chainable({ error: null }, { update: mocks.serviceUpdate }) }),
+}));
 vi.mock("@sentry/nextjs", () => ({ captureException: mocks.captureException }));
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: mocks.checkRateLimit,
@@ -21,8 +27,8 @@ vi.mock("@/lib/rateLimit", () => ({
 vi.mock("square", () => ({
   SquareClient: vi.fn().mockImplementation(function SquareClient() {
     return {
-      customers: { create: mocks.customersCreate },
-      cards: { create: mocks.cardsCreate, disable: mocks.cardsDisable },
+      customers: { create: mocks.customersCreate, get: mocks.customersGet },
+      cards: { create: mocks.cardsCreate, get: mocks.cardsGet, disable: mocks.cardsDisable },
     };
   }),
   SquareEnvironment: { Production: "production", Sandbox: "sandbox" },
@@ -38,17 +44,16 @@ function setupSupabase(profile: { square_customer_id: string | null; square_card
   mocks.getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", email: "a@example.com" } } });
   const { from } = createSupabaseMock();
   from.mockReturnValueOnce(chainable({ data: profile })); // profiles select
-  const updateSpy = vi.fn();
-  from.mockReturnValueOnce(chainable({ error: null }, { update: updateSpy })); // persistSavedCard / getOrCreateCustomerId 等
-  from.mockReturnValueOnce(chainable({ error: null }, { update: updateSpy })); // 2回目の update（あれば）
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
-  return { from, updateSpy };
+  return { from, updateSpy: mocks.serviceUpdate };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.checkRateLimit.mockResolvedValue(true);
   mocks.customersCreate.mockResolvedValue({ customer: { id: "sq-customer-1" } });
+  mocks.customersGet.mockResolvedValue({ customer: { referenceId: "user-1" } });
+  mocks.cardsGet.mockImplementation(async () => ({ card: { customerId: "sq-customer-old", enabled: true } }));
   mocks.cardsCreate.mockResolvedValue({
     card: { id: "sq-card-1", cardBrand: "VISA", last4: "4242", expMonth: BigInt(12), expYear: BigInt(2030) },
   });
@@ -109,6 +114,19 @@ describe("POST /api/payment-methods/square", () => {
       expect.objectContaining({ sourceId: "nonce-2", card: { customerId: "sq-customer-old" } })
     );
     expect(mocks.cardsDisable).toHaveBeenCalledWith({ cardId: "sq-card-old" });
+  });
+
+  it("profiles の Customer・カードが他人のものなら使わず、他人のカードを無効化しない", async () => {
+    setupSupabase({ square_customer_id: "stolen-customer", square_card_id: "stolen-card" });
+    mocks.customersGet.mockResolvedValueOnce({ customer: { referenceId: "someone-else" } });
+    mocks.cardsGet.mockResolvedValueOnce({ card: { customerId: "stolen-customer", enabled: true } });
+
+    const res = await POST(makeRequest({ sourceId: "nonce-5" }));
+
+    expect(res.status).toBe(200);
+    expect(mocks.customersCreate).toHaveBeenCalled();
+    expect(mocks.cardsCreate).toHaveBeenCalledWith(expect.objectContaining({ card: { customerId: "sq-customer-1" } }));
+    expect(mocks.cardsDisable).not.toHaveBeenCalled();
   });
 
   it("カード保存が想定外のエラーで失敗した場合は500で汎用の案内を返し、Sentry に記録する", async () => {
@@ -173,9 +191,8 @@ describe("DELETE /api/payment-methods/square", () => {
   it("保存済みカードを無効化し、profiles のカード情報をクリアする", async () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", email: "a@example.com" } } });
     const { from } = createSupabaseMock();
-    from.mockReturnValueOnce(chainable({ data: { square_card_id: "sq-card-1" } }));
-    const updateSpy = vi.fn();
-    from.mockReturnValueOnce(chainable({ error: null }, { update: updateSpy }));
+    from.mockReturnValueOnce(chainable({ data: { square_customer_id: "sq-customer-old", square_card_id: "sq-card-1" } }));
+    const updateSpy = mocks.serviceUpdate;
     mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser }, from });
 
     const res = await DELETE();

@@ -5,10 +5,12 @@ import { chainable } from "@/lib/testUtils/supabaseMock";
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   createServerClient: vi.fn(),
+  serviceFrom: vi.fn(),
   checkRateLimit: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
+vi.mock("@/lib/supabase/service", () => ({ createServiceClient: () => ({ from: mocks.serviceFrom }) }));
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
@@ -23,11 +25,9 @@ function makeRequest(body: unknown) {
 function setup({ updateError = null }: { updateError?: { message: string } | null } = {}) {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   const updateSpy = vi.fn();
-  const fromSpy = vi.fn().mockReturnValue(chainable({ data: null, error: updateError }, { update: updateSpy }));
-  mocks.createServerClient.mockReturnValue({
-    auth: { getUser: mocks.getUser },
-    from: fromSpy,
-  });
+  // 更新は本人確認のあと service_role で行う（036 で本人からの直接更新は不可）
+  const fromSpy = mocks.serviceFrom.mockReturnValue(chainable({ data: null, error: updateError }, { update: updateSpy }));
+  mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser } });
   return { fromSpy, updateSpy };
 }
 

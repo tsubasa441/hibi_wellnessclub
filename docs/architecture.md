@@ -169,7 +169,7 @@ src/
 │   ├── passwordUpdateError.ts  # updateUser 失敗時の原因別メッセージ（再設定画面・設定画面でのパスワード変更で共通）
 │   ├── ranks.ts                # ランク定義・ランクアップ判定│   ├── rateLimit.ts            # APIレート制限（Supabaseのcheck_rate_limit RPC経由）
 │   ├── squareClient.ts         # Square クライアントの共通生成（決済APIとカード保存ヘルパーで使い回す）
-│   ├── squareCards.ts          # クレジットカード保存機能: Customer/Card on File の作成・保存・無効化（/api/payments/square・/api/payment-methods/square から使用）
+│   ├── squareCards.ts          # クレジットカード保存機能: Customer/Card on File の作成・保存・無効化（/api/payments/square・/api/payment-methods/square から使用）。課金・無効化の前に Square 側で本人の Customer・カードか確かめる。profiles のカード列は service_role で書く
 │   ├── squareErrors.ts         # Square API のエラーコードをユーザー向けの日本語の案内に変換（Square のエラー本文は画面に出さない）
 │   ├── useSquareCard.ts        # Square カード入力欄（Web Payments SDK）の読み込み・トークン化の共通フック（CheckoutForm・SettingsMenu から使用）。tokenize に 3-D セキュア用の verificationDetails を渡す
 │   └── toRomaji.ts             # 日本語→ローマ字変換（kuroshiro）

@@ -5,7 +5,7 @@ import { getSquareClient } from "@/lib/squareClient";
 import { sendBookingConfirmation } from "@/lib/email";
 import { decrypt } from "@/lib/encrypt";
 import { spendPointsForBooking, refundUsedPoints } from "@/lib/points";
-import { getOrCreateCustomerId, saveCard, disableCard, persistSavedCard } from "@/lib/squareCards";
+import { getOrCreateCustomerId, saveCard, disableOwnCard, persistSavedCard, isOwnCustomer, isOwnCard } from "@/lib/squareCards";
 import { buildOptionSelections, EventOptionRow } from "@/lib/eventValidation";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { squareErrorCodes, squareErrorMessage } from "@/lib/squareErrors";
@@ -170,15 +170,21 @@ export async function POST(req: NextRequest) {
   let chargeCustomerId: string;
 
   if (useSavedCard) {
-    if (!existingCardId || !existingCustomerId) {
+    // profiles の値が書き換えられていても他人のカードで課金しないよう、Square 側で持ち主を確かめる
+    const owned =
+      !!existingCardId &&
+      !!existingCustomerId &&
+      (await isOwnCustomer(existingCustomerId, user.id)) &&
+      (await isOwnCard(existingCardId, existingCustomerId));
+    if (!owned) {
       if (requestedPoints > 0) await refundUsedPoints(supabase, user.id, bookingId);
       return NextResponse.json({ error: "保存されたカードがありません" }, { status: 400 });
     }
-    chargeSourceId = existingCardId;
-    chargeCustomerId = existingCustomerId;
+    chargeSourceId = existingCardId!;
+    chargeCustomerId = existingCustomerId!;
   } else {
     try {
-      chargeCustomerId = await getOrCreateCustomerId(supabase, user.id, existingCustomerId, user.email ?? null);
+      chargeCustomerId = await getOrCreateCustomerId(user.id, existingCustomerId, user.email ?? null);
     } catch (err) {
       Sentry.captureException(err, {
         tags: { area: "square_payment", step: "customer" },
@@ -253,7 +259,7 @@ export async function POST(req: NextRequest) {
     // 新しいカードで支払った場合のみ、成功した決済からカードを保存する。保存に失敗しても予約は確定済みのため成功として返す
     const cardSaved = useSavedCard
       ? null
-      : await saveCardFromPayment(supabase, user.id, chargeCustomerId, payment.id!, existingCardId);
+      : await saveCardFromPayment(user.id, chargeCustomerId, payment.id!, existingCardId);
 
     const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
     await sendBookingConfirmation({
@@ -288,7 +294,6 @@ export async function POST(req: NextRequest) {
 
 // 成功した決済（paymentId）からカードを保存し、古い保存カードを差し替える。失敗は Sentry に記録して false を返す
 async function saveCardFromPayment(
-  supabase: ReturnType<typeof createClient>,
   userId: string,
   customerId: string,
   paymentId: string,
@@ -296,9 +301,9 @@ async function saveCardFromPayment(
 ): Promise<boolean> {
   try {
     const card = await saveCard(customerId, paymentId);
-    await persistSavedCard(supabase, userId, card);
+    await persistSavedCard(userId, card);
     if (existingCardId && existingCardId !== card.cardId) {
-      await disableCard(existingCardId);
+      await disableOwnCard(existingCardId, customerId);
     }
     return true;
   } catch (err) {

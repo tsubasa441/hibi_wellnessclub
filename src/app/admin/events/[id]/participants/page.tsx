@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminPage } from "@/lib/admin";
 import { decrypt } from "@/lib/encrypt";
 
 const PAYMENT_LABELS: Record<string, string> = { square: "Square", paypay: "PayPay", free: "無料" };
@@ -22,6 +23,7 @@ type BookingRow = {
 export default async function EventParticipantsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createClient();
+  await requireAdminPage(supabase);
 
   const { data: event } = await supabase
     .from("events")

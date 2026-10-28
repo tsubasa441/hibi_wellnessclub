@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
 import { validateNickname } from "@/lib/nameValidation";
 
@@ -22,7 +23,8 @@ export async function POST(req: NextRequest) {
   }
   const nickname = result.value;
 
-  const { error } = await supabase.from("profiles").update({ nickname }).eq("id", user.id);
+  // profiles は本人から直接更新できない（036）。本人確認済みのここから service_role で書く
+  const { error } = await createServiceClient().from("profiles").update({ nickname }).eq("id", user.id);
 
   if (error) {
     return NextResponse.json({ error: "ニックネームの変更に失敗しました" }, { status: 500 });

@@ -224,10 +224,10 @@ function LoginFormInner() {
       // 変換失敗時は元の名前をそのまま使用
     }
 
+    // 氏名は auth.users のメタデータ（平文）に残さない。暗号化して保存するのは /api/signup/profile
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name: validName } },
     });
 
     if (signUpError) {

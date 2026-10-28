@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminPage } from "@/lib/admin";
 import EventForm from "../EventForm";
 import DeleteEventButton from "./DeleteEventButton";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createClient();
+  await requireAdminPage(supabase);
   const [{ data: event }, { data: options }, { count: bookingCount }] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).single(),
     supabase

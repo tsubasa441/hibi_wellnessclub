@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rateLimit";
-import { getOrCreateCustomerId, saveCard, disableCard, persistSavedCard } from "@/lib/squareCards";
+import { getOrCreateCustomerId, saveCard, disableOwnCard, persistSavedCard } from "@/lib/squareCards";
 import { squareErrorCodes, squareErrorMessage } from "@/lib/squareErrors";
 import * as Sentry from "@sentry/nextjs";
 
@@ -32,11 +32,11 @@ export async function POST(req: NextRequest) {
   const existingCardId: string | null = profile?.square_card_id ?? null;
 
   try {
-    const customerId = await getOrCreateCustomerId(supabase, user.id, existingCustomerId, user.email ?? null);
+    const customerId = await getOrCreateCustomerId(user.id, existingCustomerId, user.email ?? null);
     const card = await saveCard(customerId, sourceId);
-    await persistSavedCard(supabase, user.id, card);
+    await persistSavedCard(user.id, card);
     if (existingCardId && existingCardId !== card.cardId) {
-      await disableCard(existingCardId);
+      await disableOwnCard(existingCardId, customerId);
     }
     return NextResponse.json({ brand: card.brand, last4: card.last4, expMonth: card.expMonth, expYear: card.expYear });
   } catch (err) {
@@ -68,7 +68,7 @@ export async function DELETE() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("square_card_id")
+    .select("square_customer_id, square_card_id")
     .eq("id", user.id)
     .single();
   const existingCardId: string | null = profile?.square_card_id ?? null;
@@ -77,8 +77,8 @@ export async function DELETE() {
     return NextResponse.json({ error: "登録されたカードがありません" }, { status: 400 });
   }
 
-  await disableCard(existingCardId);
-  await persistSavedCard(supabase, user.id, null);
+  await disableOwnCard(existingCardId, profile?.square_customer_id ?? null);
+  await persistSavedCard(user.id, null);
 
   return NextResponse.json({ success: true });
 }
