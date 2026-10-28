@@ -186,7 +186,7 @@ if (!user) redirect("/login");
 
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
 |---------|--------|--------|--------|--------|
-| profiles | 本人のみ／管理者は全件（`032_security_hardening.sql`） | 不可（トリガー） | 不可（2026-10-28、`036_lock_profile_updates.sql`。以前は本人のみ可で、`rank_level`・カード列などを本人が書き換えられた。ニックネーム変更・新規登録のプロフィール保存・ランクアップのお知らせの既読化・カードの保存は、本人確認済みの API が service_role で行う。新規登録のプロフィール保存は、性別が未登録のとき（登録直後）の1回だけ） | 不可 |
+| profiles | 本人のみ／管理者は全件（`032_security_hardening.sql`） | 不可（トリガー） | 不可（2026-10-28〜29、`036_lock_profile_updates.sql`・`037_revoke_profile_updates.sql`。`anon`・`authenticated` からは UPDATE/INSERT/DELETE の権限そのものを外している。以前は本人のみ可で、`rank_level`・カード列などを本人が書き換えられた。ニックネーム変更・新規登録のプロフィール保存・ランクアップのお知らせの既読化・カードの保存は、本人確認済みの API が service_role で行う。新規登録のプロフィール保存は、性別が未登録のとき（登録直後）の1回だけ） | 不可 |
 | events | 全員（公開済みのみ）／管理者は全ステータス | 管理者のみ | 管理者のみ | 管理者のみ（2026-10-27 から物理削除。予約は `event_id` が null になって残る） |
 | event_options | 全員（親イベントが公開済みのもの）／管理者は全件 | 管理者のみ | 管理者のみ | 管理者のみ |
 | bookings | 本人のみ／管理者は全件 | 不可（予約の作成は決済 API が本人確認・残席・決済の上 service_role で行う。本人に許すと決済を通さず「支払い済み」の予約を作れてしまうため。`032_security_hardening.sql`） | 不可（チェックインの `checked_in_at` 更新は `/api/bookings/[id]/checkin` が本人確認＋時間ゲートの上 service_role で行う。キャンセルも同様） | 不可 |
