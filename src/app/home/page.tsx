@@ -49,7 +49,7 @@ export default async function HomePage() {
   };
   const sessionCount = sessionRes.count ?? 0;
   const nextEvents = eventsRes.data ?? [];
-  // 次回のイベントも予約済みと同じく近い順に2件まで出し、3件以上あれば「ほかn件のイベントを見る」でイベント一覧へ（2026-10-25、依頼者の指定）
+  // 直近のイベント（2026-10-29 に「次回のイベント」から改名）も予約済みと同じく近い順に2件まで出し、3件以上あれば「ほかn件のイベントを見る」でイベント一覧へ（2026-10-25、依頼者の指定）
   const HOME_EVENT_LIMIT = 2;
   const shownEvents = nextEvents.slice(0, HOME_EVENT_LIMIT);
   const hiddenEvents = nextEvents.slice(HOME_EVENT_LIMIT);
@@ -132,7 +132,7 @@ export default async function HomePage() {
 
         {/* 次回イベント */}
         <div className="animate-fade-up animate-delay-200">
-          <h2 className="mb-3 font-zenkaku text-base font-bold text-ink-700 tracking-wide">次回のイベント</h2>
+          <h2 className="mb-3 font-zenkaku text-base font-bold text-ink-700 tracking-wide">直近のイベント</h2>
           {nextEvents.length > 0 ? (
             <>
               <div className="space-y-3">
