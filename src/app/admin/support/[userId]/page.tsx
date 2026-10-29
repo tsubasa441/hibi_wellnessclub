@@ -20,7 +20,7 @@ export default async function AdminSupportThreadPage({ params }: { params: Promi
   const service = createServiceClient();
 
   const [{ data: profile }, { data: messages }] = await Promise.all([
-    service.from("profiles").select("nickname, name").eq("id", userId).maybeSingle(),
+    service.from("profiles").select("nickname, name, name_kana").eq("id", userId).maybeSingle(),
     service
       .from("support_messages")
       .select("id, sender, body, created_at")
@@ -36,7 +36,8 @@ export default async function AdminSupportThreadPage({ params }: { params: Promi
     .eq("sender", "user")
     .is("read_by_admin_at", null);
 
-  const name = profile.name ? decrypt(profile.name) : "";
+  // 氏名はフリガナ（カタカナ）で出す。フリガナの無い 2026-10-25 より前の登録者は漢字の氏名
+  const name = profile.name_kana ? decrypt(profile.name_kana) : profile.name ? decrypt(profile.name) : "";
 
   return (
     <div>

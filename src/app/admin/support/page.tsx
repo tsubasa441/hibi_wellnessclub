@@ -42,12 +42,13 @@ export default async function AdminSupportPage() {
 
   const userIds = [...threads.keys()];
   const { data: profiles } = userIds.length
-    ? await service.from("profiles").select("id, nickname, name").in("id", userIds)
+    ? await service.from("profiles").select("id, nickname, name, name_kana").in("id", userIds)
     : { data: [] };
   const names = new Map(
-    (profiles ?? []).map((p: { id: string; nickname: string | null; name: string | null }) => [
+    // 氏名はフリガナ（カタカナ）で出す。フリガナの無い 2026-10-25 より前の登録者は漢字の氏名
+    (profiles ?? []).map((p: { id: string; nickname: string | null; name: string | null; name_kana: string | null }) => [
       p.id,
-      { nickname: p.nickname, name: p.name ? decrypt(p.name) : "" },
+      { nickname: p.nickname, name: p.name_kana ? decrypt(p.name_kana) : p.name ? decrypt(p.name) : "" },
     ])
   );
 
