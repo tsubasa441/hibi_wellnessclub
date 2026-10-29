@@ -16,7 +16,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "下書き", color: "bg-base-200 text-ink-500" },
   published: { label: "公開中", color: "bg-sage-100 text-sage-600" },
-  cancelled: { label: "削除済み", color: "bg-red-50 text-red-500" },
+  cancelled: { label: "中止・非公開", color: "bg-ink-50 text-ink-500" },
 };
 
 function formatDate(dateStr: string) {
@@ -36,10 +36,10 @@ function formatDate(dateStr: string) {
 export default async function AdminEventsPage() {
   const supabase = createClient();
   await requireAdminPage(supabase);
+  // 削除は物理削除のため、cancelled で残るのは中止の返金に失敗したイベント（手動で返金したあと、ここから削除する）
   const { data: events } = await supabase
     .from("events")
     .select("*")
-    .neq("status", "cancelled")
     .order("start_at", { ascending: false });
 
   return (
