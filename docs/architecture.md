@@ -53,6 +53,10 @@ src/
 ├── app/
 │   ├── layout.tsx              # ルートレイアウト・フォント設定
 │   ├── globals.css             # カラー変数・グローバルスタイル・.app-bg
+│   ├── not-found.tsx           # 日本語の404ページ（AuthShell の外枠・トップへ戻るボタン）
+│   ├── icon.png                # favicon（ロゴの H を白、背景 ink-700。512px）
+│   ├── apple-icon.png          # ホーム画面に追加したときのアイコン（180px）
+│   ├── opengraph-image.jpg     # リンクを共有したときの画像（1200×630。トップの写真・ロゴ・コピー）
 │   ├── page.tsx                # トップページ（/）
 │   ├── HeroBackground.tsx      # トップページ背景の写真/動画クロスフェード切替（Client Component）
 │   ├── AccountDeletedToast.tsx # 退会直後のトップに一度だけ出すお知らせ（Toast を約4秒表示し、URL の ?accountDeleted=1 を消す。Client Component）

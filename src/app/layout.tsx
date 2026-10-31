@@ -23,9 +23,21 @@ const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--font-
 // トップページの紹介文（日本語）用。日本語の文字は unicode-range で必要な分だけ読み込まれるため preload しない
 const zenKaku = Zen_Kaku_Gothic_New({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-zenkaku", display: "swap", preload: false });
 
+const SITE_TITLE = "Hibi | フィットネスコミュニティ";
+const SITE_DESCRIPTION = "ヨガ・トレーニング・ランニング・ボクシング・ピラティスのフィットネスイベントに参加しよう";
+
 export const metadata: Metadata = {
-  title: "Hibi | フィットネスコミュニティ",
-  description: "ヨガ・トレーニング・ランニング・ボクシングのフィットネスイベントに参加しよう",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: "Hibi",
+    type: "website",
+    locale: "ja_JP",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
