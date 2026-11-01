@@ -13,6 +13,7 @@ import {
   linkButtonClass,
 } from "@/lib/authStyles";
 import { validateKana, validateName } from "@/lib/nameValidation";
+import { signUpErrorMessage } from "@/lib/passwordUpdateError";
 
 type Tab = "signin" | "signup" | "forgot";
 type Gender = "male" | "female" | "other";
@@ -231,12 +232,7 @@ function LoginFormInner() {
     });
 
     if (signUpError) {
-      const msg = signUpError.message.toLowerCase();
-      if (msg.includes("password")) {
-        showError("パスワードを正しく設定してください");
-      } else {
-        showError("このメールアドレスは既に使用されています");
-      }
+      showError(signUpErrorMessage(signUpError));
       setLoading(false);
       return;
     }

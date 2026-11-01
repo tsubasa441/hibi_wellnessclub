@@ -1,7 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { passwordUpdateErrorMessage } from "./passwordUpdateError";
+import { passwordUpdateErrorMessage, signUpErrorMessage } from "./passwordUpdateError";
+
+describe("signUpErrorMessage", () => {
+  it("流出したパスワード（pwned）は、流出の可能性を伝える", () => {
+    const msg = signUpErrorMessage({ code: "weak_password", status: 422, reasons: ["pwned"] });
+    expect(msg).toContain("流出した可能性");
+  });
+
+  it("その他の弱いパスワードは、安全性が低いと伝える", () => {
+    expect(signUpErrorMessage({ code: "weak_password", reasons: ["length"] })).toContain("安全性が低い");
+  });
+
+  it.each(["user_already_exists", "email_exists"])("%s は、使用済みのアドレスと伝える", (code) => {
+    expect(signUpErrorMessage({ code })).toBe("このメールアドレスは既に使用されています");
+  });
+
+  it("回数制限を、使用済みのアドレスと誤って伝えない", () => {
+    const msg = signUpErrorMessage({ code: "over_email_send_rate_limit", status: 429 });
+    expect(msg).toContain("しばらくしてから");
+    expect(msg).not.toContain("既に使用");
+  });
+
+  it("想定外のエラーを、使用済みのアドレスと誤って伝えない", () => {
+    const msg = signUpErrorMessage({ code: "unexpected_failure", status: 500 });
+    expect(msg).toContain("時間をおいて");
+    expect(msg).not.toContain("既に使用");
+  });
+});
 
 describe("passwordUpdateErrorMessage", () => {
+  it("流出したパスワード（pwned）は、再設定でも流出の可能性を伝える", () => {
+    expect(passwordUpdateErrorMessage({ code: "weak_password", reasons: ["pwned"] })).toContain("流出した可能性");
+  });
+
   it("今のパスワードと同じ場合（same_password）は、リンクの期限切れとは言わず、別のパスワードを促す", () => {
     const msg = passwordUpdateErrorMessage({ code: "same_password", status: 422 });
     expect(msg).toContain("現在のパスワードと同じ");
