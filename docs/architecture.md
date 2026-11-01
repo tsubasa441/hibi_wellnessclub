@@ -139,7 +139,8 @@ src/
 │               ├── route.ts                # PATCH 更新 / DELETE 削除（これからのイベントは中止・全額返金のうえ削除）
 │               └── participants/export/route.ts  # GET 参加者CSVエクスポート
 ├── components/
-│   ├── LoadingScreen.tsx       # 画面遷移・処理待ちの全画面の読み込み画面（各画面の loading.tsx から使う）
+│   ├── LoadingScreen.tsx       # 全画面の読み込み画面（NavigationLoading から使う）
+│   ├── NavigationLoading.tsx   # 切り替えに0.6秒以上かかるときだけ LoadingScreen を出す（ルートレイアウトに設置。loading.tsx は使わない）
 │   ├── AppFooter.tsx           # ログイン後の画面（ホーム・イベント一覧・インパクト・マイページ）の最下部のフッター（ロゴ・よくあるご質問・法定ページへのリンク）
 │   ├── Header.tsx              # 共通ヘッダー（トップと同じ Hibi のロゴ画像。管理者には「管理画面」リンク）
 │   ├── SettingsMenu.tsx        # マイページのアカウント設定（ニックネーム変更・パスワード変更・クレジットカード登録/変更・ログアウト・アカウント削除。2026-10-16 に設定ドロワーから移設）

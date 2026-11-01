@@ -14,7 +14,8 @@
 
 | コンポーネント | パス | 説明 |
 |-------------|------|------|
-| LoadingScreen | `src/components/LoadingScreen.tsx` | 画面遷移・処理待ちの間に全画面で出す読み込み画面（2026-10-24、依頼者の指定で読み込み中の枠 `PageSkeleton` から置き換え。参考：他サイトの遷移画面）。ぼかしたセージ・インク系の色の層（`blur-3xl`）がゆっくり流れる背景に、4つに区切った白い輪（6秒で1回転）と内側の点線の輪（逆回転）、中央に白いロゴ（`hibi-logo-white.png`）＋「wellness club」（ゆっくり明滅）。すぐ終わる遷移でちらつかないよう 0.15 秒遅れて現れる。`prefers-reduced-motion` のときは動かさない。下ナビより前面（`z-[60]`）。各画面の `loading.tsx`（ホーム・イベント一覧/詳細・予約済み・チェックイン・インパクト・マイページ・お問い合わせ）から使う。アニメーションは `globals.css` の `animate-loading-*`。Server Component |
+| LoadingScreen | `src/components/LoadingScreen.tsx` | 画面遷移・処理待ちの間に全画面で出す読み込み画面（2026-10-24、依頼者の指定で読み込み中の枠 `PageSkeleton` から置き換え。参考：他サイトの遷移画面）。ぼかしたセージ・インク系の色の層（`blur-3xl`）がゆっくり流れる背景に、4つに区切った白い輪（6秒で1回転）と内側の点線の輪（逆回転）、中央に白いロゴ（`hibi-logo-white.png`）＋「wellness club」（ゆっくり明滅）。`prefers-reduced-motion` のときは動かさない。下ナビより前面（`z-[60]`）。`NavigationLoading` から使う。アニメーションは `globals.css` の `animate-loading-*`。Server Component |
+| NavigationLoading | `src/components/NavigationLoading.tsx` | リンクを押してから0.6秒たっても画面が切り替わらないときだけ、`LoadingScreen` を出す。ルートレイアウトに置く（2026-11-01、依頼者の指定。`loading.tsx` は、押した瞬間に今の画面と下ナビが消え、空白と読み込み画面が点滅したため全画面から削除。切り替わるまで今の画面が残る）。別タブで開くリンク・同じ画面へのリンク・`/api/` へのリンク（CSV）では出さない。15秒たっても切り替わらなければ消す。プログラムからの遷移（`router.push`）では出ない。Client Component |
 | AppFooter | `src/components/AppFooter.tsx` | ログイン後の画面（ホーム・イベント一覧・インパクト・マイページ）の最下部に置くフッター（2026-10-24、依頼者の指定。参考：会員制スタジオのアプリ）。色はトップ・法定ページの `Footer` と同じ（`bg-ink-700`・白文字。同日、依頼者の指定で薄いグレーから変更）。左にロゴ画像（白版の `hibi-logo-white.png`・高さ スマホ 20px／sm 以上 28px）＋「wellness club」（font-dm・white/80）、右によくあるご質問（`/faq`）・利用規約・プライバシーポリシー・特定商取引法に基づく表記へのリンクを2行×2列で並べる（`grid-flow-col grid-rows-2`。短いもの同士・長いもの同士が縦に組まれ、スマホ 375px 幅にも収まる。文字はスマホ 11px／sm 以上 12px。同日、高いとの指摘で2回詰めた）。親の `main` を `flex flex-col` にして `mt-auto` で画面の下端に寄せ、下に 92px の余白を取る（下ナビから浮いたチェックインの丸ボタンがリンクに重ならない高さ。スマホで下ナビの上に見える帯は約 78px）。Server Component |
 | Header | `src/components/Header.tsx` | ロゴ。管理者には「管理画面」リンクも表示（歯車アイコンは 2026-10-16 に撤去） |
 | SettingsMenu | `src/components/SettingsMenu.tsx` | マイページのアカウント設定。ニックネーム変更（`POST /api/profile/nickname`）・パスワード変更・クレジットカード登録/変更（`POST /api/payment-methods/square`）・ログアウト・アカウント削除（`POST /api/account/delete`）を提供（2026-10-16 に旧 `SettingsDrawer` から移設） |
@@ -193,7 +194,7 @@
 | インパクト | `/impact` | `/impact` |
 | マイページ | `/mypage` | `/mypage` |
 
-「マイページ」は `/support` でも選択中になり、運営からの未読の返信があるとアイコンの右上に赤い点を付ける（画面を移るたびに本人の未読数を確認。`/support` を開いている間は出さない）。チェックインは中央に一段大きい丸ボタン（56px・`bg-ink-500`、選択中は `bg-sage-600`、`-mt-6` でナビから浮かせ、`ring-4 ring-nav-bg` で縁取り）。
+切り替えの間は今の画面が残るため、押したタブは切り替わる前に選択中の色にする（2026-11-01）。「マイページ」は `/support` でも選択中になり、運営からの未読の返信があるとアイコンの右上に赤い点を付ける（画面を移るたびに本人の未読数を確認。`/support` を開いている間は出さない）。チェックインは中央に一段大きい丸ボタン（56px・`bg-ink-500`、選択中は `bg-sage-600`、`-mt-6` でナビから浮かせ、`ring-4 ring-nav-bg` で縁取り）。
 
 ### ReserveTabs（予約タブ内の切り替え）
 

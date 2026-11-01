@@ -79,11 +79,22 @@ function isActive(pathname: string, item: NavItem) {
   return item.matches.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 }
 
-function NavLink({ item, pathname, dot = false }: { item: NavItem; pathname: string; dot?: boolean }) {
+function NavLink({
+  item,
+  pathname,
+  dot = false,
+  onNavigate,
+}: {
+  item: NavItem;
+  pathname: string;
+  dot?: boolean;
+  onNavigate: (href: string) => void;
+}) {
   const active = isActive(pathname, item);
   return (
     <Link
       href={item.href}
+      onClick={() => onNavigate(item.href)}
       className={`flex flex-col items-center gap-1 py-2 transition ${active ? "text-sage-600" : "text-ink-300 hover:text-sage-600"}`}
     >
       <span className="relative">
@@ -99,7 +110,10 @@ function NavLink({ item, pathname, dot = false }: { item: NavItem; pathname: str
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const checkinActive = pathname === "/checkin";
+  // 切り替えの間は今の画面が残るので、押した反応が見えるよう、押したタブを先に選択中にする（下ナビは画面ごとに作り直される）
+  const [pressedHref, setPressedHref] = useState<string | null>(null);
+  const activePath = pressedHref ?? pathname;
+  const checkinActive = activePath === "/checkin";
   const [hasUnreadSupport, setHasUnreadSupport] = useState(false);
 
   // 運営からの未読の返信があれば「マイページ」に赤い点を付ける。画面を移るたびに確認する。
@@ -127,11 +141,11 @@ export default function BottomNav() {
     <nav className="nm-nav-bottom fixed bottom-0 left-0 right-0 z-50">
       <div className="max-w-2xl mx-auto grid grid-cols-5 items-end px-2 pt-1 pb-2 sm:pb-3">
         {LEFT_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} />
+          <NavLink key={item.href} item={item} pathname={activePath} onNavigate={setPressedHref} />
         ))}
 
         {/* チェックイン：画面中央の大きな丸ボタン。ホバーは他のタブと同じく、選択中と同じ sage-600 に変わる（選択中はホバーで変えない） */}
-        <Link href="/checkin" className="group flex flex-col items-center gap-1 -mt-6 focus-visible:outline-none">
+        <Link href="/checkin" onClick={() => setPressedHref("/checkin")} className="group flex flex-col items-center gap-1 -mt-6 focus-visible:outline-none">
           <span
             className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_4px_12px_rgba(44,53,49,0.25)] ring-4 ring-nav-bg transition-colors duration-200 group-focus-visible:ring-sage-300 ${
               checkinActive ? "bg-sage-600" : "bg-ink-500 group-hover:bg-sage-600"
@@ -151,7 +165,8 @@ export default function BottomNav() {
           <NavLink
             key={item.href}
             item={item}
-            pathname={pathname}
+            pathname={activePath}
+            onNavigate={setPressedHref}
             dot={item.href === "/mypage" && hasUnreadSupport && pathname !== "/support"}
           />
         ))}

@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Outfit, Cormorant_Garamond, DM_Sans, Noto_Sans_JP, Bebas_Neue, Zen_Kaku_Gothic_New } from "next/font/google";
+import NavigationLoading from "@/components/NavigationLoading";
 import "./globals.css";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
@@ -45,6 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body className={`${outfit.variable} ${cormorant.variable} ${dmSans.variable} ${noto.variable} ${bebas.variable} ${zenKaku.variable} font-dm bg-base-100 text-ink-500 overflow-x-hidden`}>
         {children}
+        <Suspense fallback={null}>
+          <NavigationLoading />
+        </Suspense>
       </body>
     </html>
   );

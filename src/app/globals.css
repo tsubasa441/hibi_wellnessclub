@@ -108,7 +108,7 @@ input::-ms-clear {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.7; }
 }
-.animate-loading-in { animation: loading-in 0.4s ease 0.15s both; }
+.animate-loading-in { animation: loading-in 0.25s ease both; }
 .animate-loading-spin { animation: loading-spin 6s linear infinite; }
 .animate-loading-spin-reverse { animation: loading-spin 14s linear infinite reverse; }
 .animate-loading-drift { animation: loading-drift 9s ease-in-out infinite; }
