@@ -102,30 +102,31 @@ export default function CheckoutForm({
       <div>
         <p className="font-outfit text-sm font-medium text-ink-700 mb-3">お支払い方法を選択</p>
         <div className="space-y-3">
-          <label className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition ${method === "square" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
-            <input type="radio" name="method" value="square" checked={method === "square"} onChange={() => setMethod("square")} className="accent-ink-500" />
-            <div className="flex items-center gap-3">
-              <div className="w-20 h-14 shrink-0 bg-white border border-base-200 flex items-center justify-center overflow-hidden">
-                <Image src="/images/square-logo.png" alt="Square" width={72} height={18} />
-              </div>
-              <div>
-                <p className="font-outfit font-medium text-sm text-ink-700">クレジットカード</p>
-                <p className="font-dm text-xs text-ink-300">Square で安全に決済</p>
-              </div>
-            </div>
+          <label className={`block p-4 border-2 cursor-pointer transition ${method === "square" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
+            <span className="flex items-center gap-4">
+              <input type="radio" name="method" value="square" checked={method === "square"} onChange={() => setMethod("square")} className="accent-ink-500" />
+              <span>
+                <span className="block font-outfit font-medium text-sm text-ink-700">クレジットカード</span>
+                <span className="block font-dm text-xs text-ink-300">Square で安全に決済</span>
+              </span>
+            </span>
+            {/* Square の規定：ロゴの周囲に最低 40px の余白（高さ 18 + 上下 40 + 枠線 2 = 100） */}
+            <span className="mt-3 h-[100px] bg-white border border-base-200 flex items-center justify-center">
+              <Image src="/images/square-logo.png" alt="Square" width={72} height={18} />
+            </span>
           </label>
 
-          <label className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition ${method === "paypay" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
-            <input type="radio" name="method" value="paypay" checked={method === "paypay"} onChange={() => setMethod("paypay")} className="accent-ink-500" />
-            <div className="flex items-center gap-3">
-              <div className="w-20 h-14 shrink-0 bg-white border border-base-200 flex items-center justify-center overflow-hidden">
-                <Image src="/images/paypay-logo.png" alt="PayPay" width={52} height={52} />
-              </div>
-              <div>
-                <p className="font-outfit font-medium text-sm text-ink-700">PayPay</p>
-                <p className="font-dm text-xs text-ink-300">PayPay アプリで決済</p>
-              </div>
-            </div>
+          <label className={`block p-4 border-2 cursor-pointer transition ${method === "paypay" ? "border-ink-500 bg-sage-100" : "border-base-200 bg-white"}`}>
+            <span className="flex items-center gap-4">
+              <input type="radio" name="method" value="paypay" checked={method === "paypay"} onChange={() => setMethod("paypay")} className="accent-ink-500" />
+              <span>
+                <span className="block font-outfit font-medium text-sm text-ink-700">PayPay</span>
+                <span className="block font-dm text-xs text-ink-300">PayPay アプリで決済</span>
+              </span>
+            </span>
+            <span className="mt-3 h-[100px] bg-white border border-base-200 flex items-center justify-center">
+              <Image src="/images/paypay-logo.png" alt="PayPay" width={72} height={72} />
+            </span>
           </label>
         </div>
       </div>
