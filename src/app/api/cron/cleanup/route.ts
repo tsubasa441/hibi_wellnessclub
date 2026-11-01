@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { deleteOldRateLimits, deleteStaleSupportThreads } from "@/lib/dataRetention";
+import { deleteExpiredEmailChangeRequests, deleteOldRateLimits, deleteStaleSupportThreads } from "@/lib/dataRetention";
 
 // Vercel Cron から毎日 AM 3:00 (JST) に呼ばれる。Authorization: Bearer $CRON_SECRET で保護
 export async function GET(req: NextRequest) {
@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const deletedThreads = await deleteStaleSupportThreads(supabase, now);
   await deleteOldRateLimits(supabase, now);
+  await deleteExpiredEmailChangeRequests(supabase, now);
 
   return NextResponse.json({ deletedThreads });
 }

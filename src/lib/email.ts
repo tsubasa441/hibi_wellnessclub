@@ -13,7 +13,7 @@ const SUPPORT_ADMIN_EMAIL = process.env.SUPPORT_ADMIN_EMAIL ?? "hibi.wellnessclu
 
 // メール送信の失敗で予約・決済・キャンセルの結果を変えないよう、例外は投げずに Sentry へ記録する
 // （Resend は API エラーを例外ではなく戻り値の error で返す。宛先は個人情報のため記録しない）
-async function sendEmail(kind: string, payload: Parameters<typeof resend.emails.send>[0]): Promise<void> {
+async function sendEmail(kind: string, payload: Parameters<typeof resend.emails.send>[0]): Promise<boolean> {
   try {
     const { error } = await resend.emails.send(payload);
     if (error) {
@@ -22,9 +22,12 @@ async function sendEmail(kind: string, payload: Parameters<typeof resend.emails.
         tags: { area: "email", kind },
         extra: { errorName: error.name, errorMessage: error.message, from: FROM },
       });
+      return false;
     }
+    return true;
   } catch (err) {
     Sentry.captureException(err, { tags: { area: "email", kind } });
+    return false;
   }
 }
 
@@ -374,6 +377,38 @@ export async function sendWaitlistSeatAvailable(params: {
               ${paragraph("キャンセル待ちに登録していた皆さまに同時にお知らせしています。先にご予約いただいた方から確定しますので、お早めにどうぞ。")}
               ${button(`${SITE_URL}/events/${eventId}`, "予約ページを開く")}
               ${smallNote("このお知らせでキャンセル待ちは終了しました。再び満席になった場合は、イベントのページからもう一度キャンセル待ちに登録してください。")}`),
+  });
+}
+
+// メールアドレス変更の1段階目：今のアドレスの持ち主に確かめる。リンクは確認ページへ（開いただけでは進まない）
+export async function sendEmailChangeRequest(params: { to: string; newEmail: string; token: string; expiresMinutes: number }) {
+  const { to, newEmail, token, expiresMinutes } = params;
+
+  return sendEmail("email_change_request", {
+    from: FROM,
+    to,
+    subject: "【Hibi】メールアドレス変更のお申し込み",
+    html: emailLayout(`
+              ${title("メールアドレス変更のお申し込み")}
+              ${paragraph(`Hibi のメールアドレスを ${escapeHtml(newEmail)} に変更するお申し込みがありました。お心当たりがある場合は、下のボタンから手続きを進めてください。`)}
+              ${button(`${SITE_URL}/auth/email-change/verify?token=${encodeURIComponent(token)}`, "変更の手続きを進める")}
+              ${smallNote(`このリンクの有効期限は${expiresMinutes}分です。お心当たりがない場合は、ボタンを押さないでください。メールアドレスは変更されません。第三者がパスワードを知っている可能性があるため、パスワードの変更をおすすめします。`)}`),
+  });
+}
+
+// メールアドレス変更の2段階目：新しいアドレスに届くことを確かめる。リンクを押すと切り替わる
+export async function sendEmailChangeConfirmation(params: { to: string; tokenHash: string }) {
+  const { to, tokenHash } = params;
+
+  return sendEmail("email_change_confirmation", {
+    from: FROM,
+    to,
+    subject: "【Hibi】新しいメールアドレスの確認",
+    html: emailLayout(`
+              ${title("新しいメールアドレスの確認")}
+              ${paragraph("下のボタンを押すと、Hibi のメールアドレスがこのアドレスに変更されます。")}
+              ${button(`${SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=email_change`, "メールアドレスの変更を確定する")}
+              ${smallNote("お心当たりがない場合は、このメールを無視してください。")}`),
   });
 }
 

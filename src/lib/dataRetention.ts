@@ -22,6 +22,11 @@ export async function deleteStaleSupportThreads(svc: SupabaseClient, now: Date):
   return deleteError ? 0 : staleUserIds.length;
 }
 
+// 使われないまま期限が切れたメールアドレス変更の申し込みを消す（新しいアドレスを残さないため）
+export async function deleteExpiredEmailChangeRequests(svc: SupabaseClient, now: Date): Promise<void> {
+  await svc.from("email_change_requests").delete().lt("expires_at", now.toISOString());
+}
+
 // レート制限の記録は時間窓（最長でも数分）を過ぎれば不要なので、1日より古いものを消す
 export async function deleteOldRateLimits(svc: SupabaseClient, now: Date): Promise<void> {
   await svc

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { chainable, createSupabaseMock } from "@/lib/testUtils/supabaseMock";
-import { deleteOldRateLimits, deleteStaleSupportThreads } from "./dataRetention";
+import { deleteExpiredEmailChangeRequests, deleteOldRateLimits, deleteStaleSupportThreads } from "./dataRetention";
 
 const NOW = new Date("2026-10-27T00:00:00Z");
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * 24 * 60 * 60 * 1000).toISOString();
@@ -36,6 +36,19 @@ describe("deleteStaleSupportThreads", () => {
 
     expect(count).toBe(0);
     expect(from).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("deleteExpiredEmailChangeRequests", () => {
+  it("期限切れのメールアドレス変更の申し込みを消す", async () => {
+    const { supabase, from } = createSupabaseMock();
+    const ltSpy = vi.fn();
+    from.mockReturnValueOnce(chainable({ error: null }, { lt: ltSpy }));
+
+    await deleteExpiredEmailChangeRequests(supabase, NOW);
+
+    expect(from).toHaveBeenCalledWith("email_change_requests");
+    expect(ltSpy).toHaveBeenCalledWith("expires_at", NOW.toISOString());
   });
 });
 

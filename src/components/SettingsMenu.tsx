@@ -122,7 +122,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
     setEmailRequested(false);
   }
 
-  // 申し込みのみ。切り替わるのは新旧両方のアドレスに届く確認メールのリンクが押されたとき
+  // 申し込みのみ。今のアドレスのリンク→新しいアドレスのリンクの順に押されると切り替わる
   async function handleRequestEmailChange() {
     setEmailError(null);
     if (!newEmail.trim() || !emailPassword) {
@@ -287,7 +287,7 @@ export default function SettingsMenu({ nickname, email, savedCard }: Props) {
               {emailRequested ? (
                 <div className="space-y-3">
                   <p className="font-dm text-xs text-ink-500 leading-relaxed">
-                    確認メールをお送りしました。今のメールアドレスと新しいメールアドレスの両方に届いたメールのリンクを押すと、変更が完了します。それまでは、今のメールアドレスでログインしてください。
+                    今のメールアドレスに確認メールをお送りしました。リンクを押すと、新しいメールアドレスにも確認メールが届きます。そのリンクを押すと、変更が完了します。それまでは、今のメールアドレスでログインしてください。
                   </p>
                   <button onClick={resetEmailForm} className="font-outfit text-xs text-ink-300 hover:text-ink-500 transition">
                     閉じる

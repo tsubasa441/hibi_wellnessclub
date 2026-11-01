@@ -98,22 +98,27 @@ Supabase Auth を使用。メールアドレス + パスワード認証のみ。
 2. サーバー側で:
    - レート制限（5回/600秒。パスワードの総当たり対策）
    - 形式チェック・今のアドレスと同じなら拒否
-   - 現在のパスワードを signInWithPassword で確認（本人以外がログイン中の端末を操作しただけで変更できないように）
-   - 同じクライアントの updateUser({ email }) で Supabase に変更を申し込み、確認用のセッションは signOut({ scope: "local" }) で破棄
-     （@supabase/supabase-js の createClient、flowType 既定 "implicit"。@supabase/ssr のクライアントから申し込むと
-     token_hash が PKCE 用の値になり /auth/confirm で検証できない。BUG-10 と同じ理由）
-   - 既に他のアカウントが使っているアドレスは Supabase が拒否する（email_exists）→「このメールアドレスは使用できません」
-3. Supabase の Secure email change（オン）により、今のアドレスと新しいアドレスの両方に確認メールが届く
-   - メールテンプレート（Supabase Dashboard > Authentication > Email Templates > Change Email Address）は
-     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change` を指す
-4. リンク → GET /auth/confirm → /auth/verify（「メールアドレスの変更を確定する」ボタン）→ POST /auth/confirm が
+   - 現在のパスワードを signInWithPassword で確認（本人以外がログイン中の端末を操作しただけで変更できないように）。確認用のセッションは signOut({ scope: "local" }) で破棄
+   - email_change_requests に申し込みを保存（1人1件、新しいアドレスは暗号化、トークンは SHA-256 のハッシュ、有効期限30分）
+   - 今のアドレスへ確認メールを送る（Resend。新しいアドレスにはまだ送らない）
+3. 今のアドレスのリンク → /auth/email-change/verify（「変更の手続きを進める」ボタン。先読みでトークンが消費されないよう、開いただけでは進まない）
+   → POST /api/account/email/confirm（ログイン不要。トークンが本人確認の代わり。IP で 10回/600秒）
+   - 申し込みを消しながら読む（1回限り）。無い・期限切れ → status=invalid
+   - auth.admin.generateLink({ type: "email_change_current" }) で確定用のトークンを作る（Supabase はメールを送らない。
+     email_change_new の hashed_token は verifyOtp で検証できなかったため、current の方を使う。2026-11-01 に実機で確認）
+   - 既に他のアカウントが使っているアドレスは Supabase が拒否する（email_exists）→ status=taken
+   - 新しいアドレスへ確認メールを送る（Resend）→ status=sent
+4. 新しいアドレスのリンク → GET /auth/confirm → /auth/verify（「メールアドレスの変更を確定する」ボタン）→ POST /auth/confirm が
    verifyOtp({ type: "email_change" }) を実行し、/auth/email-change（ログイン不要）へ 303
-   - 1通目の確認ではセッションが返らない → status=pending（「もう1通のメールも確認してください」）
-   - 2通目の確認でセッションが返り、メールアドレスが切り替わる → status=done。この時点から新しいアドレスでログインする
+   - メールアドレスが切り替わる → status=done。この時点から新しいアドレスでログインする
    - 検証失敗 → status=invalid（Sentry に area=auth_email_change で記録。メールアドレス・トークンは含めない）
 ```
 
-他人のアカウントの乗っ取り・悪用への対策：既に使われているアドレスには変更できない（Supabase の一意制約）。他人のまだ登録されていないアドレスに変えようとしても、その受信箱のリンクを押さない限り切り替わらない。パスワードを盗まれても、今のアドレスの確認メールのリンクを押さない限り切り替わらない。メールアドレスは `auth.users` のみに保存しており、管理画面の参加者一覧・CSV も `auth.users` から読むため、切り替え後は自動で新しいアドレスになる。
+2026-11-01、依頼者の指定で「今のアドレスの確認」をアプリ側に追加した。Hibi は登録時のメール確認なし（Supabase の `mailer_autoconfirm: true`）で、この設定では Secure email change をオンにしても、確認メールは2通届くのに新しいアドレスのリンク1つで切り替わることを、本番で確認したため（testplan 27-6）。
+
+**Supabase のテンプレート Change Email Address には確定用のリンクを置かない**（`supabase/email-templates/change-email.html`）。公開キーとパスワードがあれば、Hibi の API を通さず Supabase に直接変更を申し込めるため、リンクがあると今のアドレスの確認を飛ばせてしまう。アプリの手続きでは Supabase のこのメールは送られない。
+
+他人のアカウントの乗っ取り・悪用への対策：既に使われているアドレスには変更できない（Supabase の一意制約）。他人のまだ登録されていないアドレスに変えようとしても、その受信箱のリンクを押さない限り切り替わらない。パスワードを盗まれても、今のアドレスの受信箱に入れない限り切り替わらない。メールアドレスは `auth.users` のみに保存しており、管理画面の参加者一覧・CSV も `auth.users` から読むため、切り替え後は自動で新しいアドレスになる。
 
 ---
 

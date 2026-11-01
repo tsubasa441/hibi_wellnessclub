@@ -10,17 +10,28 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   checkRateLimit: vi.fn(),
   captureMessage: vi.fn(),
+  upsert: vi.fn(),
+  deleteEq: vi.fn(),
+  sendEmailChangeRequest: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createServerClient }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: () => ({
+    from: () => ({ upsert: mocks.upsert, delete: () => ({ eq: mocks.deleteEq }) }),
+  }),
+}));
 vi.mock("@supabase/supabase-js", () => ({ createClient: mocks.createSupabaseClient }));
 vi.mock("@sentry/nextjs", () => ({ captureMessage: mocks.captureMessage }));
+vi.mock("@/lib/encrypt", () => ({ encrypt: (text: string) => `enc:${text}` }));
+vi.mock("@/lib/email", () => ({ sendEmailChangeRequest: mocks.sendEmailChangeRequest }));
 vi.mock("@/lib/rateLimit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   RATE_LIMIT_MESSAGE: "リクエストが多すぎます。しばらくしてから再度お試しください。",
 }));
 
 const { POST } = await import("./route");
+const { hashEmailChangeToken } = await import("@/lib/emailChange");
 
 function makeRequest(body: unknown) {
   return { json: async () => body } as unknown as NextRequest;
@@ -32,8 +43,10 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1", email: "old@example.com" } } });
   mocks.createServerClient.mockReturnValue({ auth: { getUser: mocks.getUser } });
   mocks.signInWithPassword.mockResolvedValue({ error: null });
-  mocks.updateUser.mockResolvedValue({ error: null });
   mocks.signOut.mockResolvedValue({ error: null });
+  mocks.upsert.mockResolvedValue({ error: null });
+  mocks.deleteEq.mockResolvedValue({ error: null });
+  mocks.sendEmailChangeRequest.mockResolvedValue(true);
   mocks.createSupabaseClient.mockReturnValue({
     auth: { signInWithPassword: mocks.signInWithPassword, updateUser: mocks.updateUser, signOut: mocks.signOut },
   });
@@ -58,50 +71,56 @@ describe("POST /api/account/email", () => {
     ["パスワード未入力", { email: "new@example.com", currentPassword: "" }],
     ["形式が不正", { email: "not-an-email", currentPassword: "pw" }],
     ["今と同じ（大文字小文字違い）", { email: "OLD@example.com", currentPassword: "pw" }],
-  ])("%s は400で、Supabase に申し込まない", async (_, body) => {
+  ])("%s は400で、申し込みを保存しない", async (_, body) => {
     const res = await POST(makeRequest(body));
     expect(res.status).toBe(400);
-    expect(mocks.updateUser).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
-  it("現在のパスワードが違えば400で、変更を申し込まない", async () => {
+  it("現在のパスワードが違えば400で、申し込みを保存しない", async () => {
     mocks.signInWithPassword.mockResolvedValue({ error: { message: "Invalid login credentials" } });
     const res = await POST(makeRequest({ email: "new@example.com", currentPassword: "wrong" }));
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe("現在のパスワードが正しくありません");
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({ email: "old@example.com", password: "wrong" });
-    expect(mocks.updateUser).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
-  it("成功時は PKCE を使わないクライアントで申し込み、確認用のセッションを端末に影響させず破棄する", async () => {
+  it("成功時は今のアドレスだけにメールを送り、Supabase には変更を申し込まない", async () => {
     const res = await POST(makeRequest({ email: "  New@Example.com ", currentPassword: "pw" }));
     expect(res.status).toBe(200);
-    expect(mocks.updateUser).toHaveBeenCalledWith({ email: "new@example.com" });
+    expect(mocks.updateUser).not.toHaveBeenCalled();
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: "local" });
-    const options = mocks.createSupabaseClient.mock.calls[0][2];
-    expect(options.auth.persistSession).toBe(false);
-    expect(options.auth.flowType).toBeUndefined();
+
+    const mail = mocks.sendEmailChangeRequest.mock.calls[0][0];
+    expect(mail.to).toBe("old@example.com");
+    expect(mail.newEmail).toBe("new@example.com");
   });
 
-  it("既に使われているアドレスは400（他人のアカウントにはならない）", async () => {
-    mocks.updateUser.mockResolvedValue({ error: { code: "email_exists", status: 422, name: "AuthApiError" } });
-    const res = await POST(makeRequest({ email: "taken@example.com", currentPassword: "pw" }));
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe("このメールアドレスは使用できません");
-    expect(mocks.signOut).toHaveBeenCalled();
+  it("新しいアドレスは暗号化し、トークンはハッシュだけを保存する", async () => {
+    await POST(makeRequest({ email: "new@example.com", currentPassword: "pw" }));
+
+    const saved = mocks.upsert.mock.calls[0][0];
+    const { token } = mocks.sendEmailChangeRequest.mock.calls[0][0];
+    expect(saved.user_id).toBe("user-1");
+    expect(saved.new_email).toBe("enc:new@example.com");
+    expect(saved.token_hash).toBe(hashEmailChangeToken(token));
+    expect(saved.token_hash).not.toBe(token);
+    expect(mocks.upsert.mock.calls[0][1]).toEqual({ onConflict: "user_id" });
   });
 
-  it("メール送信の上限は429", async () => {
-    mocks.updateUser.mockResolvedValue({ error: { code: "over_email_send_rate_limit", status: 429, name: "AuthApiError" } });
-    const res = await POST(makeRequest({ email: "new@example.com", currentPassword: "pw" }));
-    expect(res.status).toBe(429);
-  });
-
-  it("想定外の失敗は500で、メールアドレスを含めずに記録する", async () => {
-    mocks.updateUser.mockResolvedValue({ error: { code: "unexpected_failure", status: 500, name: "AuthApiError" } });
+  it("保存に失敗したら500で、メールは送らない", async () => {
+    mocks.upsert.mockResolvedValue({ error: { message: "db error" } });
     const res = await POST(makeRequest({ email: "new@example.com", currentPassword: "pw" }));
     expect(res.status).toBe(500);
-    const extra = mocks.captureMessage.mock.calls[0][1].extra;
-    expect(JSON.stringify(extra)).not.toContain("example.com");
+    expect(mocks.sendEmailChangeRequest).not.toHaveBeenCalled();
+    expect(JSON.stringify(mocks.captureMessage.mock.calls)).not.toContain("example.com");
+  });
+
+  it("メールを送れなければ500で、申し込みを消す", async () => {
+    mocks.sendEmailChangeRequest.mockResolvedValue(false);
+    const res = await POST(makeRequest({ email: "new@example.com", currentPassword: "pw" }));
+    expect(res.status).toBe(500);
+    expect(mocks.deleteEq).toHaveBeenCalledWith("user_id", "user-1");
   });
 });

@@ -188,6 +188,20 @@ RLS は SELECT のみ（本人のスレッド、または管理者）。書き�
 
 `(event_id, user_id)` で一意。RLS は SELECT のみ（本人、または管理者）。登録・取り消し・通知後の削除は API が service_role で行う。退会済みのユーザー（メールアドレスを置き換え済み）には送らない。
 
+### email_change_requests（2026-11-01 追加、`038_email_change_requests.sql`）
+
+メールアドレス変更の申し込み。今のアドレスに届くリンクが押されるまで、変更を進めないために使う（@docs/authdesign.md 参照）。
+
+| カラム | 型 | 備考 |
+|--------|-----|------|
+| user_id | uuid | PK、FK → profiles.id（`on delete cascade`）。1人1件で、申し込み直すと置き換わる |
+| new_email | text | 新しいメールアドレス（暗号化） |
+| token_hash | text | UNIQUE。メールのリンクのトークンの SHA-256。トークン自体は保存しない |
+| expires_at | timestamptz | 有効期限（30分） |
+| created_at | timestamptz | |
+
+RLS は有効で、ポリシーは設けない（読み書きは API が service_role で行う）。リンクを押すと行を消し、期限切れの行は毎日の `/api/cron/cleanup` が消す。
+
 ### rate_limits
 
 API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` の `checkRateLimit()` から `check_rate_limit` RPC（service_role専用）経由でのみ読み書きされる。ユーザーやadmin画面から直接参照することはない。
@@ -221,7 +235,8 @@ API のレート制限用の内部管理テーブル。`src/lib/rateLimit.ts` �
 | POST | `/api/convert-name` | 名前ローマ字変換 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/auth/forgot-password` | パスワード再設定メール送信 | 不要（未認証で呼ばれる。IPアドレスでレート制限） |
 | POST | `/api/account/delete` | アカウント削除（`auth.users` を削除し、関連データも連鎖して削除。予約＝支払いの記録だけは `user_id` を null にして保持。終了前の予約がある間は不可） | 必要（本人のみ、管理者は不可） |
-| POST | `/api/account/email` | メールアドレス変更の申し込み（マイページから。現在のパスワードを確認してから Supabase に申し込む。切り替わるのは新旧両方のアドレスの確認メールのリンクが押されたとき。5回/600秒のレート制限。2026-10-24 追加。@docs/authdesign.md 参照） | 必要（本人のみ） |
+| POST | `/api/account/email` | メールアドレス変更の申し込み（マイページから。現在のパスワードを確認して保存し、今のアドレスへ確認メールを送る。5回/600秒のレート制限。2026-10-24 追加、2026-11-01 変更。@docs/authdesign.md 参照） | 必要（本人のみ） |
+| POST | `/api/account/email/confirm` | 今のアドレスのリンクの確認ページから呼ばれ、新しいアドレスへ確認メールを送る。そのリンクで切り替わる（2026-11-01 追加。10回/600秒、IP 単位） | 不要（メールのトークン） |
 | GET | `/api/cron/badges` | 月次バッジボーナス付与（Vercel Cron。GETのみexport、Vercel Cronの既定に合わせた実装） | 不要（Cron Secret） |
 | GET | `/api/cron/cleanup` | 古いデータの削除（毎日 3:00 JST。30日やり取りのないお問い合わせ・古い `rate_limits`） | 不要（Cron Secret） |
 | POST | `/api/rank/notify` | ランクアップ通知の既読化 | 必要 |
